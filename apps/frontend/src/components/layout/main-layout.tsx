@@ -9,9 +9,10 @@ import { useEffect } from 'react';
 
 interface MainLayoutProps {
   children: ReactNode;
+  showAIPanel?: boolean;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout({ children, showAIPanel = false }: MainLayoutProps) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const router = useRouter();
 

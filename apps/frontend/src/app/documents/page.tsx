@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Upload, Search, MoreVertical, FileText, Download, Share } from 'lucide-react';
-import api from '@/lib/api';
+import { generateMockDocuments } from '@/lib/mock-data';
 
 export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,8 +19,9 @@ export default function DocumentsPage() {
 
   const fetchDocuments = async () => {
     try {
-      const response = await api.get('/documents');
-      setDocuments(response.data);
+      // Use mock data instead of API
+      const mockDocuments = generateMockDocuments(50);
+      setDocuments(mockDocuments);
     } catch (error) {
       console.error('Error fetching documents:', error);
     } finally {

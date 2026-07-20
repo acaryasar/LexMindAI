@@ -11,6 +11,8 @@ import { AIModule } from './modules/ai/ai.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { FinanceModule } from './modules/finance/finance.module';
+import { RecommendationsModule } from './modules/recommendations/recommendations.module';
+import { DailyPlannerModule } from './modules/daily-planner/daily-planner.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { FinanceModule } from './modules/finance/finance.module';
     CalendarModule,
     TasksModule,
     FinanceModule,
+    RecommendationsModule,
+    DailyPlannerModule,
   ],
 })
 export class AppModule {}

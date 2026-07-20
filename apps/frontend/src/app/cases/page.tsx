@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, MoreVertical, Scale, Calendar, User } from 'lucide-react';
-import api from '@/lib/api';
+import { generateMockCases } from '@/lib/mock-data';
 
 export default function CasesPage() {
   const router = useRouter();
@@ -22,8 +22,9 @@ export default function CasesPage() {
 
   const fetchCases = async () => {
     try {
-      const response = await api.get('/cases');
-      setCases(response.data);
+      // Use mock data instead of API
+      const mockCases = generateMockCases(50);
+      setCases(mockCases);
     } catch (error) {
       console.error('Error fetching cases:', error);
     } finally {

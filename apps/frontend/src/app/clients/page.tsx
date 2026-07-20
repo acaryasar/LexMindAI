@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, MoreVertical, Phone, Mail, MapPin } from 'lucide-react';
-import api from '@/lib/api';
+import { generateMockClients } from '@/lib/mock-data';
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -21,8 +21,9 @@ export default function ClientsPage() {
 
   const fetchClients = async () => {
     try {
-      const response = await api.get('/clients');
-      setClients(response.data);
+      // Use mock data instead of API
+      const mockClients = generateMockClients(50);
+      setClients(mockClients);
     } catch (error) {
       console.error('Error fetching clients:', error);
     } finally {
@@ -77,7 +78,7 @@ export default function ClientsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredClients.map((client) => (
-              <Card key={client.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => console.log('Client clicked:', client.id)}>
+              <Card key={client.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push(`/clients/${client.id}`)}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

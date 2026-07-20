@@ -789,3 +789,109 @@ model AuditLog {
   
   @@map("audit_logs")
 }
+
+// AI Recommendation Engine
+model AIRecommendation {
+  id              String   @id @default(uuid())
+  userId          String
+  type            String
+  priority        String
+  title           String
+  description     String
+  reason          String
+  businessImpact  String?
+  legalImpact     String?
+  estimatedTime   Int?
+  confidenceScore Int
+  context         Json?
+  
+  // Relations
+  actions         AIRecommendationAction[]
+  workflowId      String?
+  workflow        AIWorkflow? @relation("RecommendationWorkflow", fields: [workflowId], references: [id])
+  
+  dismissedAt     DateTime?
+  completedAt     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  deletedAt       DateTime?
+  createdBy       String?
+  updatedBy       String?
+  deletedBy       String?
+  
+  @@map("ai_recommendations")
+}
+
+model AIRecommendationAction {
+  id              String   @id @default(uuid())
+  recommendationId String
+  recommendation  AIRecommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  type            String
+  label           String
+  description     String?
+  requiresApproval Boolean @default(false)
+  outcome         String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@map("ai_recommendation_actions")
+}
+
+model AIWorkflow {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String
+  steps       Json
+  status      String
+  
+  // Relations
+  recommendations AIRecommendation[] @relation("RecommendationWorkflow")
+  executions    AIWorkflowExecution[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+  deletedBy   String?
+  
+  @@map("ai_workflows")
+}
+
+model AIWorkflowExecution {
+  id          String   @id @default(uuid())
+  workflowId  String
+  workflow    AIWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  userId      String
+  status      String
+  currentStep Int?
+  progress    Int?
+  results     Json?
+  error       String?
+  
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  
+  @@map("ai_workflow_executions")
+}
+
+// Daily AI Planner
+model AIDailyPlan {
+  id          String   @id @default(uuid())
+  userId      String
+  date        DateTime
+  greeting    String?
+  workload    Json?
+  priorities  Json?
+  suggestedOrder Json?
+  estimatedCompletion Int?
+  remainingFreeTime Int?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, date])
+  @@map("ai_daily_plans")
+}

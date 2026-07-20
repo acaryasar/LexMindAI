@@ -98,7 +98,7 @@ export default function LoginPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Giriş Yap</CardTitle>
             <CardDescription>
-              Hesabınıza giriş yaparak LexMind AI'ı kullanmaya başlayın
+              Hesabınıza giriş yaparak LexMind AI&apos;ı kullanmaya başlayın
             </CardDescription>
           </CardHeader>
           <CardContent>

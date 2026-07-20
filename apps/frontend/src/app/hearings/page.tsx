@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, MoreVertical, Scale, Calendar, Clock, MapPin } from 'lucide-react';
-import api from '@/lib/api';
+import { generateMockHearings } from '@/lib/mock-data';
 
 export default function HearingsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,8 +19,9 @@ export default function HearingsPage() {
 
   const fetchHearings = async () => {
     try {
-      const response = await api.get('/hearings');
-      setHearings(response.data);
+      // Use mock data instead of API
+      const mockHearings = generateMockHearings(50);
+      setHearings(mockHearings);
     } catch (error) {
       console.error('Error fetching hearings:', error);
     } finally {
