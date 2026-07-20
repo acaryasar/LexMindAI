@@ -20,7 +20,7 @@ import {
 
 const navigation = [
   {
-    name: 'Dashboard',
+    name: 'Ana Sayfa',
     href: '/dashboard',
     icon: LayoutDashboard,
   },

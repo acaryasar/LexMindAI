@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { User, Bell, Shield, Database, Palette, Globe, Cpu, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, Bell, Shield, Database, Palette, Globe, Cpu, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import axios from 'axios';
 
 export default function SettingsPage() {
@@ -17,10 +17,32 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAIConfig();
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (activeTooltip) {
+        const target = event.target as HTMLElement;
+        const tooltipButton = target.closest('[data-tooltip]');
+        const tooltipContent = target.closest('[data-tooltip-content]');
+        
+        // Tooltip butonuna veya içeriğine tıklandıysa kapatma
+        if (tooltipButton || tooltipContent) {
+          return;
+        }
+        
+        // Dışarı tıklandıysa kapat
+        setActiveTooltip(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [activeTooltip]);
 
   const fetchAIConfig = async () => {
     try {
@@ -179,7 +201,16 @@ export default function SettingsPage() {
             ) : (
               <>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">AI Sağlayıcı</label>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">AI Sağlayıcı</label>
+                    <button
+                      data-tooltip="provider"
+                      onClick={() => setActiveTooltip(activeTooltip === 'provider' ? null : 'provider')}
+                      className="relative w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
+                  </div>
                   <select
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={aiConfig.provider}
@@ -190,23 +221,87 @@ export default function SettingsPage() {
                     <option value="anthropic">Anthropic</option>
                     <option value="google">Google AI</option>
                   </select>
+                  {activeTooltip === 'provider' && (
+                    <div 
+                      data-tooltip-content="provider"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className="relative z-50 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg pointer-events-auto"
+                    >
+                      <p className="font-medium mb-1">AI Sağlayıcı Nedir?</p>
+                      <p className="text-gray-300">Kullanmak istediğiniz AI hizmet sağlayıcısını seçin (OpenAI, Anthropic, Google AI). Her sağlayıcının farklı modelleri ve fiyatlandırması vardır.</p>
+                      <div className="mt-2 space-y-1">
+                        <a href="https://openai.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 cursor-pointer">🔗 openai.com</a>
+                        <a href="https://anthropic.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 cursor-pointer block">🔗 anthropic.com</a>
+                        <a href="https://ai.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 cursor-pointer block">🔗 ai.google.com</a>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">API Anahtarı</label>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">API Anahtarı</label>
+                    <button
+                      data-tooltip="apiKey"
+                      onClick={() => setActiveTooltip(activeTooltip === 'apiKey' ? null : 'apiKey')}
+                      className="relative w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
+                  </div>
                   <Input
                     type="password"
                     placeholder="sk-..."
                     value={aiConfig.apiKey}
                     onChange={(e) => setAiConfig({ ...aiConfig, apiKey: e.target.value })}
                   />
+                  {activeTooltip === 'apiKey' && (
+                    <div 
+                      data-tooltip-content="apiKey"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className="relative z-50 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg pointer-events-auto"
+                    >
+                      <p className="font-medium mb-1">API Anahtarı Nedir?</p>
+                      <p className="text-gray-300">Seçtiğiniz AI sağlayıcısının API anahtarını girin. Bu anahtar, AI hizmetlerine erişmek için gereklidir.</p>
+                      <div className="mt-2 space-y-1">
+                        <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 cursor-pointer">🔗 platform.openai.com/api-keys</a>
+                        <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 cursor-pointer block">🔗 console.anthropic.com/</a>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Model</label>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">Model</label>
+                    <button
+                      data-tooltip="model"
+                      onClick={() => setActiveTooltip(activeTooltip === 'model' ? null : 'model')}
+                      className="relative w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                    >
+                      <Info className="w-3 h-3" />
+                    </button>
+                  </div>
                   <Input
                     placeholder="gpt-4, claude-3-opus, etc."
                     value={aiConfig.model}
                     onChange={(e) => setAiConfig({ ...aiConfig, model: e.target.value })}
                   />
+                  {activeTooltip === 'model' && (
+                    <div 
+                      data-tooltip-content="model"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className="relative z-50 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-lg pointer-events-auto"
+                    >
+                      <p className="font-medium mb-1">Model Nedir?</p>
+                      <p className="text-gray-300">Kullanmak istediğiniz AI modelinin adını girin (örn: gpt-4, claude-3-opus, gemini-pro).</p>
+                      <div className="mt-2 space-y-1">
+                        <a href="https://platform.openai.com/docs/models" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 cursor-pointer">🔗 platform.openai.com/docs/models</a>
+                        <a href="https://docs.anthropic.com/claude/docs" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 cursor-pointer block">🔗 docs.anthropic.com/claude/docs</a>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {testResult && (
                   <div className={`flex items-center space-x-2 p-3 rounded-md ${

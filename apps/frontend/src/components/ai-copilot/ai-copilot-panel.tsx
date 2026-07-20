@@ -139,7 +139,7 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
 
   if (loading) {
     return (
-      <div className="w-[400px] h-screen sticky top-0 bg-white/80 backdrop-blur-xl border-l border-gray-200/50 p-6 overflow-y-auto">
+      <div className="w-full h-full bg-white/80 backdrop-blur-xl border-l border-gray-200/50 p-6 overflow-y-auto">
         <div className="animate-pulse space-y-4">
           <div className="h-16 bg-gray-200 rounded-2xl" />
           <div className="h-32 bg-gray-200 rounded-2xl" />
@@ -151,7 +151,7 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
   }
 
   return (
-    <div className="w-[400px] h-screen sticky top-0 bg-white/80 backdrop-blur-xl border-l border-gray-200/50 p-6 overflow-y-auto">
+    <div className="w-full h-full bg-white/80 backdrop-blur-xl border-l border-gray-200/50 p-6 overflow-y-auto flex flex-col">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">

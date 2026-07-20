@@ -2,17 +2,17 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsEnum } from 'class-validator';
 
 export enum TaskPriority {
-  LOW = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH',
-  URGENT = 'URGENT',
+  LOW = 'DÜŞÜK',
+  MEDIUM = 'ORTA',
+  HIGH = 'YÜKSEK',
+  URGENT = 'ACİL',
 }
 
 export enum TaskStatus {
-  TODO = 'TODO',
-  IN_PROGRESS = 'IN_PROGRESS',
-  REVIEW = 'REVIEW',
-  COMPLETED = 'COMPLETED',
+  TODO = 'YENİ',
+  IN_PROGRESS = 'İNCELENİYOR',
+  REVIEW = 'KONTROL',
+  COMPLETED = 'TAMAMLANDI',
 }
 
 export class CreateTaskDto {
