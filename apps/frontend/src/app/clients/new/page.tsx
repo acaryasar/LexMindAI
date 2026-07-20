@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/main-layout';
-import api from '@/lib/api';
+import { clientsApi, CreateClientDto } from '@/lib/api/clients';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,9 +15,9 @@ import { ArrowLeft, Save } from 'lucide-react';
 const clientSchema = z.object({
   firstName: z.string().min(2, 'İsim en az 2 karakter olmalı'),
   lastName: z.string().min(2, 'Soyisim en az 2 karakter olmalı'),
-  email: z.string().email('Geçerli bir e-posta adresi girin'),
-  phoneNumber: z.string().min(10, 'Telefon numarası en az 10 karakter olmalı'),
-  nationalId: z.string().length(11, 'TCKN 11 haneli olmalı'),
+  email: z.string().email('Geçerli bir e-posta adresi girin').optional().or(z.literal('')),
+  phoneNumber: z.string().min(10, 'Telefon numarası en az 10 karakter olmalı').optional().or(z.literal('')),
+  nationalId: z.string().length(11, 'TCKN 11 haneli olmalı').optional().or(z.literal('')),
   taxNumber: z.string().optional(),
   address: z.string().optional(),
   notes: z.string().optional(),
@@ -41,7 +41,18 @@ export default function NewClientPage() {
   const onSubmit = async (data: ClientFormData) => {
     setIsLoading(true);
     try {
-      await api.post('/clients', data);
+      const createData: CreateClientDto = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email || undefined,
+        phoneNumber: data.phoneNumber || undefined,
+        nationalId: data.nationalId || undefined,
+        taxNumber: data.taxNumber,
+        address: data.address,
+        notes: data.notes,
+        tags: data.tags ? data.tags.split(',').map(t => t.trim()) : undefined,
+      };
+      await clientsApi.create(createData);
       router.push('/clients');
     } catch (error: any) {
       console.error('Error creating client:', error);

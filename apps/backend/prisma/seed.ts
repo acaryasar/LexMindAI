@@ -3,6 +3,93 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
+// Turkish data generators
+const turkishNames = {
+  firstNames: [
+    'Ahmet', 'Mehmet', 'Ayşe', 'Fatma', 'Ali', 'Veli', 'Zeynep', 'Elif', 'Mustafa', 'Hüseyin',
+    'Ömer', 'İbrahim', 'Hasan', 'Hüseyin', 'İsmail', 'Murat', 'Can', 'Emre', 'Burak', 'Arda',
+    'Deniz', 'Ece', 'Selin', 'Ceren', 'Buse', 'Elif', 'Zeynep', 'Sümeyye', 'Havva', 'Rabia',
+    'Yusuf', 'Yasin', 'Kerem', 'Mert', 'Ege', 'Baran', 'Kağan', 'Doğa', 'Aras', 'Rüzgar',
+    'Defne', 'Nil', 'Leyla', 'Şirin', 'Gülşah', 'Merve', 'Seda', 'Gamze', 'Begüm', 'Esra'
+  ],
+  lastNames: [
+    'Yılmaz', 'Kaya', 'Demir', 'Çelik', 'Şahin', 'Öztürk', 'Aydın', 'Yıldız', 'Kılıç', 'Koç',
+    'Arslan', 'Doğan', 'Özdemir', 'Yıldırım', 'Keskin', 'Koçak', 'Aksoy', 'Şimşek', 'Kurt', 'Polat',
+    'Bulut', 'Taş', 'Kara', 'Erdoğan', 'Yavuz', 'Sönmez', 'Uçar', 'Kaya', 'Avcı', 'Özkan',
+    'Güneş', 'Şen', 'Çetin', 'Yılmaz', 'Kara', 'Demir', 'Akgün', 'Akyüz', 'Aktaş', 'Akyıldız'
+  ]
+};
+
+const turkishCities = [
+  'İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Antalya', 'Adana', 'Konya', 'Mersin', 'Gaziantep', 'Şanlıurfa',
+  'Eskişehir', 'Diyarbakır', 'Samsun', 'Kayseri', 'Malatya', 'Denizli', 'Trabzon', 'Erzurum', 'Van', 'Sakarya'
+];
+
+const courtTypes = [
+  'Asliye Hukuk Mahkemesi', 'İş Mahkemesi', 'Ticaret Mahkemesi', 'Aile Mahkemesi', 'İdare Mahkemesi',
+  'Ceza Mahkemesi', 'Ağır Ceza Mahkemesi', 'Tüketici Mahkemesi', 'Fikri Mülkiyet Mahkemesi', 'Bölge Adliye Mahkemesi'
+];
+
+const caseTypes = [
+  'Tazminat Davası', 'Boşanma Davası', 'İş Davası', 'Kira Davası', 'Ticari Davası',
+  'Ceza Davası', 'İdari Davası', 'Tüketici Davası', 'Fikri Mülkiyet Davası', 'İcra Takibi'
+];
+
+const caseDescriptions = [
+  'Müşteriye ödenmemiş tazminat talebi',
+  'Boşanma ve velayet davası',
+  'Haksız işten çıkarma tazminatı',
+  'Kira bedeli tahsili davası',
+  'Ticari sözleşme ihlali',
+  'Hırsızlık suçlaması',
+  'İdari karar iptali',
+  'Ayıplı mal iadesi',
+  'Marka ihlali davası',
+  'Alacak tahsili icra takibi'
+];
+
+const documentCategories = [
+  'Dava Dilekçesi', 'Delil Belgesi', 'Sözleşme', 'Mahkeme Kararı', 'Uzman Raporu',
+  'Tanıklık Beyanı', 'Mektup', 'Fatura', 'Banka Dekontu', 'Resmi Belge'
+];
+
+function getRandomItem(arr: any[]) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getRandomNumber(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getRandomDate(startYear: number, endYear: number) {
+  const start = new Date(startYear, 0, 1);
+  const end = new Date(endYear, 11, 31);
+  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+}
+
+function generateTurkishNationalId() {
+  let id = '';
+  for (let i = 0; i < 11; i++) {
+    id += getRandomNumber(0, 9);
+  }
+  return id;
+}
+
+function generatePhoneNumber() {
+  return `05${getRandomNumber(0, 9)}${getRandomNumber(0, 9)} ${getRandomNumber(100, 999)} ${getRandomNumber(10, 99)} ${getRandomNumber(10, 99)}`;
+}
+
+function generateEmail(firstName: string, lastName: string) {
+  const domains = ['gmail.com', 'hotmail.com', 'yahoo.com', 'outlook.com', 'yandex.com'];
+  return `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${getRandomItem(domains)}`;
+}
+
+function generateAddress(city: string) {
+  const districts = ['Merkez', 'Yenişehir', 'Kadıköy', 'Beşiktaş', 'Şişli', 'Çankaya', 'Keçiören', 'Karşıyaka', 'Nilüfer', 'Osmangazi'];
+  const streets = ['Atatürk Cad.', 'Cumhuriyet Cad.', 'İstiklal Cad.', 'Bağdat Cad.', 'Barbaros Bulvarı'];
+  return `${getRandomItem(districts)}, ${getRandomItem(streets)} No: ${getRandomNumber(1, 500)}, ${city}`;
+}
+
 async function main() {
   console.log('Starting seed...');
 
@@ -83,183 +170,151 @@ async function main() {
     },
   });
 
-  // Create sample clients
-  const client1 = await prisma.client.upsert({
-    where: { nationalId: '12345678901' },
-    update: {},
-    create: {
-      firstName: 'Ahmet',
-      lastName: 'Yılmaz',
-      email: 'ahmet.yilmaz@example.com',
-      phoneNumber: '+905551234567',
-      nationalId: '12345678901',
-      address: 'İstanbul, Türkiye',
-      tags: ['VIP', 'Kurumsal'],
-    },
-  });
+  // Create sample clients (50+ records)
+  console.log('Creating clients...');
+  const clients = [];
+  for (let i = 0; i < 50; i++) {
+    const firstName = getRandomItem(turkishNames.firstNames);
+    const lastName = getRandomItem(turkishNames.lastNames);
+    const city = getRandomItem(turkishCities);
+    const nationalId = generateTurkishNationalId();
+    
+    const client = await prisma.client.upsert({
+      where: { nationalId },
+      update: {},
+      create: {
+        firstName,
+        lastName,
+        email: generateEmail(firstName, lastName),
+        phoneNumber: generatePhoneNumber(),
+        nationalId,
+        address: generateAddress(city),
+        tags: getRandomItem([['VIP'], ['Kurumsal'], ['Bireysel'], ['Yüksek Risk'], []]),
+      },
+    });
+    clients.push(client);
+  }
 
-  const client2 = await prisma.client.upsert({
-    where: { nationalId: '98765432109' },
-    update: {},
-    create: {
-      firstName: 'Ayşe',
-      lastName: 'Demir',
-      email: 'ayse.demir@example.com',
-      phoneNumber: '+905559876543',
-      nationalId: '98765432109',
-      address: 'Ankara, Türkiye',
-      tags: ['Bireysel'],
-    },
-  });
+  // Create sample cases (50+ records)
+  console.log('Creating cases...');
+  const cases = [];
+  for (let i = 0; i < 50; i++) {
+    const client = getRandomItem(clients);
+    const city = getRandomItem(turkishCities);
+    const caseNumber = `${getRandomNumber(2020, 2024)}/${getRandomNumber(1000, 9999)}`;
+    
+    const caseData = await prisma.case.upsert({
+      where: { caseNumber },
+      update: {},
+      create: {
+        caseNumber,
+        title: `${getRandomItem(caseTypes)} - ${client.firstName} ${client.lastName}`,
+        description: getRandomItem(caseDescriptions),
+        status: getRandomItem(['ACTIVE', 'PENDING', 'CLOSED', 'ARCHIVED']),
+        type: getRandomItem(['CIVIL', 'CRIMINAL', 'FAMILY', 'COMMERCIAL', 'ADMINISTRATIVE']),
+        courtName: `${city} ${getRandomItem(courtTypes)}`,
+        courtCity: city,
+        startDate: getRandomDate(2020, 2024),
+      },
+    });
+    cases.push(caseData);
 
-  // Create sample cases
-  const case1 = await prisma.case.upsert({
-    where: { caseNumber: '2024/1234' },
-    update: {},
-    create: {
-      caseNumber: '2024/1234',
-      title: 'Tazminat Davası',
-      description: 'Maddi tazminat talebi',
-      status: 'ACTIVE',
-      type: 'CIVIL',
-      courtName: 'İstanbul 1. Asliye Hukuk Mahkemesi',
-      courtCity: 'İstanbul',
-      startDate: new Date('2024-01-15'),
-    },
-  });
+    // Link client to case
+    await prisma.caseClient.create({
+      data: {
+        caseId: caseData.id,
+        clientId: client.id,
+        role: 'CLIENT',
+      },
+    });
+  }
 
-  const case2 = await prisma.case.upsert({
-    where: { caseNumber: '2024/1235' },
-    update: {},
-    create: {
-      caseNumber: '2024/1235',
-      title: 'Boşanma Davası',
-      description: 'Aile hukuku kapsamında boşanma',
-      status: 'ACTIVE',
-      type: 'FAMILY',
-      courtName: 'İstanbul 2. Aile Mahkemesi',
-      courtCity: 'İstanbul',
-      startDate: new Date('2024-02-01'),
-    },
-  });
+  // Create sample hearings (50+ records)
+  console.log('Creating hearings...');
+  for (let i = 0; i < 50; i++) {
+    const caseData = getRandomItem(cases);
+    const hearingDate = getRandomDate(2024, 2026);
+    
+    await prisma.caseHearing.create({
+      data: {
+        caseId: caseData.id,
+        date: hearingDate,
+        time: `${getRandomNumber(9, 17)}:00`,
+        location: `${caseData.courtName}, Duruşma Salonu ${getRandomNumber(1, 10)}`,
+        notes: getRandomItem(['Tanıkların dinlenmesi', 'Uzlaşma görüşmesi', 'Delil sunumu', 'Son savunma', '']),
+      },
+    });
+  }
 
-  // Link clients to cases
-  await prisma.caseClient.create({
-    data: {
-      caseId: case1.id,
-      clientId: client1.id,
-      role: 'CLIENT',
-    },
-  });
+  // Create sample documents (50+ records)
+  console.log('Creating documents...');
+  for (let i = 0; i < 50; i++) {
+    const caseData = getRandomItem(cases);
+    const category = getRandomItem(documentCategories);
+    const fileName = `${category.toLowerCase().replace(/ /g, '_')}_${getRandomNumber(1000, 9999)}.pdf`;
+    
+    const document = await prisma.document.create({
+      data: {
+        name: `${category} - ${caseData.caseNumber}`,
+        fileName,
+        mimeType: 'application/pdf',
+        size: getRandomNumber(1024, 10485760),
+        path: `/uploads/${fileName}`,
+        hash: `hash_${getRandomNumber(100000, 999999)}`,
+        bucket: 'documents',
+        category,
+      },
+    });
 
-  await prisma.caseClient.create({
-    data: {
-      caseId: case2.id,
-      clientId: client2.id,
-      role: 'CLIENT',
-    },
-  });
+    // Link document to case
+    await prisma.caseDocument.create({
+      data: {
+        caseId: caseData.id,
+        documentId: document.id,
+      },
+    });
 
-  // Link lawyers to cases
-  await prisma.caseLawyer.create({
-    data: {
-      caseId: case1.id,
-      userId: adminUser.id,
-      role: 'LAWYER',
-    },
-  });
+    // Link document to client
+    const caseClient = await prisma.caseClient.findFirst({
+      where: { caseId: caseData.id },
+    });
+    if (caseClient) {
+      await prisma.clientDocument.create({
+        data: {
+          clientId: caseClient.clientId,
+          documentId: document.id,
+        },
+      });
+    }
+  }
 
-  // Create sample hearings
-  await prisma.caseHearing.create({
-    data: {
-      caseId: case1.id,
-      date: new Date('2024-07-21'),
-      time: '10:00',
-      location: 'İstanbul 1. Asliye Hukuk Mahkemesi, Duruşma Salonu 1',
-      notes: 'Tanıkların dinlenmesi',
-    },
-  });
-
-  await prisma.caseHearing.create({
-    data: {
-      caseId: case2.id,
-      date: new Date('2024-07-22'),
-      time: '14:30',
-      location: 'İstanbul 2. Aile Mahkemesi, Duruşma Salonu 3',
-      notes: 'Uzlaşma görüşmesi',
-    },
-  });
-
-  // Create sample tasks
-  await prisma.task.create({
-    data: {
-      title: 'Dava dilekçesi hazırla',
-      description: '2024/1234 numaralı dava için dilekçe hazırlanacak',
-      dueDate: new Date('2024-07-25'),
-      priority: 'HIGH',
-      status: 'TODO',
-      createdBy: adminUser.id,
-    },
-  });
-
-  await prisma.task.create({
-    data: {
-      title: 'Müvekkil görüşmesi',
-      description: 'Ahmet Yılmaz ile ön görüşme',
-      dueDate: new Date('2024-07-23'),
-      priority: 'MEDIUM',
-      status: 'IN_PROGRESS',
-      createdBy: adminUser.id,
-    },
-  });
-
-  // Create sample calendar events
-  await prisma.calendarEvent.create({
-    data: {
-      title: 'Duruşma - 2024/1234',
-      date: new Date('2024-07-21'),
-      time: '10:00',
-      duration: 120,
-      location: 'İstanbul 1. Asliye Hukuk',
-      type: 'HEARING',
-      createdBy: adminUser.id,
-    },
-  });
-
-  await prisma.calendarEvent.create({
-    data: {
-      title: 'Müvekkil Toplantısı',
-      date: new Date('2024-07-23'),
-      time: '14:00',
-      duration: 60,
-      location: 'Ofis',
-      type: 'MEETING',
-      createdBy: adminUser.id,
-    },
-  });
-
-  // Create sample AI prompts
-  await prisma.aIPrompt.create({
-    data: {
-      name: 'Dilekçe Hazırlama',
-      description: 'Hukuki dilekçe taslağı oluşturma',
-      category: 'Dilekçe',
-      content: 'Verilen bilgilerle hukuki dilekçe taslağı oluştur. Resmi dil kullan ve gerekli hukuki referansları ekle.',
-      version: '1.0',
-      status: 'ACTIVE',
-    },
-  });
-
-  await prisma.aIPrompt.create({
-    data: {
-      name: 'Sözleşme Analizi',
-      description: 'Sözleşme risk analizi',
-      category: 'Analiz',
-      content: 'Bu sözleşmedeki riskleri tespit et ve öneriler sun. Maddeleri dikkatlice incele.',
-      version: '1.0',
-      status: 'ACTIVE',
-    },
-  });
+  // Create sample tasks (50+ records)
+  console.log('Creating tasks...');
+  for (let i = 0; i < 50; i++) {
+    const caseData = getRandomItem(cases);
+    
+    await prisma.task.create({
+      data: {
+        title: getRandomItem([
+          'Dava dilekçesi hazırla',
+          'Müvekkil görüşmesi',
+          'Delil toplama',
+          'Mahkeme kararı inceleme',
+          'Uzman raporu talep etme',
+          'Tanıklık beyanı al',
+          'Sözleşme hazırla',
+          'İtiraz dilekçesi yaz',
+          'Durum raporu hazırla',
+          'Son teslim tarihi kontrolü'
+        ]),
+        description: `${caseData.caseNumber} numaralı dava için ilgili işlem yapılacak`,
+        dueDate: getRandomDate(2024, 2025),
+        priority: getRandomItem(['HIGH', 'MEDIUM', 'LOW']),
+        status: getRandomItem(['TODO', 'IN_PROGRESS', 'COMPLETED']),
+        createdBy: adminUser.id,
+      },
+    });
+  }
 
   console.log('Seed completed successfully!');
 }

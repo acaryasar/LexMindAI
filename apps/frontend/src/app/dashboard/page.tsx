@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/main-layout';
 import { AICopilotPanel } from '@/components/ai-copilot/ai-copilot-panel';
@@ -15,51 +16,86 @@ import {
   AlertCircle,
   CheckCircle,
 } from 'lucide-react';
+import { clientsApi } from '@/lib/api/clients';
+import { casesApi } from '@/lib/api/cases';
+import { hearingsApi, Hearing } from '@/lib/api/hearings';
+import { tasksApi } from '@/lib/api/tasks';
 
 export default function DashboardPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    activeCases: 0,
+    activeClients: 0,
+    upcomingHearings: 0,
+    pendingTasks: 0,
+  });
+  const [recentActivities] = useState([
+    { id: 1, action: 'Yeni dava oluşturuldu', time: '2 saat önce', type: 'case' },
+    { id: 2, action: 'Belge yüklendi', time: '3 saat önce', type: 'document' },
+    { id: 3, action: 'Ödeme alındı', time: '5 saat önce', type: 'finance' },
+    { id: 4, action: 'AI analiz tamamlandı', time: '6 saat önce', type: 'ai' },
+    { id: 5, action: 'Duruşma eklendi', time: '1 gün önce', type: 'hearing' },
+  ]);
+  const [upcomingHearings, setUpcomingHearings] = useState<Hearing[]>([]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [clientsResponse, casesResponse, hearingsResponse, tasksResponse] = await Promise.all([
+        clientsApi.getAll(1, 1),
+        casesApi.getAll(1, 1),
+        hearingsApi.getAll(1, 10),
+        tasksApi.getAll(1, 1),
+      ]);
+
+      setStats({
+        activeCases: casesResponse.meta.total,
+        activeClients: clientsResponse.meta.total,
+        upcomingHearings: hearingsResponse.meta.total,
+        pendingTasks: tasksResponse.meta.total,
+      });
+
+      setUpcomingHearings(hearingsResponse.data.slice(0, 5));
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const kpiData = [
     {
       title: 'Aktif Davalar',
-      value: '120',
+      value: stats.activeCases.toString(),
       trend: '+12%',
       icon: Scale,
       color: 'blue',
     },
     {
       title: 'Aktif Müvekkiller',
-      value: '540',
+      value: stats.activeClients.toString(),
       trend: '+8%',
       icon: Users,
       color: 'green',
     },
     {
       title: 'Yaklaşan Duruşmalar',
-      value: '8',
+      value: stats.upcomingHearings.toString(),
       trend: '+2',
       icon: Calendar,
       color: 'orange',
     },
     {
       title: 'Bekleyen Görevler',
-      value: '24',
+      value: stats.pendingTasks.toString(),
       trend: '-5',
       icon: Clock,
       color: 'purple',
     },
-  ];
-
-  const recentActivities = [
-    { id: 1, action: 'Yeni dava oluşturuldu', time: '2 saat önce', type: 'case' },
-    { id: 2, action: 'Belge yüklendi', time: '3 saat önce', type: 'document' },
-    { id: 3, action: 'Ödeme alındı', time: '5 saat önce', type: 'finance' },
-    { id: 4, action: 'AI analiz tamamlandı', time: '6 saat önce', type: 'ai' },
-    { id: 5, action: 'Duruşma eklendi', time: '1 gün önce', type: 'hearing' },
-  ];
-
-  const upcomingHearings = [
-    { id: 1, case: '2024/1234', client: 'Ahmet Yılmaz', date: '21.07.2026', time: '10:00', court: 'İstanbul 1. Asliye Hukuk' },
-    { id: 2, case: '2024/1235', client: 'Ayşe Demir', date: '22.07.2026', time: '14:30', court: 'İstanbul 2. Asliye Hukuk' },
   ];
 
   return (
@@ -206,23 +242,26 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">
-                          {hearing.case}
+                          Dava ID: {hearing.caseId}
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {hearing.client} - {hearing.court}
+                          {hearing.location || 'Konum belirtilmemiş'}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {hearing.date}
+                        {new Date(hearing.date).toLocaleDateString('tr-TR')}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {hearing.time}
+                        {hearing.time || 'Saat belirtilmemiş'}
                       </p>
                     </div>
                   </div>
                 ))}
+                {upcomingHearings.length === 0 && (
+                  <p className="text-sm text-gray-500 text-center py-4">Yaklaşan duruşma yok</p>
+                )}
               </div>
             </CardContent>
           </Card>

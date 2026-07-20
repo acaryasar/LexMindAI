@@ -19,6 +19,12 @@ model User {
   emailVerified Boolean  @default(false)
   lastLoginAt   DateTime?
   
+  // AI Configuration
+  aiProvider    String?   // openai, anthropic, etc.
+  aiApiKey      String?   // encrypted API key
+  aiModel       String?   // model name (e.g., gpt-4, claude-3)
+  aiSettings    Json?     // additional AI settings (temperature, maxTokens, etc.)
+  
   // Relations
   roles         UserRole[]
   refreshTokens RefreshToken[]

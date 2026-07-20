@@ -5,13 +5,25 @@ import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Upload, Search, MoreVertical, FileText, Download, Share } from 'lucide-react';
-import { generateMockDocuments } from '@/lib/mock-data';
+import { Upload, Search, MoreVertical, FileText, Download, Share, Edit, Trash2 } from 'lucide-react';
+import { documentsApi, Document } from '@/lib/api/documents';
 
 export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadCategory, setUploadCategory] = useState('');
+  const [uploadClientId, setUploadClientId] = useState('');
+  const [uploadCaseId, setUploadCaseId] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editCategory, setEditCategory] = useState('');
 
   useEffect(() => {
     fetchDocuments();
@@ -19,9 +31,8 @@ export default function DocumentsPage() {
 
   const fetchDocuments = async () => {
     try {
-      // Use mock data instead of API
-      const mockDocuments = generateMockDocuments(50);
-      setDocuments(mockDocuments);
+      const response = await documentsApi.getAll(1, 50);
+      setDocuments(response.data);
     } catch (error) {
       console.error('Error fetching documents:', error);
     } finally {
@@ -44,6 +55,82 @@ export default function DocumentsPage() {
       doc.category?.toLowerCase().includes(searchQuery.toLowerCase())
   ) : [];
 
+  const handleUpload = async () => {
+    if (!uploadFile) {
+      alert('Lütfen bir dosya seçin');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const uploadedDoc = await documentsApi.upload(uploadFile);
+      
+      if (uploadTitle || uploadCategory) {
+        await documentsApi.update(uploadedDoc.id, {
+          name: uploadTitle || uploadedDoc.name,
+          category: uploadCategory,
+        });
+      }
+      
+      setShowUploadDialog(false);
+      setUploadFile(null);
+      setUploadTitle('');
+      setUploadCategory('');
+      setUploadClientId('');
+      setUploadCaseId('');
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      alert('Belge yüklenirken hata oluştu');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleEdit = (doc: Document) => {
+    setSelectedDoc(doc);
+    setEditTitle(doc.name);
+    setEditCategory(doc.category || '');
+    setShowEditDialog(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedDoc) return;
+    
+    try {
+      await documentsApi.update(selectedDoc.id, {
+        name: editTitle,
+        category: editCategory,
+      });
+      setShowEditDialog(false);
+      setSelectedDoc(null);
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error updating document:', error);
+      alert('Belge güncellenirken hata oluştu');
+    }
+  };
+
+  const handleDelete = (doc: Document) => {
+    setSelectedDoc(doc);
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedDoc) return;
+    
+    try {
+      await documentsApi.delete(selectedDoc.id);
+      setShowDeleteDialog(false);
+      setSelectedDoc(null);
+      fetchDocuments();
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      alert('Belge silinirken hata oluştu');
+      setShowDeleteDialog(false);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -57,7 +144,7 @@ export default function DocumentsPage() {
               Belge yönetimi ve arşiv
             </p>
           </div>
-          <Button onClick={() => alert('Belge yükleme özelliği yakında eklenecek')}>
+          <Button onClick={() => setShowUploadDialog(true)}>
             <Upload className="w-4 h-4 mr-2" />
             Belge Yükle
           </Button>
@@ -94,9 +181,14 @@ export default function DocumentsPage() {
                         {doc.fileName}
                       </p>
                     </div>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(doc)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(doc)}>
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -141,6 +233,101 @@ export default function DocumentsPage() {
           </div>
         )}
       </div>
+
+      {/* Upload Dialog */}
+      {showUploadDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Belge Yükle</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Dosya</label>
+                <Input
+                  type="file"
+                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Başlık</label>
+                <Input
+                  placeholder="Belge başlığı"
+                  value={uploadTitle}
+                  onChange={(e) => setUploadTitle(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Kategori</label>
+                <Input
+                  placeholder="Örn: Dava, Sözleşme"
+                  value={uploadCategory}
+                  onChange={(e) => setUploadCategory(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
+                İptal
+              </Button>
+              <Button onClick={handleUpload} disabled={uploading}>
+                {uploading ? 'Yükleniyor...' : 'Yükle'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Dialog */}
+      {showEditDialog && selectedDoc && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Belge Düzenle</h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Başlık</label>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Kategori</label>
+                <Input
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+                İptal
+              </Button>
+              <Button onClick={handleSaveEdit}>
+                Kaydet
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteDialog && selectedDoc && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Belgeyi Sil</h3>
+            <p className="text-gray-600 mb-6">
+              Bu belgeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                İptal
+              </Button>
+              <Button variant="destructive" onClick={handleConfirmDelete}>
+                Evet, Sil
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 }

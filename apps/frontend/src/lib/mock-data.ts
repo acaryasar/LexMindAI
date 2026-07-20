@@ -137,6 +137,7 @@ export function generateMockCases(count: number = 50) {
       courtName: `${city} ${getRandomItem(courtTypes)}`,
       startDate: getRandomDate(2020, 2024),
       assignedLawyer: `${getRandomItem(turkishNames.firstNames)} ${getRandomItem(turkishNames.lastNames)}`,
+      clientId: client.id, // Add client ID to filter cases by client
       clients: [client],
       priority: getRandomItem(['critical', 'high', 'medium', 'low']),
       successProbability: getRandomNumber(30, 95),
@@ -172,6 +173,7 @@ export function generateMockDocuments(count: number = 50) {
       mimeType: getRandomItem(documentTypes),
       createdAt: getRandomDate(2020, 2024),
       caseId: caseItem.id,
+      clientId: caseItem.clientId, // Add client ID to filter documents by client
       uploadDate: getRandomDate(2020, 2024),
       riskLevel: Math.random() > 0.7 ? getRandomItem(['Yüksek', 'Orta', 'Düşük']) : null,
       riskFactors: Math.random() > 0.8 ? ['İmza eksik', 'Tarih uyumsuzluğu'] : null

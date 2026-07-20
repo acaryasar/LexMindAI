@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
+import { EncryptionUtil } from '@common/encryption.util';
 
 @Injectable()
 export class AuthService {
@@ -255,5 +256,58 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async updateAIConfig(userId: string, aiConfig: { provider: string; apiKey: string; model: string; settings?: any }) {
+    const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY') || 'default-encryption-key';
+    
+    const encryptedApiKey = EncryptionUtil.encrypt(aiConfig.apiKey, encryptionKey);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        aiProvider: aiConfig.provider,
+        aiApiKey: encryptedApiKey,
+        aiModel: aiConfig.model,
+        aiSettings: aiConfig.settings || {},
+      },
+    });
+
+    return { success: true, message: 'AI konfigürasyonu güncellendi' };
+  }
+
+  async getAIConfig(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        aiProvider: true,
+        aiApiKey: true,
+        aiModel: true,
+        aiSettings: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Kullanıcı bulunamadı');
+    }
+
+    const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY') || 'default-encryption-key';
+    
+    let decryptedApiKey = null;
+    if (user.aiApiKey) {
+      try {
+        decryptedApiKey = EncryptionUtil.decrypt(user.aiApiKey, encryptionKey);
+      } catch (error) {
+        console.error('Failed to decrypt API key:', error);
+      }
+    }
+
+    return {
+      provider: user.aiProvider,
+      apiKey: decryptedApiKey ? `${decryptedApiKey.substring(0, 8)}...` : null, // Only return partial key for security
+      model: user.aiModel,
+      settings: user.aiSettings,
+      hasConfig: !!user.aiProvider && !!user.aiApiKey,
+    };
   }
 }

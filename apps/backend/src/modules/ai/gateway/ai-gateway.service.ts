@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OpenAI } from 'openai';
 import { PrismaService } from '@database/prisma.service';
+import { EncryptionUtil } from '@common/encryption.util';
 
 @Injectable()
 export class AIGatewayService {
@@ -22,9 +23,16 @@ export class AIGatewayService {
     message: string,
     conversationId?: string,
     context?: any,
+    userId?: string,
   ): Promise<{ response: string; usage?: any }> {
     try {
       const startTime = Date.now();
+
+      // Get user-specific AI configuration
+      const aiConfig = await this.getUserAIConfig(userId);
+
+      // Initialize OpenAI with user's API key or fallback to default
+      const openai = this.getOpenAIClient(aiConfig);
 
       // Build system prompt
       const systemPrompt = await this.buildSystemPrompt(context);
@@ -32,17 +40,17 @@ export class AIGatewayService {
       // Get conversation history if conversationId provided
       const messages = await this.buildMessages(message, conversationId, systemPrompt);
 
-      const completion = await this.openai.chat.completions.create({
-        model: this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
+      const completion = await openai.chat.completions.create({
+        model: aiConfig?.model || this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
         messages,
-        temperature: 0.7,
-        max_tokens: 2000,
+        temperature: (aiConfig?.settings as any)?.temperature || 0.7,
+        max_tokens: (aiConfig?.settings as any)?.maxTokens || 2000,
       });
 
       const responseTime = Date.now() - startTime;
 
       // Log usage
-      await this.logUsage('chat', completion.usage, responseTime);
+      await this.logUsage('chat', completion.usage, responseTime, userId);
 
       return {
         response: completion.choices[0].message.content || '',
@@ -211,11 +219,11 @@ export class AIGatewayService {
     return messages;
   }
 
-  private async logUsage(service: string, usage: any, responseTime: number) {
+  private async logUsage(service: string, usage: any, responseTime: number, userId?: string) {
     try {
       await this.prisma.aIUsageLog.create({
         data: {
-          userId: 'system', // In real app, this would be the actual user ID
+          userId: userId || 'system',
           model: this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
           inputTokens: usage.prompt_tokens || 0,
           outputTokens: usage.completion_tokens || 0,
@@ -226,5 +234,57 @@ export class AIGatewayService {
     } catch (error) {
       this.logger.error('Failed to log AI usage:', error);
     }
+  }
+
+  private async getUserAIConfig(userId?: string) {
+    if (!userId) return null;
+
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          aiProvider: true,
+          aiApiKey: true,
+          aiModel: true,
+          aiSettings: true,
+        },
+      });
+
+      if (!user || !user.aiApiKey) return null;
+
+      const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY') || 'default-encryption-key';
+      
+      let decryptedApiKey = null;
+      try {
+        decryptedApiKey = EncryptionUtil.decrypt(user.aiApiKey, encryptionKey);
+      } catch (error) {
+        this.logger.error('Failed to decrypt API key:', error);
+        return null;
+      }
+
+      return {
+        provider: user.aiProvider,
+        apiKey: decryptedApiKey,
+        model: user.aiModel,
+        settings: user.aiSettings,
+      };
+    } catch (error) {
+      this.logger.error('Failed to get user AI config:', error);
+      return null;
+    }
+  }
+
+  private getOpenAIClient(aiConfig: any): OpenAI {
+    if (aiConfig?.apiKey) {
+      return new OpenAI({ apiKey: aiConfig.apiKey });
+    }
+    
+    // Fallback to default configuration
+    const defaultApiKey = this.configService.get<string>('OPENAI_API_KEY');
+    if (defaultApiKey) {
+      return new OpenAI({ apiKey: defaultApiKey });
+    }
+
+    throw new Error('No AI API key configured');
   }
 }

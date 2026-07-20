@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Get, Put, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto/login.dto';
@@ -58,5 +58,25 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
   async getProfile(@Request() req: any) {
     return this.authService.getProfile(req.user.id);
+  }
+
+  @Put('ai-config')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'AI API konfigürasyonunu güncelle' })
+  @ApiResponse({ status: 200, description: 'AI konfigürasyonu güncellendi' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  async updateAIConfig(@Request() req: any, @Body() aiConfig: { provider: string; apiKey: string; model: string; settings?: any }) {
+    return this.authService.updateAIConfig(req.user.id, aiConfig);
+  }
+
+  @Get('ai-config')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'AI API konfigürasyonunu getir' })
+  @ApiResponse({ status: 200, description: 'AI konfigürasyonu getirildi' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  async getAIConfig(@Request() req: any) {
+    return this.authService.getAIConfig(req.user.id);
   }
 }

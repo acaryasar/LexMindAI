@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/main-layout';
-import api from '@/lib/api';
+import { casesApi, CreateCaseDto } from '@/lib/api/cases';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,8 +21,6 @@ const caseSchema = z.object({
   courtName: z.string().min(1, 'Mahkeme adı zorunludur'),
   courtCity: z.string().min(1, 'Şehir zorunludur'),
   startDate: z.string().min(1, 'Başlangıç tarihi zorunludur'),
-  clientIds: z.array(z.string()).optional(),
-  lawyerIds: z.array(z.string()).optional(),
 });
 
 type CaseFormData = z.infer<typeof caseSchema>;
@@ -46,7 +44,17 @@ export default function NewCasePage() {
   const onSubmit = async (data: CaseFormData) => {
     setIsLoading(true);
     try {
-      await api.post('/cases', data);
+      const createData: CreateCaseDto = {
+        caseNumber: data.caseNumber,
+        title: data.title,
+        description: data.description,
+        status: data.status,
+        type: data.type,
+        courtName: data.courtName,
+        courtCity: data.courtCity,
+        startDate: data.startDate,
+      };
+      await casesApi.create(createData);
       router.push('/cases');
     } catch (error: any) {
       console.error('Error creating case:', error);
@@ -221,40 +229,6 @@ export default function NewCasePage() {
                       </p>
                     )}
                   </div>
-                </div>
-              </div>
-
-              {/* Participants */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                  Katılımcılar
-                </h3>
-                <div className="space-y-2">
-                  <label htmlFor="clientIds" className="text-sm font-medium">
-                    Müvekkiller
-                  </label>
-                  <select
-                    id="clientIds"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    {...register('clientIds')}
-                  >
-                    <option value="">Müvekkil seçin</option>
-                    <option value="1">Ahmet Yılmaz</option>
-                    <option value="2">Ayşe Demir</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="lawyerIds" className="text-sm font-medium">
-                    Avukatlar
-                  </label>
-                  <select
-                    id="lawyerIds"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    {...register('lawyerIds')}
-                  >
-                    <option value="">Avukat seçin</option>
-                    <option value="1">Admin User</option>
-                  </select>
                 </div>
               </div>
 

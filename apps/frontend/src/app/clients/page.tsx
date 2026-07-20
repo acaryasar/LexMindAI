@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, MoreVertical, Phone, Mail, MapPin } from 'lucide-react';
-import { generateMockClients } from '@/lib/mock-data';
+import { clientsApi, Client } from '@/lib/api/clients';
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -21,9 +21,8 @@ export default function ClientsPage() {
 
   const fetchClients = async () => {
     try {
-      // Use mock data instead of API
-      const mockClients = generateMockClients(50);
-      setClients(mockClients);
+      const response = await clientsApi.getAll(1, 50);
+      setClients(response.data);
     } catch (error) {
       console.error('Error fetching clients:', error);
     } finally {
