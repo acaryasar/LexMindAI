@@ -120,7 +120,7 @@ export class AIService {
   async documentAnalysis(documentAnalysisDto: DocumentAnalysisDto, userId: string) {
     const response = await this.aiGateway.documentAnalysis(
       documentAnalysisDto.documentId,
-      documentAnalysisDto.analysisType,
+      documentAnalysisDto.analysisType || 'general',
       documentAnalysisDto.prompt,
     );
 

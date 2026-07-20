@@ -222,7 +222,7 @@ model ClientNote {
   clientId  String
   client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
   content   String
-  createdBy String
+  createdBy String?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -253,7 +253,7 @@ model ClientTimeline {
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   action    String
   details   String?
-  createdBy String
+  createdBy String?
   
   createdAt DateTime @default(now())
   
@@ -347,7 +347,7 @@ model CaseNote {
   caseId    String
   case      Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
   content   String
-  createdBy String
+  createdBy String?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -465,7 +465,7 @@ model DocumentVersion {
   notes       String?
   
   createdAt   DateTime @default(now())
-  createdBy   String
+  createdBy   String?
   
   @@map("document_versions")
 }
@@ -673,7 +673,7 @@ model TaskComment {
   taskId    String
   task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
   content   String
-  createdBy String
+  createdBy String?
   
   createdAt DateTime @default(now())
   deletedAt DateTime?

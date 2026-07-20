@@ -114,11 +114,7 @@ export class CasesService {
         notes: {
           orderBy: { createdAt: 'desc' },
         },
-        documents: {
-          include: {
-            document: true,
-          },
-        },
+        documents: true,
         tasks: {
           orderBy: { dueDate: 'asc' },
         },

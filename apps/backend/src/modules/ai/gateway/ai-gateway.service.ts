@@ -122,11 +122,10 @@ export class AIGatewayService {
           },
           select: {
             name: true,
-            description: true,
           },
         });
 
-        context = 'Relevant documents:\n' + documents.map((d) => `- ${d.name}: ${d.description || ''}`).join('\n');
+        context = 'Relevant documents:\n' + documents.map((d) => `- ${d.name}`).join('\n');
       }
 
       const systemPrompt = `You are a legal research assistant. Help with legal research based on the provided query and context.`;

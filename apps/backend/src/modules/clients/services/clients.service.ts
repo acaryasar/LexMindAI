@@ -95,14 +95,7 @@ export class ClientsService {
       include: {
         contacts: true,
         addresses: true,
-        notes: {
-          orderBy: { createdAt: 'desc' },
-        },
-        documents: {
-          include: {
-            document: true,
-          },
-        },
+        documents: true,
       },
     });
 

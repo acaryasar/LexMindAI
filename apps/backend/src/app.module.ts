@@ -8,6 +8,9 @@ import { ClientsModule } from './modules/clients/clients.module';
 import { CasesModule } from './modules/cases/cases.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { AIModule } from './modules/ai/ai.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
+import { TasksModule } from './modules/tasks/tasks.module';
+import { FinanceModule } from './modules/finance/finance.module';
 
 @Module({
   imports: [
@@ -34,6 +37,9 @@ import { AIModule } from './modules/ai/ai.module';
     CasesModule,
     DocumentsModule,
     AIModule,
+    CalendarModule,
+    TasksModule,
+    FinanceModule,
   ],
 })
 export class AppModule {}
