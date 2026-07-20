@@ -1,0 +1,791 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User & Authentication
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  firstName     String
+  lastName      String
+  phoneNumber   String?
+  isActive      Boolean   @default(true)
+  emailVerified Boolean  @default(false)
+  lastLoginAt   DateTime?
+  
+  // Relations
+  roles         UserRole[]
+  refreshTokens RefreshToken[]
+  loginHistory  LoginHistory[]
+  sessions      Session[]
+  
+  // Audit
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  deletedAt     DateTime?
+  createdBy     String?
+  updatedBy     String?
+  deletedBy     String?
+  
+  @@map("users")
+}
+
+model Role {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  description String?
+  permissions RolePermission[]
+  users       UserRole[]
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+  deletedBy   String?
+  
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  description String?
+  roles       RolePermission[]
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+  deletedBy   String?
+  
+  @@map("permissions")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+  
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+  
+  @@map("refresh_tokens")
+}
+
+model LoginHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String?
+  userAgent String?
+  success   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  
+  @@map("login_history")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@map("sessions")
+}
+
+// Organization
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  taxNumber String?  @unique
+  address   String?
+  phone     String?
+  email     String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("organizations")
+}
+
+// Client Management
+model Client {
+  id           String          @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String?
+  phoneNumber  String?
+  nationalId   String?         @unique
+  taxNumber    String?         @unique
+  address      String?
+  notes        String?
+  tags         String[]
+  
+  // Relations
+  contacts     ClientContact[]
+  addresses    ClientAddress[]
+  clientNotes  ClientNote[]
+  documents    ClientDocument[]
+  timeline     ClientTimeline[]
+  cases        CaseClient[]
+  
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  updatedBy    String?
+  deletedBy    String?
+  
+  @@map("clients")
+}
+
+model ClientContact {
+  id        String  @id @default(uuid())
+  clientId  String
+  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type      String
+  value     String
+  isPrimary Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("client_contacts")
+}
+
+model ClientAddress {
+  id        String  @id @default(uuid())
+  clientId  String
+  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type      String
+  address   String
+  city      String?
+  country   String?
+  isPrimary Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("client_addresses")
+}
+
+model ClientNote {
+  id        String  @id @default(uuid())
+  clientId  String
+  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  content   String
+  createdBy String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("client_notes")
+}
+
+model ClientDocument {
+  id        String  @id @default(uuid())
+  clientId  String
+  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  documentId String
+  
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  createdBy String?
+  deletedBy String?
+  
+  @@map("client_documents")
+}
+
+model ClientTimeline {
+  id        String   @id @default(uuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  action    String
+  details   String?
+  createdBy String
+  
+  createdAt DateTime @default(now())
+  
+  @@map("client_timeline")
+}
+
+// Case Management
+model Case {
+  id          String       @id @default(uuid())
+  caseNumber  String       @unique
+  title       String
+  description String?
+  status      String
+  type        String
+  courtName   String?
+  courtCity   String?
+  startDate   DateTime?
+  endDate     DateTime?
+  
+  // Relations
+  clients     CaseClient[]
+  lawyers     CaseLawyer[]
+  events      CaseEvent[]
+  notes       CaseNote[]
+  documents   CaseDocument[]
+  tasks       CaseTask[]
+  hearings    CaseHearing[]
+  tags        CaseTag[]
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+  deletedBy   String?
+  
+  @@map("cases")
+}
+
+model CaseClient {
+  id        String  @id @default(uuid())
+  caseId    String
+  clientId  String
+  case      Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  role      String
+  
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  createdBy String?
+  deletedBy String?
+  
+  @@map("case_clients")
+}
+
+model CaseLawyer {
+  id        String  @id @default(uuid())
+  caseId    String
+  userId    String
+  case      Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  role      String
+  
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  createdBy String?
+  deletedBy String?
+  
+  @@map("case_lawyers")
+}
+
+model CaseEvent {
+  id        String   @id @default(uuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title     String
+  date      DateTime
+  notes     String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("case_events")
+}
+
+model CaseNote {
+  id        String  @id @default(uuid())
+  caseId    String
+  case      Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  content   String
+  createdBy String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("case_notes")
+}
+
+model CaseDocument {
+  id        String  @id @default(uuid())
+  caseId    String
+  case      Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  documentId String
+  
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  createdBy String?
+  deletedBy String?
+  
+  @@map("case_documents")
+}
+
+model CaseTask {
+  id        String   @id @default(uuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  title     String
+  dueDate   DateTime?
+  completed Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("case_tasks")
+}
+
+model CaseHearing {
+  id        String   @id @default(uuid())
+  caseId    String
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  date      DateTime
+  time      String?
+  location  String?
+  notes     String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("case_hearings")
+}
+
+model CaseTag {
+  id        String  @id @default(uuid())
+  caseId    String
+  case      Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  tag       String
+  
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  createdBy String?
+  deletedBy String?
+  
+  @@map("case_tags")
+}
+
+// Document Management
+model Document {
+  id          String           @id @default(uuid())
+  name        String
+  fileName    String
+  mimeType    String
+  size        Int
+  path        String
+  hash        String?
+  bucket      String
+  category    String?
+  categoryId  String?
+  
+  // Relations
+  versions    DocumentVersion[]
+  tags        DocumentTag[]
+  shares      DocumentShare[]
+  folder      DocumentFolder?  @relation("FolderDocuments", fields: [folderId], references: [id])
+  folderId    String?
+  categoryRel DocumentCategory? @relation(fields: [categoryId], references: [id])
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+  deletedBy   String?
+  
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id          String   @id @default(uuid())
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version     Int
+  fileName    String
+  path        String
+  size        Int
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  createdBy   String
+  
+  @@map("document_versions")
+}
+
+model DocumentCategory {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  documents Document[]
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("document_categories")
+}
+
+model DocumentTag {
+  id        String   @id @default(uuid())
+  documentId String
+  document  Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  tag       String
+  
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  createdBy String?
+  deletedBy String?
+  
+  @@map("document_tags")
+}
+
+model DocumentShare {
+  id        String   @id @default(uuid())
+  documentId String
+  document  Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  sharedWith String
+  expiresAt DateTime?
+  
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  createdBy String?
+  deletedBy String?
+  
+  @@map("document_shares")
+}
+
+model DocumentFolder {
+  id        String     @id @default(uuid())
+  name      String
+  parentId  String?
+  parent    DocumentFolder? @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children  DocumentFolder[] @relation("FolderHierarchy")
+  documents Document[] @relation("FolderDocuments")
+  
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("document_folders")
+}
+
+// AI Services
+model AIConversation {
+  id        String   @id @default(uuid())
+  title     String
+  userId    String
+  model     String
+  status    String
+  
+  // Relations
+  messages  AIMessage[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id            String         @id @default(uuid())
+  conversationId String
+  conversation  AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role          String
+  content       String
+  tokenUsage   Int?
+  responseTime  Int?
+  
+  createdAt     DateTime       @default(now())
+  
+  @@map("ai_messages")
+}
+
+model AIPrompt {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String
+  content     String
+  version     String
+  status      String
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("ai_prompts")
+}
+
+model AIEmbedding {
+  id        String   @id @default(uuid())
+  documentId String
+  content   String
+  // embedding field temporarily disabled until pgvector is installed
+  // embedding Unsupported("vector(1536)")?
+  
+  createdAt DateTime @default(now())
+  
+  @@map("ai_embeddings")
+}
+
+model AIMemory {
+  id        String   @id @default(uuid())
+  userId    String
+  key       String
+  value     String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("ai_memory")
+}
+
+model AIUsageLog {
+  id          String   @id @default(uuid())
+  userId      String
+  promptId    String?
+  model       String
+  inputTokens Int
+  outputTokens Int
+  totalTokens Int
+  responseTime Int
+  error       String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("ai_usage_logs")
+}
+
+// Calendar & Tasks
+model CalendarEvent {
+  id        String   @id @default(uuid())
+  title     String
+  date      DateTime
+  time      String?
+  duration  Int?
+  location  String?
+  notes     String?
+  type      String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("calendar_events")
+}
+
+model Task {
+  id        String   @id @default(uuid())
+  title     String
+  description String?
+  dueDate   DateTime?
+  priority  String
+  status    String
+  
+  // Relations
+  comments  TaskComment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String  @id @default(uuid())
+  taskId    String
+  task      Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  content   String
+  createdBy String
+  
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("task_comments")
+}
+
+// Finance
+model Invoice {
+  id          String    @id @default(uuid())
+  invoiceNumber String  @unique
+  clientId    String
+  amount      Decimal
+  status      String
+  dueDate     DateTime
+  paidDate    DateTime?
+  
+  // Relations
+  payments    Payment[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?
+  updatedBy   String?
+  deletedBy   String?
+  
+  @@map("invoices")
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount    Decimal
+  method    String
+  date      DateTime
+  notes     String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("payments")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Decimal
+  category    String
+  date        DateTime
+  receipt     String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("expenses")
+}
+
+model TimeEntry {
+  id        String   @id @default(uuid())
+  userId    String
+  caseId    String?
+  description String
+  hours     Decimal
+  date      DateTime
+  billable  Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+  deletedBy String?
+  
+  @@map("time_entries")
+}
+
+// System
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  category  String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("settings")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  ipAddress String?
+  userAgent String?
+  
+  createdAt DateTime @default(now())
+  
+  @@map("audit_logs")
+}

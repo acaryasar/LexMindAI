@@ -1,0 +1,78 @@
+export const API_CONFIG = {
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  version: '/api/v1',
+  timeout: 30000,
+};
+
+export const API_ENDPOINTS = {
+  auth: {
+    login: '/auth/login',
+    logout: '/auth/logout',
+    refresh: '/auth/refresh',
+    forgotPassword: '/auth/forgot-password',
+    resetPassword: '/auth/reset-password',
+    profile: '/auth/profile',
+  },
+  users: {
+    list: '/users',
+    detail: (id: string) => `/users/${id}`,
+    create: '/users',
+    update: (id: string) => `/users/${id}`,
+    delete: (id: string) => `/users/${id}`,
+  },
+  clients: {
+    list: '/clients',
+    detail: (id: string) => `/clients/${id}`,
+    create: '/clients',
+    update: (id: string) => `/clients/${id}`,
+    delete: (id: string) => `/clients/${id}`,
+    search: '/clients/search',
+    timeline: (id: string) => `/clients/${id}/timeline`,
+    documents: (id: string) => `/clients/${id}/documents`,
+  },
+  cases: {
+    list: '/cases',
+    detail: (id: string) => `/cases/${id}`,
+    create: '/cases',
+    update: (id: string) => `/cases/${id}`,
+    delete: (id: string) => `/cases/${id}`,
+    hearings: (id: string) => `/cases/${id}/hearings`,
+    documents: (id: string) => `/cases/${id}/documents`,
+    timeline: (id: string) => `/cases/${id}/timeline`,
+  },
+  documents: {
+    list: '/documents',
+    upload: '/documents/upload',
+    detail: (id: string) => `/documents/${id}`,
+    update: (id: string) => `/documents/${id}`,
+    delete: (id: string) => `/documents/${id}`,
+    search: '/documents/search',
+    ocr: (id: string) => `/documents/${id}/ocr`,
+    versions: (id: string) => `/documents/${id}/versions`,
+  },
+  ai: {
+    chat: '/ai/chat',
+    documentAnalysis: '/ai/document-analysis',
+    contractReview: '/ai/contract-review',
+    legalWriting: '/ai/legal-writing',
+    research: '/ai/research',
+    history: '/ai/history',
+    prompts: '/ai/prompts',
+  },
+  calendar: {
+    events: '/calendar/events',
+    tasks: '/tasks',
+  },
+  finance: {
+    invoices: '/invoices',
+    payments: '/payments',
+    expenses: '/expenses',
+    timeEntries: '/time-entries',
+  },
+  dashboard: {
+    main: '/dashboard',
+    kpi: '/dashboard/kpi',
+    charts: '/dashboard/charts',
+    activities: '/dashboard/activities',
+  },
+};
