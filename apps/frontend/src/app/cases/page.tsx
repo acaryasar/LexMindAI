@@ -54,8 +54,8 @@ export default function CasesPage() {
   ) : [];
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
+    <MainLayout showAIPanel={true}>
+      <div className="space-y-6 lg:mr-80 md:mr-64 mr-0">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

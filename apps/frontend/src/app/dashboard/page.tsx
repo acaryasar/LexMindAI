@@ -103,7 +103,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex">
-      <MainLayout>
+      <MainLayout showAIPanel={true}>
         <div 
           className="space-y-6 transition-all duration-300 ease-in-out lg:mr-80 md:mr-64 mr-0"
         >
@@ -272,13 +272,6 @@ export default function DashboardPage() {
           </Card>
         </div>
       </MainLayout>
-
-      {/* AI Copilot Panel */}
-      <div 
-        className="hidden lg:block fixed right-0 top-[64px] h-[calc(100vh-64px)] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 w-80 z-40"
-      >
-        <AICopilotPanel context="dashboard" />
-      </div>
     </div>
   );
 }

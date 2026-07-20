@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/main-layout';
-import { AICopilotPanel } from '@/components/ai-copilot/ai-copilot-panel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -121,7 +120,7 @@ export default function ClientDetailPage() {
 
   if (loading) {
     return (
-      <MainLayout>
+      <MainLayout showAIPanel={true}>
         <div className="flex items-center justify-center h-screen">
           <div className="animate-pulse text-gray-500">Yükleniyor...</div>
         </div>
@@ -131,7 +130,7 @@ export default function ClientDetailPage() {
 
   if (!client) {
     return (
-      <MainLayout>
+      <MainLayout showAIPanel={true}>
         <div className="flex items-center justify-center h-screen">
           <div className="text-gray-500">Müşteri bulunamadı</div>
         </div>
@@ -140,10 +139,10 @@ export default function ClientDetailPage() {
   }
 
   return (
-    <MainLayout>
+    <MainLayout showAIPanel={true}>
       <div className="flex">
         {/* Main Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 lg:mr-80 md:mr-64 mr-0">
           {/* Header */}
           <div className="bg-white border-b border-gray-200 px-8 py-6">
             {/* Breadcrumb */}
@@ -1103,11 +1102,6 @@ export default function ClientDetailPage() {
               </Card>
             )}
           </div>
-        </div>
-
-        {/* AI Copilot Panel */}
-        <div className="w-[400px] border-l border-gray-200">
-          <AICopilotPanel context="client" entityId={params.id as string} />
         </div>
       </div>
 

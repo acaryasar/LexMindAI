@@ -28,20 +28,16 @@ const navigation = [
     name: 'Müvekkiller',
     href: '/clients',
     icon: Users,
-    children: [
-      { name: 'Tüm Müvekkiller', href: '/clients' },
-      { name: 'Yeni Müvekkil', href: '/clients/new' },
-    ],
   },
   {
     name: 'Davalar',
     href: '/cases',
     icon: Scale,
-    children: [
-      { name: 'Tüm Davalar', href: '/cases' },
-      { name: 'Yeni Dava', href: '/cases/new' },
-      { name: 'Duruşmalar', href: '/hearings' },
-    ],
+  },
+  {
+    name: 'Duruşmalar',
+    href: '/hearings',
+    icon: Calendar,
   },
   {
     name: 'Belgeler',

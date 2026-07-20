@@ -83,13 +83,13 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
         setPanelTitle('LexMind AI');
         setPanelSubtitle('Yasal AI Asistanınız');
       } else if (context === 'client') {
-        setPanelTitle('Müvekkil Zekası');
+        setPanelTitle('Müvekkil AI');
         setPanelSubtitle('Müvekkil Analizi');
       } else if (context === 'case') {
-        setPanelTitle('Dava Zekası');
+        setPanelTitle('Dava AI');
         setPanelSubtitle('Dava Analizi');
       } else if (context === 'document') {
-        setPanelTitle('Belge Zekası');
+        setPanelTitle('Belge AI');
         setPanelSubtitle('Belge Analizi');
       }
 

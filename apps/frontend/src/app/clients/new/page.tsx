@@ -67,8 +67,8 @@ export default function NewClientPage() {
   };
 
   return (
-    <MainLayout>
-      <div className="max-w-3xl mx-auto space-y-6">
+    <MainLayout showAIPanel={true}>
+      <div className="max-w-3xl mx-auto space-y-6 lg:mr-80 md:mr-64 mr-0">
         {/* Header */}
         <div className="flex items-center space-x-4">
           <Button variant="ghost" onClick={() => router.back()}>
