@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Upload, Search, MoreVertical, FileText, Download, Share, Edit, Trash2 } from 'lucide-react';
 import { documentsApi, Document } from '@/lib/api/documents';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 export default function DocumentsPage() {
+  const { showAlert } = useAlert();
   const [searchQuery, setSearchQuery] = useState('');
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +59,7 @@ export default function DocumentsPage() {
 
   const handleUpload = async () => {
     if (!uploadFile) {
-      alert('Lütfen bir dosya seçin');
+      showAlert('warning', 'Lütfen bir dosya seçiniz.');
       return;
     }
 
@@ -79,9 +81,11 @@ export default function DocumentsPage() {
       setUploadClientId('');
       setUploadCaseId('');
       fetchDocuments();
-    } catch (error) {
+      showAlert('success', 'Belge başarıyla yüklendi.');
+    } catch (error: any) {
       console.error('Error uploading document:', error);
-      alert('Belge yüklenirken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Belge yüklenirken bir hata oluştu. Lütfen tekrar deneyiniz.';
+      showAlert('error', errorMessage);
     } finally {
       setUploading(false);
     }
@@ -105,9 +109,11 @@ export default function DocumentsPage() {
       setShowEditDialog(false);
       setSelectedDoc(null);
       fetchDocuments();
-    } catch (error) {
+      showAlert('success', 'Belge başarıyla güncellendi.');
+    } catch (error: any) {
       console.error('Error updating document:', error);
-      alert('Belge güncellenirken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Belge güncellenirken bir hata oluştu. Lütfen tekrar deneyiniz.';
+      showAlert('error', errorMessage);
     }
   };
 
@@ -124,9 +130,11 @@ export default function DocumentsPage() {
       setShowDeleteDialog(false);
       setSelectedDoc(null);
       fetchDocuments();
-    } catch (error) {
+      showAlert('success', 'Belge başarıyla silindi.');
+    } catch (error: any) {
       console.error('Error deleting document:', error);
-      alert('Belge silinirken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Belge silinirken bir hata oluştu. Lütfen tekrar deneyiniz.';
+      showAlert('error', errorMessage);
       setShowDeleteDialog(false);
     }
   };

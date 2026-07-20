@@ -18,8 +18,10 @@ import { cn } from '@/lib/utils';
 import { clientsApi, Client } from '@/lib/api/clients';
 import { casesApi, Case } from '@/lib/api/cases';
 import { documentsApi, Document } from '@/lib/api/documents';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 export default function ClientDetailPage() {
+  const { showAlert } = useAlert();
   const params = useParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
@@ -96,9 +98,11 @@ export default function ClientDetailPage() {
       await clientsApi.update(params.id as string, updateData);
       setClient(editForm);
       setIsEditing(false);
-    } catch (error) {
+      showAlert('success', 'Müvekkil başarıyla güncellendi.');
+    } catch (error: any) {
       console.error('Error updating client:', error);
-      alert('Müvekkil güncellenirken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Müvekkil güncellenirken bir hata oluştu. Lütfen tekrar deneyiniz.';
+      showAlert('error', errorMessage);
     }
   };
 
@@ -106,9 +110,11 @@ export default function ClientDetailPage() {
     try {
       await clientsApi.delete(params.id as string);
       router.push('/clients');
-    } catch (error) {
+      showAlert('success', 'Müvekkil başarıyla silindi.');
+    } catch (error: any) {
       console.error('Error deleting client:', error);
-      alert('Müvekkil silinirken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Müvekkil silinirken bir hata oluştu. Lütfen tekrar deneyiniz.';
+      showAlert('error', errorMessage);
       setShowDeleteDialog(false);
     }
   };

@@ -11,6 +11,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ArrowLeft, Save } from 'lucide-react';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 const caseSchema = z.object({
   caseNumber: z.string().min(1, 'Dava numarası zorunludur'),
@@ -26,6 +27,7 @@ const caseSchema = z.object({
 type CaseFormData = z.infer<typeof caseSchema>;
 
 export default function NewCasePage() {
+  const { showAlert } = useAlert();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -56,9 +58,11 @@ export default function NewCasePage() {
       };
       await casesApi.create(createData);
       router.push('/cases');
+      showAlert('success', 'Dava başarıyla oluşturuldu.');
     } catch (error: any) {
       console.error('Error creating case:', error);
-      alert(error.response?.data?.message || 'Dava oluşturulurken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Dava oluşturulurken bir hata oluştu. Lütfen tekrar deneyiniz.';
+      showAlert('error', errorMessage);
     } finally {
       setIsLoading(false);
     }

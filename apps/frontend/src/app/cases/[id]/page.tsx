@@ -8,8 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Edit, Save, XCircle } from 'lucide-react';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 export default function CaseDetailPage() {
+  const { showAlert } = useAlert();
   const params = useParams();
   const router = useRouter();
   const [caseData, setCaseData] = useState<Case | null>(null);
@@ -60,9 +62,11 @@ export default function CaseDetailPage() {
       await casesApi.update(params.id as string, updateData);
       setCaseData(editForm);
       setIsEditing(false);
-    } catch (error) {
+      showAlert('success', 'Dava başarıyla güncellendi.');
+    } catch (error: any) {
       console.error('Error updating case:', error);
-      alert('Dava güncellenirken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Dava güncellenirken bir hata oluştu. Lütfen tekrar deneyiniz.';
+      showAlert('error', errorMessage);
     }
   };
 
@@ -70,9 +74,11 @@ export default function CaseDetailPage() {
     try {
       await casesApi.delete(params.id as string);
       router.push('/cases');
-    } catch (error) {
+      showAlert('success', 'Dava başarıyla silindi.');
+    } catch (error: any) {
       console.error('Error deleting case:', error);
-      alert('Dava silinirken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Dava silinirken bir hata oluştu. Lütfen tekrar deneyiniz.';
+      showAlert('error', errorMessage);
       setShowDeleteDialog(false);
     }
   };

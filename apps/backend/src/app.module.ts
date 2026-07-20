@@ -13,6 +13,7 @@ import { TasksModule } from './modules/tasks/tasks.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 import { DailyPlannerModule } from './modules/daily-planner/daily-planner.module';
+import { HearingsModule } from './modules/hearings/hearings.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { DailyPlannerModule } from './modules/daily-planner/daily-planner.module
     FinanceModule,
     RecommendationsModule,
     DailyPlannerModule,
+    HearingsModule,
   ],
 })
 export class AppModule {}

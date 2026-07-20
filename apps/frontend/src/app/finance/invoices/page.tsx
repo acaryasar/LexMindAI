@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, MoreVertical, FileText, Download, Send } from 'lucide-react';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 export default function FinanceInvoicesPage() {
+  const { showAlert } = useAlert();
   const [searchQuery, setSearchQuery] = useState('');
 
   const invoices = [
@@ -73,7 +75,7 @@ export default function FinanceInvoicesPage() {
               Fatura yönetimi
             </p>
           </div>
-          <Button onClick={() => alert('Yeni fatura özelliği yakında eklenecek')}>
+          <Button onClick={() => showAlert('info', 'Yeni fatura özelliği yakında eklenecek')}>
             <Plus className="w-4 h-4 mr-2" />
             Yeni Fatura
           </Button>

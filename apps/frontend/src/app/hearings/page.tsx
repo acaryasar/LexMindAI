@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, MoreVertical, Scale, Calendar, Clock, MapPin, Edit, Trash2 } from 'lucide-react';
 import { hearingsApi, Hearing } from '@/lib/api/hearings';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 export default function HearingsPage() {
+  const { showAlert } = useAlert();
   const [searchQuery, setSearchQuery] = useState('');
   const [hearings, setHearings] = useState<Hearing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,7 +64,7 @@ export default function HearingsPage() {
 
   const handleCreate = async () => {
     if (!formData.caseId || !formData.date) {
-      alert('Dava ID ve tarih zorunludur');
+      showAlert('warning', 'Lütfen dava ID ve tarih alanlarını doldurunuz.');
       return;
     }
 
@@ -78,9 +80,11 @@ export default function HearingsPage() {
       setShowCreateDialog(false);
       setFormData({ caseId: '', date: '', time: '', location: '', notes: '' });
       fetchHearings();
-    } catch (error) {
+      showAlert('success', 'Duruşma başarıyla oluşturuldu.');
+    } catch (error: any) {
       console.error('Error creating hearing:', error);
-      alert('Duruşma oluşturulurken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Duruşma oluşturulurken bir hata oluştu. Lütfen bilgilerinizi kontrol edip tekrar deneyiniz.';
+      showAlert('error', errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -113,9 +117,11 @@ export default function HearingsPage() {
       setSelectedHearing(null);
       setFormData({ caseId: '', date: '', time: '', location: '', notes: '' });
       fetchHearings();
-    } catch (error) {
+      showAlert('success', 'Duruşma başarıyla güncellendi.');
+    } catch (error: any) {
       console.error('Error updating hearing:', error);
-      alert('Duruşma güncellenirken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Duruşma güncellenirken bir hata oluştu. Lütfen bilgilerinizi kontrol edip tekrar deneyiniz.';
+      showAlert('error', errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -134,9 +140,11 @@ export default function HearingsPage() {
       setShowDeleteDialog(false);
       setSelectedHearing(null);
       fetchHearings();
-    } catch (error) {
+      showAlert('success', 'Duruşma başarıyla silindi.');
+    } catch (error: any) {
       console.error('Error deleting hearing:', error);
-      alert('Duruşma silinirken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Duruşma silinirken bir hata oluştu. Lütfen tekrar deneyiniz.';
+      showAlert('error', errorMessage);
       setShowDeleteDialog(false);
     }
   };

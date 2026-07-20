@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, MoreVertical, DollarSign, CheckCircle, Clock } from 'lucide-react';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 export default function FinancePaymentsPage() {
+  const { showAlert } = useAlert();
   const [searchQuery, setSearchQuery] = useState('');
 
   const payments = [
@@ -81,7 +83,7 @@ export default function FinancePaymentsPage() {
               Ödeme takibi ve kaydı
             </p>
           </div>
-          <Button onClick={() => alert('Yeni ödeme özelliği yakında eklenecek')}>
+          <Button onClick={() => showAlert('info', 'Yeni ödeme özelliği yakında eklenecek')}>
             <Plus className="w-4 h-4 mr-2" />
             Yeni Ödeme
           </Button>

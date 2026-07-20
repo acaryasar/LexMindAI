@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin } from 'lucide-react';
 import api from '@/lib/api';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 export default function CalendarPage() {
+  const { showAlert } = useAlert();
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<any[]>([]);
@@ -77,7 +79,7 @@ export default function CalendarPage() {
               Etkinlik ve duruşma takvimi
             </p>
           </div>
-          <Button onClick={() => alert('Yeni etkinlik özelliği yakında eklenecek')}>
+          <Button onClick={() => showAlert('info', 'Yeni etkinlik özelliği yakında eklenecek')}>
             <Plus className="w-4 h-4 mr-2" />
             Yeni Etkinlik
           </Button>

@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, MoreVertical, FileText, Copy, Edit } from 'lucide-react';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 export default function AIPromptsPage() {
+  const { showAlert } = useAlert();
   const [searchQuery, setSearchQuery] = useState('');
 
   const prompts = [
@@ -62,7 +64,7 @@ export default function AIPromptsPage() {
               AI prompt şablonları
             </p>
           </div>
-          <Button onClick={() => alert('Yeni prompt özelliği yakında eklenecek')}>
+          <Button onClick={() => showAlert('info', 'Yeni prompt özelliği yakında eklenecek')}>
             <Plus className="w-4 h-4 mr-2" />
             Yeni Prompt
           </Button>

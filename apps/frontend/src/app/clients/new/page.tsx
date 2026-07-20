@@ -11,6 +11,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ArrowLeft, Save } from 'lucide-react';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 const clientSchema = z.object({
   firstName: z.string().min(2, 'İsim en az 2 karakter olmalı'),
@@ -27,6 +28,7 @@ const clientSchema = z.object({
 type ClientFormData = z.infer<typeof clientSchema>;
 
 export default function NewClientPage() {
+  const { showAlert } = useAlert();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -54,9 +56,11 @@ export default function NewClientPage() {
       };
       await clientsApi.create(createData);
       router.push('/clients');
+      showAlert('success', 'Müvekkil başarıyla oluşturuldu.');
     } catch (error: any) {
       console.error('Error creating client:', error);
-      alert(error.response?.data?.message || 'Müvekkil oluşturulurken hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Müvekkil oluşturulurken bir hata oluştu. Lütfen tekrar deneyiniz.';
+      showAlert('error', errorMessage);
     } finally {
       setIsLoading(false);
     }

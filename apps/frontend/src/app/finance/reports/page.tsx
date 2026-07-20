@@ -4,8 +4,10 @@ import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { DollarSign, TrendingUp, TrendingDown, FileText, Download, Calendar } from 'lucide-react';
+import { useAlert } from '@/components/ui/alert-dialog';
 
 export default function FinanceReportsPage() {
+  const { showAlert } = useAlert();
   const summary = {
     totalRevenue: 125000,
     totalExpenses: 32000,
@@ -44,7 +46,7 @@ export default function FinanceReportsPage() {
               Finansal analiz ve raporlar
             </p>
           </div>
-          <Button onClick={() => alert('Rapor oluşturma özelliği yakında eklenecek')}>
+          <Button onClick={() => showAlert('info', 'Rapor oluşturma özelliği yakında eklenecek')}>
             <FileText className="w-4 h-4 mr-2" />
             Rapor Oluştur
           </Button>
