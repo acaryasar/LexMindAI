@@ -365,28 +365,34 @@ export default function PetitionsPage() {
     setShowPreviewPanel(true);
   };
 
-  const KPICard = ({ title, value, subtitle, trend, icon: Icon }: any) => (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{value}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
+  const KPICard = ({ title, value, subtitle, icon: Icon, color = 'blue' }: any) => {
+    const colorClasses = {
+      blue: 'bg-blue-500',
+      green: 'bg-green-500',
+      orange: 'bg-orange-500',
+      purple: 'bg-purple-500',
+      red: 'bg-red-500',
+      yellow: 'bg-yellow-500',
+    };
+
+    return (
+      <Card className="hover:shadow-lg transition-shadow">
+        <CardContent className="p-6">
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 text-center">
+            {title}
+          </p>
+          <div className="flex items-center gap-3 justify-center">
+            <div className={`w-12 h-12 rounded-lg ${colorClasses[color as keyof typeof colorClasses]} flex items-center justify-center`}>
+              <Icon className="w-6 h-6 text-white" />
+            </div>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              {value}
+            </p>
           </div>
-          <div className="flex flex-col items-end">
-            <Icon className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-            {trend !== undefined && (
-              <div className={`flex items-center mt-2 ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {trend >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
-                <span className="text-sm font-medium">{Math.abs(trend)}%</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <MainLayout showAIPanel={true}>
@@ -419,59 +425,62 @@ export default function PetitionsPage() {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <KPICard
             title="Toplam Dilekçe"
             value={kpi.total}
             subtitle="Toplam kayıt"
-            trend={kpi.trend.total}
             icon={FileText}
+            color="blue"
           />
           <KPICard
             title="Taslak"
             value={kpi.draft}
             subtitle="Hazırlanıyor"
-            trend={kpi.trend.draft}
             icon={ScrollText}
+            color="yellow"
           />
           <KPICard
             title="İncelemede"
             value={kpi.inReview}
             subtitle="İmza bekliyor"
-            trend={kpi.trend.inReview}
             icon={Eye}
+            color="orange"
           />
           <KPICard
             title="Tamamlandı"
             value={kpi.completed}
             subtitle="Gönderildi"
-            trend={kpi.trend.completed}
             icon={Check}
+            color="green"
           />
           <KPICard
             title="Bugün Oluşturulan"
             value={kpi.todayCreated}
             subtitle="Yeni kayıt"
             icon={Plus}
+            color="blue"
           />
           <KPICard
             title="İmza Bekleyen"
             value={kpi.awaitingSignature}
             subtitle="E-imza bekliyor"
             icon={Star}
+            color="purple"
           />
           <KPICard
             title="UYAP Bekleyen"
             value={kpi.awaitingUYAP}
             subtitle="Gönderilecek"
             icon={Upload}
+            color="orange"
           />
           <KPICard
             title="AI ile Oluşturulan"
             value={kpi.aiGenerated}
             subtitle="Yapay zeka"
-            trend={kpi.trend.aiGenerated}
             icon={Brain}
+            color="purple"
           />
         </div>
 
