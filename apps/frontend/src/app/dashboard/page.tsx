@@ -50,19 +50,27 @@ export default function DashboardPage() {
     try {
       const [clientsResponse, casesResponse, hearingsResponse, tasksResponse] = await Promise.all([
         clientsApi.getAll(1, 1),
-        casesApi.getAll(1, 1),
-        hearingsApi.getAll(1, 10),
-        tasksApi.getAll(1, 1),
+        casesApi.getAll(1, 1, undefined, 'ACTIVE'),
+        hearingsApi.getAll(1, 100),
+        tasksApi.getAll(1, 1, undefined, 'TODO'),
       ]);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const upcomingHearingsList = hearingsResponse.data
+        .filter(hearing => new Date(hearing.date) >= today)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .slice(0, 5);
 
       setStats({
         activeCases: casesResponse.meta.total,
         activeClients: clientsResponse.meta.total,
-        upcomingHearings: hearingsResponse.meta.total,
+        upcomingHearings: upcomingHearingsList.length,
         pendingTasks: tasksResponse.meta.total,
       });
 
-      setUpcomingHearings(hearingsResponse.data.slice(0, 5));
+      setUpcomingHearings(upcomingHearingsList);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {

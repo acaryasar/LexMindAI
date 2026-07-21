@@ -38,11 +38,13 @@ export interface TasksResponse {
 }
 
 export const tasksApi = {
-  getAll: async (page: number = 1, limit: number = 50, search?: string): Promise<TasksResponse> => {
+  getAll: async (page: number = 1, limit: number = 50, search?: string, status?: string, priority?: string): Promise<TasksResponse> => {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('limit', limit.toString());
     if (search) params.append('search', search);
+    if (status) params.append('status', status);
+    if (priority) params.append('priority', priority);
     
     const response = await api.get(`/tasks?${params.toString()}`);
     return response.data;

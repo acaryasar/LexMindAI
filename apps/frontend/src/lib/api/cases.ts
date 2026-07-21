@@ -80,11 +80,12 @@ export interface AssignCaseLawyerDto {
 }
 
 export const casesApi = {
-  getAll: async (page: number = 1, limit: number = 50, search?: string): Promise<CasesResponse> => {
+  getAll: async (page: number = 1, limit: number = 50, search?: string, status?: string): Promise<CasesResponse> => {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('limit', limit.toString());
     if (search) params.append('search', search);
+    if (status) params.append('status', status);
     
     const response = await api.get(`/cases?${params.toString()}`);
     return response.data;

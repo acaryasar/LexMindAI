@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bell, Search, User, LogOut, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
 export function Header() {
+  const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -174,14 +176,17 @@ export function Header() {
         </div>
 
         <div className="flex items-center space-x-3 border-l border-gray-200 dark:border-gray-700 pl-4">
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+          <button
+            onClick={() => router.push('/settings')}
+            className="text-right hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-2 py-1 transition-colors cursor-pointer"
+          >
+            <p className="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
               {user?.firstName} {user?.lastName}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {user?.email}
             </p>
-          </div>
+          </button>
           <Button variant="ghost" size="icon" onClick={handleLogout}>
             <LogOut className="w-5 h-5" />
           </Button>
