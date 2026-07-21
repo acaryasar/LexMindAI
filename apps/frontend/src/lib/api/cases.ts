@@ -49,6 +49,36 @@ export interface CasesResponse {
   };
 }
 
+export interface CaseLawyer {
+  id: string;
+  caseId: string;
+  userId: string;
+  role: string;
+  isPrimary: boolean;
+  assignedAt: string;
+  createdAt: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phoneNumber?: string;
+  };
+}
+
+export enum CaseLawyerRole {
+  LEAD_LAWYER = 'LEAD_LAWYER',
+  ASSOCIATE = 'ASSOCIATE',
+  OBSERVER = 'OBSERVER',
+}
+
+export interface AssignCaseLawyerDto {
+  userId: string;
+  role: CaseLawyerRole;
+  isPrimary?: boolean;
+  reason?: string;
+}
+
 export const casesApi = {
   getAll: async (page: number = 1, limit: number = 50, search?: string): Promise<CasesResponse> => {
     const params = new URLSearchParams();
@@ -82,5 +112,19 @@ export const casesApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/cases/${id}`);
+  },
+
+  assignLawyer: async (caseId: string, data: AssignCaseLawyerDto): Promise<CaseLawyer> => {
+    const response = await api.post(`/cases/${caseId}/lawyers`, data);
+    return response.data;
+  },
+
+  removeLawyer: async (caseId: string, lawyerId: string, reason?: string): Promise<void> => {
+    await api.delete(`/cases/${caseId}/lawyers/${lawyerId}`, { data: { reason } });
+  },
+
+  getLawyers: async (caseId: string): Promise<CaseLawyer[]> => {
+    const response = await api.get(`/cases/${caseId}/lawyers`);
+    return response.data;
   },
 };

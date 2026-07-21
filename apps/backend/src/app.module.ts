@@ -14,6 +14,8 @@ import { FinanceModule } from './modules/finance/finance.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 import { DailyPlannerModule } from './modules/daily-planner/daily-planner.module';
 import { HearingsModule } from './modules/hearings/hearings.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { HearingsModule } from './modules/hearings/hearings.module';
     RecommendationsModule,
     DailyPlannerModule,
     HearingsModule,
+    NotificationsModule,
+    EmailModule,
   ],
 })
 export class AppModule {}

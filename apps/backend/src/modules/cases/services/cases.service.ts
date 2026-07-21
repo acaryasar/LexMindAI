@@ -4,10 +4,17 @@ import { CreateCaseDto } from '../dto/create-case.dto';
 import { UpdateCaseDto } from '../dto/update-case.dto';
 import { CreateCaseNoteDto } from '../dto/create-case-note.dto';
 import { CreateCaseHearingDto } from '../dto/create-case-hearing.dto';
+import { AssignCaseLawyerDto } from '../dto/assign-lawyer.dto';
+import { NotificationsService } from '@modules/notifications/services/notifications.service';
+import { EmailService } from '@modules/email/services/email.service';
 
 @Injectable()
 export class CasesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+    private emailService: EmailService,
+  ) {}
 
   async create(createCaseDto: CreateCaseDto, userId: string) {
     // Check if case number already exists
@@ -51,10 +58,21 @@ export class CasesService {
     return this.findOne(caseData.id);
   }
 
-  async findAll(page: number = 1, limit: number = 10, search?: string, status?: string) {
+  async findAll(page: number = 1, limit: number = 10, search?: string, status?: string, userId?: string, userRole?: string) {
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    // If user is lawyer, filter to only their assigned cases
+    const caseFilter = userRole === 'LAWYER' && userId
+      ? {
+          lawyers: {
+            some: {
+              userId: userId,
+            },
+          },
+        }
+      : {};
+
+    const where: any = { ...caseFilter };
 
     if (search) {
       where.OR = [
@@ -80,7 +98,9 @@ export class CasesService {
               client: true,
             },
           },
-          lawyers: true,
+          lawyers: {
+            include: { user: true },
+          },
           tags: true,
         },
       }),
@@ -263,5 +283,191 @@ export class CasesService {
     });
 
     return events;
+  }
+
+  async assignLawyer(caseId: string, assignLawyerDto: AssignCaseLawyerDto, userId: string) {
+    const caseData = await this.prisma.case.findUnique({
+      where: { id: caseId },
+    });
+
+    if (!caseData) {
+      throw new NotFoundException('Dava bulunamadı');
+    }
+
+    const lawyer = await this.prisma.user.findUnique({
+      where: { id: assignLawyerDto.userId },
+    });
+
+    if (!lawyer) {
+      throw new NotFoundException('Avukat bulunamadı');
+    }
+
+    // Check if already assigned
+    const existing = await this.prisma.caseLawyer.findFirst({
+      where: {
+        caseId,
+        userId: assignLawyerDto.userId,
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException('Bu avukat zaten atanmış');
+    }
+
+    // If setting as primary, remove primary from other lawyers
+    if (assignLawyerDto.isPrimary) {
+      await this.prisma.caseLawyer.updateMany({
+        where: { caseId },
+        data: { isPrimary: false },
+      });
+    }
+
+    const assignment = await this.prisma.caseLawyer.create({
+      data: {
+        caseId,
+        userId: assignLawyerDto.userId,
+        role: assignLawyerDto.role,
+        isPrimary: assignLawyerDto.isPrimary || false,
+      },
+    });
+
+    // Add to case events
+    await this.prisma.caseEvent.create({
+      data: {
+        caseId,
+        title: 'Avukat Atandı',
+        notes: `${lawyer.firstName} ${lawyer.lastName} atandı (${assignLawyerDto.role}). ${assignLawyerDto.reason || ''}`,
+        date: new Date(),
+      },
+    });
+
+    // Create notification for the assigned lawyer
+    await this.notificationsService.create({
+      userId: assignLawyerDto.userId,
+      type: 'LAWYER_ASSIGNED',
+      title: 'Yeni Dava Ataması',
+      message: `${caseData.caseNumber} numaralı davanıza atandınız. ${assignLawyerDto.reason || ''}`,
+      data: {
+        caseId,
+        caseNumber: caseData.caseNumber,
+        caseTitle: caseData.title,
+        role: assignLawyerDto.role,
+        isPrimary: assignLawyerDto.isPrimary,
+      },
+    });
+
+    // Send email notification
+    if (lawyer.email) {
+      try {
+        await this.emailService.sendLawyerAssignmentEmail(
+          lawyer.email,
+          `${lawyer.firstName} ${lawyer.lastName}`,
+          'case',
+          {
+            number: caseData.caseNumber,
+            title: caseData.title,
+            reason: assignLawyerDto.reason,
+            role: assignLawyerDto.role,
+            isPrimary: assignLawyerDto.isPrimary,
+          },
+        );
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+        // Don't fail the assignment if email fails
+      }
+    }
+
+    return assignment;
+  }
+
+  async removeLawyer(caseId: string, lawyerId: string, userId: string, reason?: string) {
+    const caseData = await this.prisma.case.findUnique({
+      where: { id: caseId },
+    });
+
+    if (!caseData) {
+      throw new NotFoundException('Dava bulunamadı');
+    }
+
+    const assignment = await this.prisma.caseLawyer.findFirst({
+      where: {
+        caseId,
+        userId: lawyerId,
+      },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Atama bulunamadı');
+    }
+
+    await this.prisma.caseLawyer.delete({
+      where: { id: assignment.id },
+    });
+
+    const lawyer = await this.prisma.user.findUnique({
+      where: { id: lawyerId },
+    });
+
+    // Add to case events
+    await this.prisma.caseEvent.create({
+      data: {
+        caseId,
+        title: 'Avukat Kaldırıldı',
+        notes: `${lawyer?.firstName} ${lawyer?.lastName} ataması kaldırıldı. ${reason || ''}`,
+        date: new Date(),
+      },
+    });
+
+    // Create notification for the removed lawyer
+    await this.notificationsService.create({
+      userId: lawyerId,
+      type: 'LAWYER_REMOVED',
+      title: 'Dava Ataması Kaldırıldı',
+      message: `${caseData.caseNumber} numaralı davadaki atamanız kaldırıldı. ${reason || ''}`,
+      data: {
+        caseId,
+        caseNumber: caseData.caseNumber,
+        caseTitle: caseData.title,
+      },
+    });
+
+    // Send email notification
+    if (lawyer?.email) {
+      try {
+        await this.emailService.sendLawyerRemovalEmail(
+          lawyer.email,
+          `${lawyer.firstName} ${lawyer.lastName}`,
+          'case',
+          {
+            number: caseData.caseNumber,
+            title: caseData.title,
+            reason,
+          },
+        );
+      } catch (emailError) {
+        console.error('Failed to send email notification:', emailError);
+        // Don't fail the removal if email fails
+      }
+    }
+  }
+
+  async getCaseLawyers(caseId: string) {
+    const caseData = await this.prisma.case.findUnique({
+      where: { id: caseId },
+    });
+
+    if (!caseData) {
+      throw new NotFoundException('Dava bulunamadı');
+    }
+
+    const lawyers = await this.prisma.caseLawyer.findMany({
+      where: { caseId },
+      include: {
+        user: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return lawyers;
   }
 }

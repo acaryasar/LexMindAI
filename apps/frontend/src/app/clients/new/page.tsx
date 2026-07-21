@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Users } from 'lucide-react';
 import { useAlert } from '@/components/ui/alert-dialog';
 
 const clientSchema = z.object({
@@ -68,20 +68,17 @@ export default function NewClientPage() {
 
   return (
     <MainLayout showAIPanel={true}>
-      <div className="max-w-3xl mx-auto space-y-6 lg:mr-80 md:mr-64 mr-0">
+      <div className="max-w-4xl mx-auto space-y-6 lg:mr-80 md:mr-64 mr-0">
         {/* Header */}
         <div className="flex items-center space-x-4">
           <Button variant="ghost" onClick={() => router.back()}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Geri
+            <Users className="w-4 h-4" />
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Yeni Müvekkil
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Yeni müvekkil bilgisi ekleyin
-            </p>
           </div>
         </div>
 

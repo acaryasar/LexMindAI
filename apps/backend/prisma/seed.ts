@@ -170,6 +170,154 @@ async function main() {
     },
   });
 
+  // Create additional users with different roles
+  const commonPassword = await bcrypt.hash('password123', 10);
+
+  // Partner user
+  const partnerUser = await prisma.user.upsert({
+    where: { email: 'partner@lexmind.ai' },
+    update: {},
+    create: {
+      email: 'partner@lexmind.ai',
+      password: commonPassword,
+      firstName: 'Mehmet',
+      lastName: 'Yılmaz',
+      phoneNumber: '+905555555556',
+      isActive: true,
+      emailVerified: true,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: partnerUser.id,
+        roleId: partnerRole.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: partnerUser.id,
+      roleId: partnerRole.id,
+    },
+  });
+
+  // Lawyer user 1
+  const lawyerUser1 = await prisma.user.upsert({
+    where: { email: 'lawyer1@lexmind.ai' },
+    update: {},
+    create: {
+      email: 'lawyer1@lexmind.ai',
+      password: commonPassword,
+      firstName: 'Ayşe',
+      lastName: 'Demir',
+      phoneNumber: '+905555555557',
+      isActive: true,
+      emailVerified: true,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: lawyerUser1.id,
+        roleId: lawyerRole.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: lawyerUser1.id,
+      roleId: lawyerRole.id,
+    },
+  });
+
+  // Lawyer user 2
+  const lawyerUser2 = await prisma.user.upsert({
+    where: { email: 'lawyer2@lexmind.ai' },
+    update: {},
+    create: {
+      email: 'lawyer2@lexmind.ai',
+      password: commonPassword,
+      firstName: 'Ali',
+      lastName: 'Kaya',
+      phoneNumber: '+905555555558',
+      isActive: true,
+      emailVerified: true,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: lawyerUser2.id,
+        roleId: lawyerRole.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: lawyerUser2.id,
+      roleId: lawyerRole.id,
+    },
+  });
+
+  // Secretary user
+  const secretaryUser = await prisma.user.upsert({
+    where: { email: 'secretary@lexmind.ai' },
+    update: {},
+    create: {
+      email: 'secretary@lexmind.ai',
+      password: commonPassword,
+      firstName: 'Fatma',
+      lastName: 'Şahin',
+      phoneNumber: '+905555555559',
+      isActive: true,
+      emailVerified: true,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: secretaryUser.id,
+        roleId: secretaryRole.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: secretaryUser.id,
+      roleId: secretaryRole.id,
+    },
+  });
+
+  // Accountant user
+  const accountantUser = await prisma.user.upsert({
+    where: { email: 'accountant@lexmind.ai' },
+    update: {},
+    create: {
+      email: 'accountant@lexmind.ai',
+      password: commonPassword,
+      firstName: 'Mustafa',
+      lastName: 'Öztürk',
+      phoneNumber: '+905555555560',
+      isActive: true,
+      emailVerified: true,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: {
+      userId_roleId: {
+        userId: accountantUser.id,
+        roleId: accountantRole.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: accountantUser.id,
+      roleId: accountantRole.id,
+    },
+  });
+
   // Create sample clients (50+ records)
   console.log('Creating clients...');
   const clients = [];
@@ -193,6 +341,19 @@ async function main() {
       },
     });
     clients.push(client);
+
+    // Assign client to a random lawyer
+    const assignedLawyer = getRandomItem([lawyerUser1, lawyerUser2]);
+    await prisma.clientLawyer.create({
+      data: {
+        clientId: client.id,
+        userId: assignedLawyer.id,
+        isPrimary: Math.random() > 0.5,
+        status: 'ACTIVE',
+      },
+    }).catch(() => {
+      // Ignore duplicate errors
+    });
   }
 
   // Create sample cases (50+ records)
@@ -202,6 +363,7 @@ async function main() {
     const client = getRandomItem(clients);
     const city = getRandomItem(turkishCities);
     const caseNumber = `${getRandomNumber(2020, 2024)}/${getRandomNumber(1000, 9999)}`;
+    const assignedLawyer = getRandomItem([lawyerUser1, lawyerUser2]);
     
     const caseData = await prisma.case.upsert({
       where: { caseNumber },
@@ -225,6 +387,15 @@ async function main() {
         caseId: caseData.id,
         clientId: client.id,
         role: 'CLIENT',
+      },
+    });
+
+    // Assign lawyer to case
+    await prisma.caseLawyer.create({
+      data: {
+        caseId: caseData.id,
+        userId: assignedLawyer.id,
+        role: getRandomItem(['LEAD_LAWYER', 'ASSOCIATE', 'OBSERVER']),
       },
     });
   }

@@ -41,12 +41,15 @@ export class HearingsController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('caseId') caseId?: string,
+    @Request() req?: any,
   ) {
     return this.hearingsService.findAll(
       page ? parseInt(page) : 1,
       limit ? parseInt(limit) : 10,
       search,
       caseId,
+      req?.user?.id,
+      req?.user?.role,
     );
   }
 

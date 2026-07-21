@@ -49,6 +49,28 @@ export interface ClientsResponse {
   };
 }
 
+export interface ClientLawyer {
+  id: string;
+  clientId: string;
+  userId: string;
+  isPrimary: boolean;
+  status: string;
+  assignedAt: string;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    phoneNumber?: string;
+  };
+}
+
+export interface AssignLawyerDto {
+  userId: string;
+  isPrimary?: boolean;
+  reason?: string;
+}
+
 export const clientsApi = {
   getAll: async (page: number = 1, limit: number = 50, search?: string): Promise<ClientsResponse> => {
     const params = new URLSearchParams();
@@ -77,5 +99,19 @@ export const clientsApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/clients/${id}`);
+  },
+
+  assignLawyer: async (clientId: string, data: AssignLawyerDto): Promise<ClientLawyer> => {
+    const response = await api.post(`/clients/${clientId}/lawyers`, data);
+    return response.data;
+  },
+
+  removeLawyer: async (clientId: string, lawyerId: string, reason?: string): Promise<void> => {
+    await api.delete(`/clients/${clientId}/lawyers/${lawyerId}`, { data: { reason } });
+  },
+
+  getLawyers: async (clientId: string): Promise<ClientLawyer[]> => {
+    const response = await api.get(`/clients/${clientId}/lawyers`);
+    return response.data;
   },
 };

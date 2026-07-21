@@ -16,7 +16,8 @@ export default function SettingsPage() {
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string; models?: string[] } | null>(null);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   useEffect(() => {
@@ -76,6 +77,36 @@ export default function SettingsPage() {
       setTestResult({ success: false, message: 'AI konfigürasyonu kaydedilemedi' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestAIKey = async () => {
+    if (!aiConfig.provider || !aiConfig.apiKey) {
+      setTestResult({ success: false, message: 'Lütfen AI sağlayıcı ve API anahtarı girin' });
+      return;
+    }
+
+    try {
+      setTesting(true);
+      setTestResult(null);
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.post('http://localhost:3001/api/v1/auth/validate-ai-key', 
+        { provider: aiConfig.provider, apiKey: aiConfig.apiKey },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setTestResult({ 
+        success: true, 
+        message: response.data.message,
+        models: response.data.models 
+      });
+    } catch (error: any) {
+      console.error('Error testing AI key:', error);
+      setTestResult({ 
+        success: false, 
+        message: error.response?.data?.message || error.message || 'API anahtarı doğrulanamadı' 
+      });
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -304,20 +335,42 @@ export default function SettingsPage() {
                   )}
                 </div>
                 {testResult && (
-                  <div className={`flex items-center space-x-2 p-3 rounded-md ${
+                  <div className={`flex items-start space-x-2 p-3 rounded-md ${
                     testResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
                   }`}>
                     {testResult.success ? (
-                      <CheckCircle className="w-4 h-4" />
+                      <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     ) : (
-                      <AlertCircle className="w-4 h-4" />
+                      <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     )}
-                    <span className="text-sm">{testResult.message}</span>
+                    <div className="flex-1">
+                      <span className="text-sm font-medium">{testResult.message}</span>
+                      {testResult.models && testResult.models.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-xs font-semibold mb-1">Kullanılabilir Modeller:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {testResult.models.slice(0, 5).map((model) => (
+                              <span key={model} className="text-xs bg-white bg-opacity-50 px-2 py-0.5 rounded">
+                                {model}
+                              </span>
+                            ))}
+                            {testResult.models.length > 5 && (
+                              <span className="text-xs">+{testResult.models.length - 5} daha</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-                <Button onClick={handleSaveAIConfig} disabled={saving}>
-                  {saving ? 'Kaydediliyor...' : 'Kaydet'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={handleTestAIKey} disabled={testing || !aiConfig.provider || !aiConfig.apiKey} variant="outline">
+                    {testing ? 'Doğrulanıyor...' : 'Test Et'}
+                  </Button>
+                  <Button onClick={handleSaveAIConfig} disabled={saving}>
+                    {saving ? 'Kaydediliyor...' : 'Kaydet'}
+                  </Button>
+                </div>
               </>
             )}
           </CardContent>

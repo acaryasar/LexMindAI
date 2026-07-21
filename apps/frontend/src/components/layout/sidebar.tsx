@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -83,6 +84,14 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+
+  const toggleMenu = (menuName: string) => {
+    setOpenMenus((prev) => ({
+      ...prev,
+      [menuName]: !prev[menuName],
+    }));
+  };
 
   return (
     <div className="flex h-full w-64 flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
@@ -105,31 +114,37 @@ export function Sidebar() {
           const Icon = item.icon;
 
           if (item.children) {
+            const isOpen = openMenus[item.name] || false;
             return (
               <div key={item.name} className="space-y-1">
-                <button className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <button
+                  onClick={() => toggleMenu(item.name)}
+                  className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
                   <div className="flex items-center space-x-3">
                     <Icon className="w-5 h-5" />
                     <span>{item.name}</span>
                   </div>
-                  <ChevronDown className="w-4 h-4" />
+                  {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
-                <div className="pl-9 space-y-1">
-                  {item.children.map((child) => (
-                    <Link
-                      key={child.name}
-                      href={child.href}
-                      className={cn(
-                        'flex items-center px-3 py-2 text-sm font-medium rounded-md',
-                        pathname === child.href
-                          ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      )}
-                    >
-                      {child.name}
-                    </Link>
-                  ))}
-                </div>
+                {isOpen && (
+                  <div className="pl-9 space-y-1">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.name}
+                        href={child.href}
+                        className={cn(
+                          'flex items-center px-3 py-2 text-sm font-medium rounded-md',
+                          pathname === child.href
+                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        )}
+                      >
+                        {child.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           }

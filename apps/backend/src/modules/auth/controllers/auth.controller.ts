@@ -79,4 +79,25 @@ export class AuthController {
   async getAIConfig(@Request() req: any) {
     return this.authService.getAIConfig(req.user.id);
   }
+
+  @Post('validate-ai-key')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'AI API anahtarını doğrula' })
+  @ApiResponse({ status: 200, description: 'API anahtarı geçerli' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  @ApiResponse({ status: 400, description: 'Geçersiz API anahtarı' })
+  async validateAIKey(@Request() req: any, @Body() body: { provider: string; apiKey: string }) {
+    return this.authService.validateAIKey(body.provider, body.apiKey);
+  }
+
+  @Get('users')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Tüm kullanıcıları getir' })
+  @ApiResponse({ status: 200, description: 'Kullanıcılar getirildi' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  async getUsers(@Request() req: any) {
+    return this.authService.getUsers();
+  }
 }

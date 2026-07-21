@@ -3,6 +3,8 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -12,6 +14,7 @@ import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { EncryptionUtil } from '@common/encryption.util';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
@@ -309,5 +312,97 @@ export class AuthService {
       settings: user.aiSettings,
       hasConfig: !!user.aiProvider && !!user.aiApiKey,
     };
+  }
+
+  async validateAIKey(provider: string, apiKey: string) {
+    try {
+      if (provider === 'openai') {
+        // Validate OpenAI API key
+        const response = await axios.get('https://api.openai.com/v1/models', {
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          timeout: 10000,
+        });
+
+        if (response.status === 200) {
+          return {
+            valid: true,
+            message: 'OpenAI API anahtarı geçerli',
+            models: response.data.data?.map((m: any) => m.id) || [],
+          };
+        }
+      } else if (provider === 'anthropic') {
+        // Validate Anthropic API key
+        const response = await axios.post(
+          'https://api.anthropic.com/v1/messages',
+          {
+            model: 'claude-3-haiku-20240307',
+            max_tokens: 10,
+            messages: [{ role: 'user', content: 'Hi' }],
+          },
+          {
+            headers: {
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json',
+            },
+            timeout: 10000,
+          },
+        );
+
+        if (response.status === 200) {
+          return {
+            valid: true,
+            message: 'Anthropic API anahtarı geçerli',
+          };
+        }
+      }
+
+      throw new BadRequestException('Desteklenmeyen sağlayıcı');
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        throw new HttpException(
+          'API anahtarı geçersiz veya yetkisiz',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      if (error.response?.status === 429) {
+        throw new HttpException(
+          'API hız sınırı aşıldı. Lütfen daha sonra tekrar deneyin.',
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+      if (error.code === 'ECONNABORTED') {
+        throw new HttpException(
+          'API yanıt vermedi. Bağlantı zaman aşımı.',
+          HttpStatus.REQUEST_TIMEOUT,
+        );
+      }
+      throw new HttpException(
+        `API anahtarı doğrulanamadı: ${error.message}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async getUsers() {
+    const users = await this.prisma.user.findMany({
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    return users.map(user => ({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      roles: user.roles.map(ur => ur.role.name),
+    }));
   }
 }

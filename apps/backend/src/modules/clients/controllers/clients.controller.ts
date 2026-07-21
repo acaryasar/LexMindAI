@@ -18,6 +18,7 @@ import { CreateClientDto } from '../dto/create-client.dto';
 import { UpdateClientDto } from '../dto/update-client.dto';
 import { CreateClientContactDto } from '../dto/create-client-contact.dto';
 import { CreateClientNoteDto } from '../dto/create-client-note.dto';
+import { AssignLawyerDto } from '../dto/assign-lawyer.dto';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 
 @ApiTags('Clients')
@@ -42,11 +43,14 @@ export class ClientsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
+    @Request() req?: any,
   ) {
     return this.clientsService.findAll(
       page ? parseInt(page) : 1,
       limit ? parseInt(limit) : 10,
       search,
+      req?.user?.id,
+      req?.user?.role,
     );
   }
 
@@ -101,5 +105,40 @@ export class ClientsController {
   @ApiResponse({ status: 404, description: 'Müşteri bulunamadı' })
   getTimeline(@Param('id') id: string) {
     return this.clientsService.getTimeline(id);
+  }
+
+  @Post(':id/lawyers')
+  @ApiOperation({ summary: 'Müşteriye avukat ata' })
+  @ApiResponse({ status: 201, description: 'Avukat başarıyla atandı' })
+  @ApiResponse({ status: 404, description: 'Müşteri veya avukat bulunamadı' })
+  @ApiResponse({ status: 409, description: 'Avukat zaten atanmış' })
+  assignLawyer(
+    @Param('id') id: string,
+    @Body() assignLawyerDto: AssignLawyerDto,
+    @Request() req: any,
+  ) {
+    return this.clientsService.assignLawyer(id, assignLawyerDto, req.user.id);
+  }
+
+  @Delete(':id/lawyers/:lawyerId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Müşteriden avukat kaldır' })
+  @ApiResponse({ status: 204, description: 'Avukat başarıyla kaldırıldı' })
+  @ApiResponse({ status: 404, description: 'Atama bulunamadı' })
+  removeLawyer(
+    @Param('id') id: string,
+    @Param('lawyerId') lawyerId: string,
+    @Request() req: any,
+    @Body() body?: { reason?: string },
+  ) {
+    return this.clientsService.removeLawyer(id, lawyerId, req.user.id, body?.reason);
+  }
+
+  @Get(':id/lawyers')
+  @ApiOperation({ summary: 'Müşteri avukatlarını getir' })
+  @ApiResponse({ status: 200, description: 'Avukat listesi getirildi' })
+  @ApiResponse({ status: 404, description: 'Müşteri bulunamadı' })
+  getClientLawyers(@Param('id') id: string) {
+    return this.clientsService.getClientLawyers(id);
   }
 }

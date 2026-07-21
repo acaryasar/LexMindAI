@@ -18,6 +18,7 @@ import { CreateCaseDto } from '../dto/create-case.dto';
 import { UpdateCaseDto } from '../dto/update-case.dto';
 import { CreateCaseNoteDto } from '../dto/create-case-note.dto';
 import { CreateCaseHearingDto } from '../dto/create-case-hearing.dto';
+import { AssignCaseLawyerDto } from '../dto/assign-lawyer.dto';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 
 @ApiTags('Cases')
@@ -43,12 +44,15 @@ export class CasesController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('status') status?: string,
+    @Request() req?: any,
   ) {
     return this.casesService.findAll(
       page ? parseInt(page) : 1,
       limit ? parseInt(limit) : 10,
       search,
       status,
+      req?.user?.id,
+      req?.user?.role,
     );
   }
 
@@ -103,5 +107,40 @@ export class CasesController {
   @ApiResponse({ status: 404, description: 'Dava bulunamadı' })
   getTimeline(@Param('id') id: string) {
     return this.casesService.getTimeline(id);
+  }
+
+  @Post(':id/lawyers')
+  @ApiOperation({ summary: 'Davaya avukat ata' })
+  @ApiResponse({ status: 201, description: 'Avukat başarıyla atandı' })
+  @ApiResponse({ status: 404, description: 'Dava veya avukat bulunamadı' })
+  @ApiResponse({ status: 409, description: 'Avukat zaten atanmış' })
+  assignLawyer(
+    @Param('id') id: string,
+    @Body() assignLawyerDto: AssignCaseLawyerDto,
+    @Request() req: any,
+  ) {
+    return this.casesService.assignLawyer(id, assignLawyerDto, req.user.id);
+  }
+
+  @Delete(':id/lawyers/:lawyerId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Davadan avukat kaldır' })
+  @ApiResponse({ status: 204, description: 'Avukat başarıyla kaldırıldı' })
+  @ApiResponse({ status: 404, description: 'Atama bulunamadı' })
+  removeLawyer(
+    @Param('id') id: string,
+    @Param('lawyerId') lawyerId: string,
+    @Request() req: any,
+    @Body() body?: { reason?: string },
+  ) {
+    return this.casesService.removeLawyer(id, lawyerId, req.user.id, body?.reason);
+  }
+
+  @Get(':id/lawyers')
+  @ApiOperation({ summary: 'Dava avukatlarını getir' })
+  @ApiResponse({ status: 200, description: 'Avukat listesi getirildi' })
+  @ApiResponse({ status: 404, description: 'Dava bulunamadı' })
+  getCaseLawyers(@Param('id') id: string) {
+    return this.casesService.getCaseLawyers(id);
   }
 }

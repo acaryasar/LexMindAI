@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Scale } from 'lucide-react';
 import { useAlert } from '@/components/ui/alert-dialog';
 
 const caseSchema = z.object({
@@ -75,15 +75,12 @@ export default function NewCasePage() {
         <div className="flex items-center space-x-4">
           <Button variant="ghost" onClick={() => router.back()}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Geri
+            <Scale className="w-4 h-4" />
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Yeni Dava
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Yeni dava dosyası oluşturun
-            </p>
           </div>
         </div>
 

@@ -151,9 +151,6 @@ export default function DashboardPage() {
                         <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
                           {kpi.value}
                         </p>
-                        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                          {kpi.trend}
-                        </p>
                       </div>
                       <div className={`w-12 h-12 rounded-lg ${colorClasses[kpi.color as keyof typeof colorClasses]} flex items-center justify-center`}>
                         <Icon className="w-6 h-6 text-white" />

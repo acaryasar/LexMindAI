@@ -29,8 +29,19 @@ export class HearingsService {
     });
   }
 
-  async findAll(page: number = 1, limit: number = 10, search?: string, caseId?: string) {
+  async findAll(page: number = 1, limit: number = 10, search?: string, caseId?: string, userId?: string, userRole?: string) {
     const where: any = {};
+
+    // If user is lawyer, filter to only hearings from their assigned cases
+    if (userRole === 'LAWYER' && userId) {
+      where.case = {
+        lawyers: {
+          some: {
+            userId: userId,
+          },
+        },
+      };
+    }
 
     if (search) {
       where.OR = [

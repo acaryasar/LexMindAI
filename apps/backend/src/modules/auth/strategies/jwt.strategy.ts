@@ -47,6 +47,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Kullanıcı bulunamadı veya aktif değil');
     }
 
-    return user;
+    // Add role to user object for easy access in controllers
+    const userWithRole = {
+      ...user,
+      role: user.roles[0]?.role?.name || null,
+    };
+
+    return userWithRole;
   }
 }
