@@ -19,6 +19,15 @@ export default function SettingsPage() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; models?: string[] } | null>(null);
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+  
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordResult, setPasswordResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     fetchAIConfig();
@@ -107,6 +116,52 @@ export default function SettingsPage() {
       });
     } finally {
       setTesting(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    // Validation
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setPasswordResult({ success: false, message: 'Lütfen tüm şifre alanlarını doldurun' });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordResult({ success: false, message: 'Yeni şifre en az 6 karakter olmalıdır' });
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordResult({ success: false, message: 'Yeni şifre ve şifre tekrarı eşleşmiyor' });
+      return;
+    }
+
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      setPasswordResult({ success: false, message: 'Yeni şifre mevcut şifreden farklı olmalıdır' });
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      setPasswordResult(null);
+      const token = localStorage.getItem('accessToken');
+      await axios.post('http://localhost:3001/api/v1/auth/change-password',
+        {
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setPasswordResult({ success: true, message: 'Şifre başarıyla değiştirildi. E-posta bildirimi gönderildi.' });
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      setPasswordResult({
+        success: false,
+        message: error.response?.data?.message || error.message || 'Şifre değiştirilemedi'
+      });
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -204,17 +259,49 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Mevcut Şifre</label>
-              <Input type="password" placeholder="••••••••" />
+              <Input 
+                type="password" 
+                placeholder="••••••••" 
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Yeni Şifre</label>
-              <Input type="password" placeholder="••••••••" />
+              <Input 
+                type="password" 
+                placeholder="••••••••" 
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Şifre Tekrar</label>
-              <Input type="password" placeholder="••••••••" />
+              <Input 
+                type="password" 
+                placeholder="••••••••" 
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+              />
             </div>
-            <Button>Şifre Değiştir</Button>
+            {passwordResult && (
+              <div className={`flex items-start space-x-2 p-3 rounded-md ${
+                passwordResult.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+              }`}>
+                {passwordResult.success ? (
+                  <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                )}
+                <span className="text-sm">{passwordResult.message}</span>
+              </div>
+            )}
+            <Button 
+              onClick={handleChangePassword} 
+              disabled={changingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+            >
+              {changingPassword ? 'Değiştiriliyor...' : 'Şifre Değiştir'}
+            </Button>
           </CardContent>
         </Card>
 

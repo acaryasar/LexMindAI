@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft } from 'lucide-react';
 import { usersApi } from '@/lib/api/users';
 import { useAlert } from '@/components/ui/alert-dialog';
+import api from '@/lib/api';
 
 export default function NewUserPage() {
   const { showAlert } = useAlert();
@@ -18,12 +19,33 @@ export default function NewUserPage() {
     lastName: '',
     email: '',
     phoneNumber: '',
-    password: '',
+    role: 'USER',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [roles, setRoles] = useState<any[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
+
+  const fetchRoles = async () => {
+    try {
+      setLoadingRoles(true);
+      const token = localStorage.getItem('accessToken');
+      const response = await api.get('/auth/roles', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRoles(response.data);
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    } finally {
+      setLoadingRoles(false);
+    }
+  };
 
   const handleSubmit = async () => {
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+    if (!formData.firstName || !formData.lastName || !formData.email) {
       showAlert('warning', 'Lütfen zorunlu alanları doldurunuz.');
       return;
     }
@@ -31,7 +53,7 @@ export default function NewUserPage() {
     setSubmitting(true);
     try {
       await usersApi.register(formData);
-      showAlert('success', 'Kullanıcı başarıyla oluşturuldu.');
+      showAlert('success', 'Kullanıcı başarıyla oluşturuldu. Kullanıcıya e-posta bildirimi gönderildi.');
       router.push('/users');
     } catch (error: any) {
       console.error('Error creating user:', error);
@@ -103,13 +125,22 @@ export default function NewUserPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Şifre</label>
-              <Input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Şifre"
-              />
+              <label className="text-sm font-medium">Rol</label>
+              {loadingRoles ? (
+                <p className="text-sm text-gray-500">Yükleniyor...</p>
+              ) : (
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                >
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.name}>
+                      {role.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div className="flex gap-3 justify-end">
               <Button variant="outline" onClick={() => router.push('/users')}>

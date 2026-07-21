@@ -161,4 +161,205 @@ export class EmailService {
       html,
     });
   }
+
+  async sendUserRegistrationEmail(
+    to: string,
+    firstName: string,
+    lastName: string,
+  ) {
+    const subject = 'LexMind AI Hesabınız Oluşturuldu';
+    const loginUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #1e40af; color: white; padding: 20px; text-align: center; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 8px; margin-top: 20px; }
+          .steps { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .step { margin-bottom: 15px; padding-left: 20px; position: relative; }
+          .step:before { content: "✓"; position: absolute; left: 0; color: #1e40af; font-weight: bold; }
+          .button { display: inline-block; padding: 12px 24px; background: #1e40af; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; }
+          .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; }
+          .warning { background: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #f59e0b; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>LexMind AI</h1>
+          </div>
+          <div class="content">
+            <h2>Hoş Geldiniz ${firstName} ${lastName},</h2>
+            <p>LexMind AI sistemine kaydınız başarıyla oluşturuldu. Sisteme giriş yapmak için aşağıdaki adımları izleyiniz:</p>
+            
+            <div class="steps">
+              <div class="step">
+                <strong>1. Adım:</strong> Giriş sayfasına gidin
+              </div>
+              <div class="step">
+                <strong>2. Adım:</strong> E-posta adresinizi girin
+              </div>
+              <div class="step">
+                <strong>3. Adım:</strong> "Şifremi Unuttum" linkine tıklayın
+              </div>
+              <div class="step">
+                <strong>4. Adım:</strong> E-posta adresinizi girin ve şifre sıfırlama bağlantısını alın
+              </div>
+              <div class="step">
+                <strong>5. Adım:</strong> Bağlantıya tıklayarak kendinize güvenli bir şifre belirleyin
+              </div>
+            </div>
+
+            <div class="warning">
+              <strong>⚠️ Önemli Güvenlik Uyarısı:</strong>
+              <p>Sistemimiz güvenlik nedeniyle şifrelerinizi e-posta ile göndermez. Lütfen "Şifremi Unuttum" özelliğini kullanarak kendi şifrenizi belirleyiniz.</p>
+            </div>
+            
+            <a href="${loginUrl}/auth/login" class="button">Giriş Sayfasına Git</a>
+          </div>
+          <div class="footer">
+            <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
+            <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await this.transporter.sendMail({
+      from: `"LexMind AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+  }
+
+  async sendPasswordResetEmail(
+    to: string,
+    firstName: string,
+    lastName: string,
+    resetToken: string,
+  ) {
+    const subject = 'Şifre Sıfırlama Bağlantısı';
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #1e40af; color: white; padding: 20px; text-align: center; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 8px; margin-top: 20px; }
+          .info { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .button { display: inline-block; padding: 12px 24px; background: #1e40af; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; }
+          .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; }
+          .warning { background: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #f59e0b; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>LexMind AI</h1>
+          </div>
+          <div class="content">
+            <h2>Merhaba ${firstName} ${lastName},</h2>
+            <p>Şifrenizi sıfırlamak için bir talebiniz aldık. Aşağıdaki butona tıklayarak yeni şifrenizi belirleyebilirsiniz:</p>
+            
+            <div class="info">
+              <p><strong>⚠️ Önemli:</strong> Bu bağlantı 1 saat süreyle geçerlidir.</p>
+            </div>
+            
+            <a href="${resetUrl}" class="button">Şifremi Sıfırla</a>
+            
+            <div class="warning">
+              <strong>Güvenlik Uyarısı:</strong>
+              <p>Eğer bu talebi siz yapmadıysanız, bu e-postayı görmezden geliniz. Şifreniz değişmeyecektir.</p>
+            </div>
+          </div>
+          <div class="footer">
+            <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
+            <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await this.transporter.sendMail({
+      from: `"LexMind AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+  }
+
+  async sendPasswordChangeNotificationEmail(
+    to: string,
+    firstName: string,
+    lastName: string,
+  ) {
+    const subject = 'Şifreniz Değiştirildi';
+    const loginUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #059669; color: white; padding: 20px; text-align: center; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 8px; margin-top: 20px; }
+          .info { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .button { display: inline-block; padding: 12px 24px; background: #059669; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; }
+          .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; }
+          .warning { background: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #f59e0b; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>LexMind AI</h1>
+          </div>
+          <div class="content">
+            <h2>Merhaba ${firstName} ${lastName},</h2>
+            <p>LexMind AI hesabınızın şifresi başarıyla değiştirildi.</p>
+            
+            <div class="info">
+              <p><strong>Değişiklik Tarihi:</strong> ${new Date().toLocaleString('tr-TR')}</p>
+              <p><strong>İşlem:</strong> Şifre güncelleme</p>
+            </div>
+
+            <div class="warning">
+              <strong>⚠️ Güvenlik Bilgisi:</strong>
+              <p>Bu işlemi siz yapmadıysanız, hesabınızın güvenliği için lütfen derhal yöneticinizle iletişime geçiniz.</p>
+            </div>
+            
+            <a href="${loginUrl}/auth/login" class="button">Giriş Yap</a>
+          </div>
+          <div class="footer">
+            <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
+            <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await this.transporter.sendMail({
+      from: `"LexMind AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+  }
 }

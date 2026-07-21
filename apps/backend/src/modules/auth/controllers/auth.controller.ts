@@ -5,6 +5,9 @@ import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '../guards/jwt-refresh.guard';
 
@@ -143,5 +146,53 @@ export class AuthController {
   @ApiResponse({ status: 404, description: 'Kullanıcı bulunamadı' })
   async updateUserRoles(@Request() req: any, @Param('id') id: string, @Body() body: { roles: string[] }) {
     return this.authService.updateUserRoles(id, body.roles);
+  }
+
+  @Post('demo-roles')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Demo kullanıcı rollerini getir' })
+  @ApiResponse({ status: 200, description: 'Kullanıcı rolleri getirildi' })
+  @ApiResponse({ status: 401, description: 'Geçersiz kimlik bilgileri' })
+  async getDemoRoles(@Body() body: { email: string; password: string }) {
+    return this.authService.getUserRolesByEmailAndPassword(body.email, body.password);
+  }
+
+  @Get('roles')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Tüm rolleri getir' })
+  @ApiResponse({ status: 200, description: 'Roller getirildi' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  async getRoles(@Request() req: any) {
+    return this.authService.getRoles();
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Şifremi unuttum' })
+  @ApiResponse({ status: 200, description: 'Şifre sıfırlama bağlantısı gönderildi' })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Şifre sıfırlama' })
+  @ApiResponse({ status: 200, description: 'Şifre başarıyla sıfırlandı' })
+  @ApiResponse({ status: 400, description: 'Geçersiz veya süresi dolmuş token' })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+    return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Şifre değiştirme' })
+  @ApiResponse({ status: 200, description: 'Şifre başarıyla değiştirildi' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz erişim veya mevcut şifre hatalı' })
+  @ApiResponse({ status: 400, description: 'Geçersiz şifre' })
+  async changePassword(@Request() req: any, @Body() changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
+    return this.authService.changePassword(req.user.id, changePasswordDto);
   }
 }

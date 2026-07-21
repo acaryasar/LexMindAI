@@ -9,10 +9,14 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@database/prisma.service';
+import { EmailService } from '../../email/services/email.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 import { EncryptionUtil } from '@common/encryption.util';
 import axios from 'axios';
 
@@ -22,6 +26,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private emailService: EmailService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -33,7 +38,9 @@ export class AuthService {
       throw new ConflictException('Bu e-posta adresi zaten kayıtlı');
     }
 
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+    // If no password provided, generate a temporary random password
+    const passwordToHash = registerDto.password || this.generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(passwordToHash, 10);
 
     const user = await this.prisma.user.create({
       data: {
@@ -45,16 +52,17 @@ export class AuthService {
       },
     });
 
-    // Assign default role
-    const defaultRole = await this.prisma.role.findFirst({
-      where: { name: 'USER' },
+    // Assign role (use provided role or default to USER)
+    const roleName = registerDto.role || 'USER';
+    const role = await this.prisma.role.findFirst({
+      where: { name: roleName },
     });
 
-    if (defaultRole) {
+    if (role) {
       await this.prisma.userRole.create({
         data: {
           userId: user.id,
-          roleId: defaultRole.id,
+          roleId: role.id,
         },
       });
     }
@@ -70,6 +78,18 @@ export class AuthService {
         success: true,
       },
     });
+
+    // Send registration email
+    try {
+      await this.emailService.sendUserRegistrationEmail(
+        user.email,
+        user.firstName,
+        user.lastName,
+      );
+    } catch (error) {
+      console.error('Failed to send registration email:', error);
+      // Don't throw error, registration should succeed even if email fails
+    }
 
     return {
       accessToken: tokens.accessToken,
@@ -223,6 +243,16 @@ export class AuthService {
 
   private generateRandomToken(): string {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  }
+
+  private generateRandomPassword(): string {
+    const length = 16;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
   }
 
   async getProfile(userId: string) {
@@ -537,5 +567,207 @@ export class AuthService {
       phoneNumber: updatedUser.phoneNumber,
       roles: updatedUser.roles.map(ur => ur.role.name),
     };
+  }
+
+  async getUserRolesByEmailAndPassword(email: string, password: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Geçersiz e-posta veya şifre');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Geçersiz e-posta veya şifre');
+    }
+
+    // Get all users
+    const users = await this.prisma.user.findMany({
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    return {
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      roles: user.roles.map(ur => ur.role.name),
+      demoUsers: users.map(u => ({
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        password: 'demo123', // Demo password for testing
+        roles: u.roles.map(ur => ur.role.name),
+      })),
+    };
+  }
+
+  async getRoles() {
+    const roles = await this.prisma.role.findMany({
+      orderBy: { name: 'asc' },
+    });
+
+    return roles.map(role => ({
+      id: role.id,
+      name: role.name,
+      description: role.description,
+    }));
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: forgotPasswordDto.email },
+    });
+
+    if (!user) {
+      // Don't reveal if email exists or not for security
+      return { message: 'Eğer bu e-posta adresi kayıtlıysa, şifre sıfırlama bağlantısı gönderilecektir' };
+    }
+
+    // Generate reset token
+    const resetToken = this.generateRandomToken() + this.generateRandomToken();
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // Token expires in 1 hour
+
+    // Delete any existing reset tokens for this user
+    await this.prisma.passwordReset.deleteMany({
+      where: { userId: user.id },
+    });
+
+    // Create new reset token
+    await this.prisma.passwordReset.create({
+      data: {
+        userId: user.id,
+        token: resetToken,
+        expiresAt,
+      },
+    });
+
+    // Send email with reset link
+    try {
+      await this.emailService.sendPasswordResetEmail(
+        user.email,
+        user.firstName,
+        user.lastName,
+        resetToken,
+      );
+    } catch (error) {
+      console.error('Failed to send password reset email:', error);
+      // Don't throw error, user should still be able to reset password
+    }
+
+    return { message: 'Eğer bu e-posta adresi kayıtlıysa, şifre sıfırlama bağlantısı gönderilecektir' };
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ message: string }> {
+    const passwordReset = await this.prisma.passwordReset.findUnique({
+      where: { token: resetPasswordDto.token },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!passwordReset) {
+      throw new BadRequestException('Geçersiz veya süresi dolmuş token');
+    }
+
+    if (passwordReset.usedAt) {
+      throw new BadRequestException('Bu token zaten kullanılmış');
+    }
+
+    if (new Date() > passwordReset.expiresAt) {
+      throw new BadRequestException('Token süresi dolmuş');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(resetPasswordDto.password, 10);
+
+    // Update user password
+    await this.prisma.user.update({
+      where: { id: passwordReset.userId },
+      data: { password: hashedPassword },
+    });
+
+    // Mark token as used
+    await this.prisma.passwordReset.update({
+      where: { id: passwordReset.id },
+      data: { usedAt: new Date() },
+    });
+
+    // Revoke all refresh tokens for security
+    await this.prisma.refreshToken.updateMany({
+      where: { userId: passwordReset.userId },
+      data: { revokedAt: new Date() },
+    });
+
+    return { message: 'Şifre başarıyla sıfırlandı' };
+  }
+
+  async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Kullanıcı bulunamadı');
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(changePasswordDto.currentPassword, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Mevcut şifre hatalı');
+    }
+
+    // Check if new password is same as current password
+    const isSamePassword = await bcrypt.compare(changePasswordDto.newPassword, user.password);
+
+    if (isSamePassword) {
+      throw new BadRequestException('Yeni şifre mevcut şifre ile aynı olamaz');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
+
+    // Update user password
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    // Revoke all refresh tokens for security
+    await this.prisma.refreshToken.updateMany({
+      where: { userId },
+      data: { revokedAt: new Date() },
+    });
+
+    // Send password change notification email
+    try {
+      await this.emailService.sendPasswordChangeNotificationEmail(
+        user.email,
+        user.firstName,
+        user.lastName,
+      );
+    } catch (error) {
+      console.error('Failed to send password change notification email:', error);
+      // Don't throw error, password change should succeed even if email fails
+    }
+
+    return { message: 'Şifre başarıyla değiştirildi' };
   }
 }

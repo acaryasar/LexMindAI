@@ -23,6 +23,8 @@ export default function LoginPage() {
   const setAuth = useAuthStore((state) => state.setAuth);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [demoRoles, setDemoRoles] = useState<any>(null);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
 
   const {
     register,
@@ -52,8 +54,80 @@ export default function LoginPage() {
     }
   };
 
+  const handleDemoClick = async () => {
+    const email = (document.getElementById('email') as HTMLInputElement)?.value;
+    const password = (document.getElementById('password') as HTMLInputElement)?.value;
+
+    if (!email || !password) {
+      setError('Lütfen e-posta ve şifre alanlarını doldurun');
+      return;
+    }
+
+    setIsDemoLoading(true);
+    setError('');
+    setDemoRoles(null);
+
+    try {
+      const response = await api.post('/auth/demo-roles', { email, password });
+      setDemoRoles(response.data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Kullanıcı rolleri alınamadı');
+    } finally {
+      setIsDemoLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 relative">
+      {/* Demo Button - Bottom Right Corner */}
+      <Button
+        onClick={handleDemoClick}
+        disabled={isDemoLoading}
+        className="fixed bottom-4 right-4 z-50"
+        variant="outline"
+      >
+        {isDemoLoading ? 'Yükleniyor...' : 'Demo'}
+      </Button>
+
+      {/* Demo Roles Display */}
+      {demoRoles && (
+        <div className="fixed bottom-16 right-4 z-50 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg max-w-md max-h-[80vh] overflow-y-auto">
+          <h3 className="font-bold mb-3 text-gray-900 dark:text-white">Demo Kullanıcıları</h3>
+          
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            {demoRoles.demoUsers && demoRoles.demoUsers.length > 0 ? (
+              <div className="space-y-2">
+                {demoRoles.demoUsers.map((user: any, index: number) => (
+                  <div key={index} className="p-2 bg-gray-50 dark:bg-gray-700/50 rounded-md">
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {user.firstName} {user.lastName}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300">
+                      <strong>Şifre:</strong> {user.password}
+                    </p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300">
+                      <strong>Roller:</strong> {user.roles.join(', ')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">Kullanıcı bulunamadı</p>
+            )}
+          </div>
+          
+          <Button
+            onClick={() => setDemoRoles(null)}
+            className="mt-3 w-full"
+            size="sm"
+            variant="ghost"
+          >
+            Kapat
+          </Button>
+        </div>
+      )}
+
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
         {/* Left side - Branding */}
         <div className="flex flex-col justify-center space-y-6">
@@ -94,6 +168,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right side - Login Form */}
+
         <Card className="shadow-xl">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold">Giriş Yap</CardTitle>
@@ -165,9 +240,18 @@ export default function LoginPage() {
                 {isLoading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
               </Button>
             </form>
-          </CardContent>
-        </Card>
+          </CardContent>          
+        </Card>    
+
       </div>
+
+      {/* Copyright - Screen Center and Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 text-center py-4">
+        <p className="text-slate-600 text-xs">
+          © 2026 Acar Software. All rights reserved.
+        </p>
+      </div>
+
     </div>
   );
 }

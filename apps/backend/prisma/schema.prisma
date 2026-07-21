@@ -30,6 +30,7 @@ model User {
   refreshTokens RefreshToken[]
   loginHistory  LoginHistory[]
   sessions      Session[]
+  passwordResets PasswordReset[]
   clients       ClientLawyer[]
   cases         CaseLawyer[]
   notifications  Notification[]
@@ -136,6 +137,18 @@ model Session {
   createdAt DateTime @default(now())
   
   @@map("sessions")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  
+  @@map("password_resets")
 }
 
 // Organization
