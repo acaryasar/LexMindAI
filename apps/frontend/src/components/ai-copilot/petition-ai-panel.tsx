@@ -674,32 +674,11 @@ function QualityAnalysisCard({ score, metrics, isAnalyzing, onAnalyze }: Quality
       {/* Overall Score */}
       <Card className="bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-700">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Dilekçe Kalite Analizi</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Son analiz: {new Date().toLocaleDateString('tr-TR')}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onAnalyze}
-              disabled={isAnalyzing}
-              className="hover:bg-purple-100 dark:hover:bg-purple-900/20"
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Analiz ediliyor...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Yeniden Analiz Et
-                </>
-              )}
-            </Button>
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Dilekçe Kalite Analizi</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Son analiz: {new Date().toLocaleDateString('tr-TR')}
+            </p>
           </div>
 
           <div className="flex items-center justify-center py-4">
@@ -715,6 +694,28 @@ function QualityAnalysisCard({ score, metrics, isAnalyzing, onAnalyze }: Quality
                 {getScoreLabel(score)}
               </p>
             </div>
+          </div>
+
+          <div className="flex justify-center mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onAnalyze}
+              disabled={isAnalyzing}
+              className="text-xs px-3 py-1.5 hover:bg-purple-100 dark:hover:bg-purple-900/20"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                  Analiz ediliyor...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3 h-3 mr-1.5" />
+                  Yeniden Analiz Et
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
