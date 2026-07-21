@@ -10,7 +10,7 @@ import { ArrowLeft, Edit, Save, Phone, Mail, Shield, Trash2, Check } from 'lucid
 import { usersApi, User } from '@/lib/api/users';
 import { useAlert } from '@/components/ui/alert-dialog';
 
-const AVAILABLE_ROLES = ['USER', 'ADMIN', 'LAWYER'];
+const AVAILABLE_ROLES = ['USER', 'ADMIN', 'LAWYER', 'MANAGING_PARTNER', 'PARTNER', 'SECRETARY', 'ACCOUNTANT'];
 
 export default function UserDetailPage() {
   const { showAlert } = useAlert();

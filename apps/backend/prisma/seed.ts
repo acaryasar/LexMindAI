@@ -139,6 +139,24 @@ async function main() {
     },
   });
 
+  const userRole = await prisma.role.upsert({
+    where: { name: 'USER' },
+    update: {},
+    create: {
+      name: 'USER',
+      description: 'User - Basic access',
+    },
+  });
+
+  const adminRole = await prisma.role.upsert({
+    where: { name: 'ADMIN' },
+    update: {},
+    create: {
+      name: 'ADMIN',
+      description: 'Admin - System administration access',
+    },
+  });
+
   // Create admin user
   const hashedPassword = await bcrypt.hash('admin123', 10);
   const adminUser = await prisma.user.upsert({
@@ -155,18 +173,18 @@ async function main() {
     },
   });
 
-  // Assign managing partner role to admin
+  // Assign admin role to admin user
   await prisma.userRole.upsert({
     where: {
       userId_roleId: {
         userId: adminUser.id,
-        roleId: managingPartnerRole.id,
+        roleId: adminRole.id,
       },
     },
     update: {},
     create: {
       userId: adminUser.id,
-      roleId: managingPartnerRole.id,
+      roleId: adminRole.id,
     },
   });
 
