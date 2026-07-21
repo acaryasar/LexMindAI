@@ -50,6 +50,7 @@ export default function DashboardPage() {
     pendingTasks: 0,
   });
   const [todayEvents, setTodayEvents] = useState<CalendarEvent[]>([]);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [recentActivities] = useState([
     { id: 1, action: 'Yeni dava oluşturuldu', time: '2 saat önce', type: 'case' },
     { id: 2, action: 'Belge yüklendi', time: '3 saat önce', type: 'document' },
@@ -325,15 +326,18 @@ export default function DashboardPage() {
 
                             {/* Event Card */}
                             <div className="flex-1 ml-4">
-                              <div className={`bg-white dark:bg-gray-800 rounded-2xl p-4 ${isFirst ? 'shadow-md' : 'shadow-sm'} hover:shadow-lg transition-all duration-200 ${isFirst ? 'border-l-4 border-l-blue-500 border border-blue-200 dark:border-blue-800' : 'border border-gray-100 dark:border-gray-700'} group-hover:border-blue-200 dark:group-hover:border-blue-800`}>
-                                {/* Event Header */}
-                                <div className="flex items-start justify-between mb-3">
+                              <div
+                                onClick={() => setExpandedEventId(expandedEventId === event.id ? null : event.id)}
+                                className={`bg-white dark:bg-gray-800 rounded-2xl cursor-pointer transition-all duration-300 ${isFirst ? 'shadow-md' : 'shadow-sm'} hover:shadow-lg ${isFirst ? 'border-l-4 border-l-blue-500 border border-blue-200 dark:border-blue-800' : 'border border-gray-100 dark:border-gray-700'} group-hover:border-blue-200 dark:group-hover:border-blue-800 ${expandedEventId === event.id ? 'p-4' : 'p-3'}`}
+                              >
+                                {/* Event Header - Always Visible */}
+                                <div className="flex items-start justify-between">
                                   <div className="flex items-center space-x-2">
                                     <div className={`w-8 h-8 rounded-lg bg-${config.color}-bg dark:bg-${config.color}-900/20 flex items-center justify-center`}>
                                       <Icon className={`w-4 h-4 text-${config.color}-600 dark:text-${config.color}-400`} />
                                     </div>
                                     <div>
-                                      <p className="font-semibold text-gray-900 dark:text-white">{config.label}</p>
+                                      <p className="font-semibold text-gray-900 dark:text-white text-sm">{config.label}</p>
                                       <span className={`text-xs bg-${config.color}-100 dark:bg-${config.color}-900/30 text-${config.color}-700 dark:text-${config.color}-300 px-2 py-0.5 rounded-full`}>
                                         {event.type}
                                       </span>
@@ -348,123 +352,128 @@ export default function DashboardPage() {
                                   </div>
                                 </div>
 
-                                {/* Event Details */}
-                                <div className="space-y-2 mb-3">
-                                  {event.location && (
-                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                      <MapPin className="w-4 h-4 mr-2" />
-                                      <span>{event.location}</span>
+                                {/* Expanded Content */}
+                                {expandedEventId === event.id && (
+                                  <div className="mt-3 space-y-3">
+                                    {/* Event Details */}
+                                    <div className="space-y-2">
+                                      {event.location && (
+                                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                          <MapPin className="w-4 h-4 mr-2" />
+                                          <span>{event.location}</span>
+                                        </div>
+                                      )}
+                                      {event.duration && (
+                                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                          <Clock3 className="w-4 h-4 mr-2" />
+                                          <span>Süre: {event.duration} dakika</span>
+                                        </div>
+                                      )}
+                                      {event.notes && (
+                                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                          <NotebookPen className="w-4 h-4 mr-2" />
+                                          <span className="truncate">{event.notes}</span>
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
-                                  {event.duration && (
-                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                      <Clock3 className="w-4 h-4 mr-2" />
-                                      <span>Süre: {event.duration} dakika</span>
-                                    </div>
-                                  )}
-                                  {event.notes && (
-                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                      <NotebookPen className="w-4 h-4 mr-2" />
-                                      <span className="truncate">{event.notes}</span>
-                                    </div>
-                                  )}
-                                </div>
 
-                                {/* AI Insight */}
-                                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 mb-3 border border-purple-100 dark:border-purple-800">
-                                  <div className="flex items-start space-x-2">
-                                    <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
-                                    <p className="text-xs text-purple-700 dark:text-purple-300">
-                                      {isCurrent ? 'Bu etkinlik şu an başlıyor. Hazırlıklarınızı tamamlayın.' : 'Bu etkinlik için hazırlık yapmayı unutmayın.'}
-                                    </p>
+                                    {/* AI Insight */}
+                                    <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 border border-purple-100 dark:border-purple-800">
+                                      <div className="flex items-start space-x-2">
+                                        <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+                                        <p className="text-xs text-purple-700 dark:text-purple-300">
+                                          {isCurrent ? 'Bu etkinlik şu an başlıyor. Hazırlıklarınızı tamamlayın.' : 'Bu etkinlik için hazırlık yapmayı unutmayın.'}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {/* Conditional Action Buttons */}
+                                    <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
+                                      {event.type === 'HEARING' && (
+                                        <>
+                                          <Button size="sm" className="flex-1" onClick={() => handleOpenCase('')}>
+                                            Davayı Aç
+                                          </Button>
+                                          <Button size="sm" variant="outline" onClick={() => handleOpenMaps(event.location || '')}>
+                                            <Navigation className="w-4 h-4 mr-1" />
+                                            Yol Tarifi
+                                          </Button>
+                                        </>
+                                      )}
+                                      {event.type === 'CLIENT_MEETING' && (
+                                        <>
+                                          <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
+                                            Toplantıya Katıl
+                                          </Button>
+                                          <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                            <NotebookPen className="w-4 h-4 mr-1" />
+                                            Notlar
+                                          </Button>
+                                        </>
+                                      )}
+                                      {event.type === 'DOCUMENT_REVIEW' && (
+                                        <>
+                                          <Button size="sm" className="flex-1" onClick={handleViewPetition}>
+                                            Dilekçeyi Gör
+                                          </Button>
+                                          <Button size="sm" variant="outline" onClick={handleAISummary}>
+                                            <Sparkles className="w-4 h-4 mr-1" />
+                                            AI Özet
+                                          </Button>
+                                        </>
+                                      )}
+                                      {event.type === 'INTERNAL_MEETING' && (
+                                        <>
+                                          <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
+                                            Toplantıya Katıl
+                                          </Button>
+                                          <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                            <NotebookPen className="w-4 h-4 mr-1" />
+                                            Notlar
+                                          </Button>
+                                        </>
+                                      )}
+                                      {event.type === 'VIDEO_CALL' && (
+                                        <>
+                                          <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
+                                            Görüşmeye Katıl
+                                          </Button>
+                                          <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                            <NotebookPen className="w-4 h-4 mr-1" />
+                                            Notlar
+                                          </Button>
+                                        </>
+                                      )}
+                                      {event.type === 'PHONE_CALL' && (
+                                        <>
+                                          <Button size="sm" className="flex-1">
+                                            Aramayı Başlat
+                                          </Button>
+                                          <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                            <NotebookPen className="w-4 h-4 mr-1" />
+                                            Notlar
+                                          </Button>
+                                        </>
+                                      )}
+                                      {(event.type === 'DEADLINE' || event.type === 'REMINDER') && (
+                                        <Button size="sm" className="flex-1" onClick={() => router.push('/tasks')}>
+                                          Görevleri Gör
+                                        </Button>
+                                      )}
+                                      {event.type === 'OTHER' && (
+                                        <>
+                                          <Button size="sm" className="flex-1" onClick={handleOpenFile}>
+                                            Dosyayı Aç
+                                          </Button>
+                                          <Button size="sm" variant="outline" onClick={handleAIAnalysis}>
+                                            <Sparkles className="w-4 h-4 mr-1" />
+                                            AI Analizi
+                                          </Button>
+                                        </>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-
-                                {/* Conditional Action Buttons */}
-                                <div className="flex items-center space-x-2">
-                                  {event.type === 'HEARING' && (
-                                    <>
-                                      <Button size="sm" className="flex-1" onClick={() => handleOpenCase('')}>
-                                        Davayı Aç
-                                      </Button>
-                                      <Button size="sm" variant="outline" onClick={() => handleOpenMaps(event.location || '')}>
-                                        <Navigation className="w-4 h-4 mr-1" />
-                                        Yol Tarifi
-                                      </Button>
-                                    </>
-                                  )}
-                                  {event.type === 'CLIENT_MEETING' && (
-                                    <>
-                                      <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
-                                        Toplantıya Katıl
-                                      </Button>
-                                      <Button size="sm" variant="outline" onClick={handleOpenNotes}>
-                                        <NotebookPen className="w-4 h-4 mr-1" />
-                                        Notlar
-                                      </Button>
-                                    </>
-                                  )}
-                                  {event.type === 'DOCUMENT_REVIEW' && (
-                                    <>
-                                      <Button size="sm" className="flex-1" onClick={handleViewPetition}>
-                                        Dilekçeyi Gör
-                                      </Button>
-                                      <Button size="sm" variant="outline" onClick={handleAISummary}>
-                                        <Sparkles className="w-4 h-4 mr-1" />
-                                        AI Özet
-                                      </Button>
-                                    </>
-                                  )}
-                                  {event.type === 'INTERNAL_MEETING' && (
-                                    <>
-                                      <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
-                                        Toplantıya Katıl
-                                      </Button>
-                                      <Button size="sm" variant="outline" onClick={handleOpenNotes}>
-                                        <NotebookPen className="w-4 h-4 mr-1" />
-                                        Notlar
-                                      </Button>
-                                    </>
-                                  )}
-                                  {event.type === 'VIDEO_CALL' && (
-                                    <>
-                                      <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
-                                        Görüşmeye Katıl
-                                      </Button>
-                                      <Button size="sm" variant="outline" onClick={handleOpenNotes}>
-                                        <NotebookPen className="w-4 h-4 mr-1" />
-                                        Notlar
-                                      </Button>
-                                    </>
-                                  )}
-                                  {event.type === 'PHONE_CALL' && (
-                                    <>
-                                      <Button size="sm" className="flex-1">
-                                        Aramayı Başlat
-                                      </Button>
-                                      <Button size="sm" variant="outline" onClick={handleOpenNotes}>
-                                        <NotebookPen className="w-4 h-4 mr-1" />
-                                        Notlar
-                                      </Button>
-                                    </>
-                                  )}
-                                  {(event.type === 'DEADLINE' || event.type === 'REMINDER') && (
-                                    <Button size="sm" className="flex-1" onClick={() => router.push('/tasks')}>
-                                      Görevleri Gör
-                                    </Button>
-                                  )}
-                                  {event.type === 'OTHER' && (
-                                    <>
-                                      <Button size="sm" className="flex-1" onClick={handleOpenFile}>
-                                        Dosyayı Aç
-                                      </Button>
-                                      <Button size="sm" variant="outline" onClick={handleAIAnalysis}>
-                                        <Sparkles className="w-4 h-4 mr-1" />
-                                        AI Analizi
-                                      </Button>
-                                    </>
-                                  )}
-                                </div>
+                                )}
                               </div>
                             </div>
                           </div>
