@@ -362,4 +362,96 @@ export class EmailService {
       html,
     });
   }
+
+  async sendCalendarEventInvitationEmail(
+    to: string,
+    recipientName: string,
+    eventDetails: {
+      title: string;
+      date: string;
+      time?: string;
+      location?: string;
+      type: string;
+      notes?: string;
+      caseNumber?: string;
+    },
+    creatorName: string,
+  ) {
+    const subject = 'Yeni Takvim Etkinliği Daveti';
+    const calendarUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/calendar`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #1e40af; color: white; padding: 20px; text-align: center; }
+          .content { background: #f9fafb; padding: 30px; border-radius: 8px; margin-top: 20px; }
+          .details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; }
+          .button { display: inline-block; padding: 12px 24px; background: #1e40af; color: white; text-decoration: none; border-radius: 6px; margin-top: 20px; }
+          .info { background: #e0f2fe; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #0284c7; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>LexMind AI</h1>
+          </div>
+          <div class="content">
+            <h2>Merhaba ${recipientName},</h2>
+            <p>Sizi yeni bir takvim etkinliğine davet ediyoruz:</p>
+            
+            <div class="details">
+              <h3>${eventDetails.title}</h3>
+              <p><strong>Tür:</strong> ${this.getEventTypeLabel(eventDetails.type)}</p>
+              <p><strong>Tarih:</strong> ${new Date(eventDetails.date).toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              ${eventDetails.time ? `<p><strong>Saat:</strong> ${eventDetails.time}</p>` : ''}
+              ${eventDetails.location ? `<p><strong>Konum:</strong> ${eventDetails.location}</p>` : ''}
+              ${eventDetails.caseNumber ? `<p><strong>Dava No:</strong> ${eventDetails.caseNumber}</p>` : ''}
+              ${eventDetails.notes ? `<p><strong>Notlar:</strong> ${eventDetails.notes}</p>` : ''}
+              <p><strong>Oluşturan:</strong> ${creatorName}</p>
+            </div>
+            
+            <div class="info">
+              <p><strong>ℹ️ Bilgi:</strong> Bu etkinlik takviminizde görünecektir. Detayları görmek için sisteme giriş yapabilirsiniz.</p>
+            </div>
+            
+            <a href="${calendarUrl}" class="button">Takvime Git</a>
+          </div>
+          <div class="footer">
+            <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
+            <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await this.transporter.sendMail({
+      from: `"LexMind AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+  }
+
+  private getEventTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+      HEARING: 'Duruşma',
+      MEETING: 'Toplantı',
+      DEADLINE: 'Son Tarih',
+      REMINDER: 'Hatırlatma',
+      CLIENT_MEETING: 'Müvekkil Görüşmesi',
+      DOCUMENT_REVIEW: 'Belge İncelemesi',
+      INTERNAL_MEETING: 'İç Toplantı',
+      PHONE_CALL: 'Telefon Görüşmesi',
+      VIDEO_CALL: 'Video Görüşme',
+      OTHER: 'Diğer',
+    };
+    return labels[type] || type;
+  }
 }

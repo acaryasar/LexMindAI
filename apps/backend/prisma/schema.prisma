@@ -34,6 +34,7 @@ model User {
   clients       ClientLawyer[]
   cases         CaseLawyer[]
   notifications  Notification[]
+  calendarEventParticipants CalendarEventParticipant[]
   
   // Audit
   createdAt     DateTime   @default(now())
@@ -320,6 +321,7 @@ model Case {
   tasks       CaseTask[]
   hearings    CaseHearing[]
   tags        CaseTag[]
+  calendarEvents CalendarEvent[] @relation("EventCase")
   
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
@@ -672,23 +674,43 @@ model AIUsageLog {
 
 // Calendar & Tasks
 model CalendarEvent {
-  id        String   @id @default(uuid())
-  title     String
-  date      DateTime
-  time      String?
-  duration  Int?
-  location  String?
-  notes     String?
-  type      String
+  id           String                    @id @default(uuid())
+  title        String
+  date         DateTime
+  time         String?
+  duration     Int?
+  location     String?
+  notes        String?
+  type         String
+  caseId       String?
   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
-  deletedBy String?
+  // Relations
+  case         Case?                     @relation("EventCase", fields: [caseId], references: [id])
+  participants CalendarEventParticipant[]
+  
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  updatedBy    String?
+  deletedBy    String?
   
   @@map("calendar_events")
+}
+
+model CalendarEventParticipant {
+  id        String   @id @default(uuid())
+  eventId   String
+  userId    String
+  status    String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  responseAt DateTime?
+  
+  // Relations
+  event     CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, userId])
+  @@map("calendar_event_participants")
 }
 
 model Task {

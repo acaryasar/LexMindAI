@@ -48,9 +48,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Add role to user object for easy access in controllers
+    const roleNames = user.roles.map(ur => ur.role.name);
     const userWithRole = {
       ...user,
-      role: user.roles[0]?.role?.name || null,
+      role: roleNames[0] || null,
+      roles: roleNames,
     };
 
     return userWithRole;

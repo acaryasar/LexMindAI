@@ -71,6 +71,18 @@ export class AuthService {
 
     await this.saveRefreshToken(user.id, tokens.refreshToken);
 
+    // Fetch user with roles
+    const userWithRoles = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
     // Log login history
     await this.prisma.loginHistory.create({
       data: {
@@ -91,15 +103,20 @@ export class AuthService {
       // Don't throw error, registration should succeed even if email fails
     }
 
+    if (!userWithRoles) {
+      throw new Error('Kullanıcı bulunamadı');
+    }
+
     return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
       user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phoneNumber: user.phoneNumber || undefined,
+        id: userWithRoles.id,
+        email: userWithRoles.email,
+        firstName: userWithRoles.firstName,
+        lastName: userWithRoles.lastName,
+        phoneNumber: userWithRoles.phoneNumber || undefined,
+        roles: userWithRoles.roles.map((ur: any) => ur.role.name),
       },
     };
   }
@@ -164,14 +181,15 @@ export class AuthService {
     await this.saveRefreshToken(user.id, tokens.refreshToken);
 
     return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
       user: {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         phoneNumber: user.phoneNumber || undefined,
+        roles: user.roles.map((ur: any) => ur.role.name),
       },
     };
   }

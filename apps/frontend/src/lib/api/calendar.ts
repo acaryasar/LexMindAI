@@ -9,6 +9,23 @@ export interface CalendarEvent {
   location?: string;
   notes?: string;
   type: string;
+  caseId?: string;
+  participants?: {
+    id: string;
+    userId: string;
+    status: string;
+    user: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string;
+    };
+  }[];
+  case?: {
+    id: string;
+    caseNumber: string;
+    title: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +38,8 @@ export interface CreateCalendarEventDto {
   location?: string;
   notes?: string;
   type: string;
+  caseId?: string;
+  participantIds?: string[];
 }
 
 export interface UpdateCalendarEventDto {
@@ -31,6 +50,8 @@ export interface UpdateCalendarEventDto {
   location?: string;
   notes?: string;
   type?: string;
+  caseId?: string;
+  participantIds?: string[];
 }
 
 export interface CalendarEventsResponse {
