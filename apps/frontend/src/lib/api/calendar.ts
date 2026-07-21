@@ -44,32 +44,37 @@ export interface CalendarEventsResponse {
 }
 
 export const calendarApi = {
-  getAll: async (page: number = 1, limit: number = 50, search?: string): Promise<CalendarEventsResponse> => {
+  getAll: async (startDate?: string, endDate?: string, type?: string): Promise<CalendarEvent[]> => {
     const params = new URLSearchParams();
-    params.append('page', page.toString());
-    params.append('limit', limit.toString());
-    if (search) params.append('search', search);
-    
-    const response = await api.get(`/calendar?${params.toString()}`);
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    if (type) params.append('type', type);
+
+    const response = await api.get(`/calendar/events?${params.toString()}`);
     return response.data;
   },
 
   getById: async (id: string): Promise<CalendarEvent> => {
-    const response = await api.get(`/calendar/${id}`);
+    const response = await api.get(`/calendar/events/${id}`);
     return response.data;
   },
 
   create: async (data: CreateCalendarEventDto): Promise<CalendarEvent> => {
-    const response = await api.post('/calendar', data);
+    const response = await api.post('/calendar/events', data);
     return response.data;
   },
 
   update: async (id: string, data: UpdateCalendarEventDto): Promise<CalendarEvent> => {
-    const response = await api.patch(`/calendar/${id}`, data);
+    const response = await api.patch(`/calendar/events/${id}`, data);
     return response.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await api.delete(`/calendar/${id}`);
+    await api.delete(`/calendar/events/${id}`);
+  },
+
+  getUpcoming: async (days: number = 7): Promise<CalendarEvent[]> => {
+    const response = await api.get(`/calendar/upcoming?days=${days}`);
+    return response.data;
   },
 };
