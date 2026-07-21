@@ -6,8 +6,6 @@ import {
   Brain,
   Sparkles,
   Plus,
-  Minimize2,
-  Maximize2,
   RefreshCw,
   Zap,
   PenTool,
@@ -106,7 +104,6 @@ interface PetitionAIPanelProps {
 
 export function PetitionAIPanel({ petition, selectedText, onApplyToDocument }: PetitionAIPanelProps) {
   const [activeTab, setActiveTab] = useState<TabType>('quick');
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [prompt, setPrompt] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -228,68 +225,21 @@ export function PetitionAIPanel({ petition, selectedText, onApplyToDocument }: P
     }
   }, [petition]);
 
-  if (isCollapsed) {
-    return (
-      <div
-        className="fixed right-0 top-0 h-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-l border-gray-200/50 dark:border-gray-700/50 z-50 flex flex-col items-center py-4 gap-4 transition-all duration-300"
-        style={{ width: '60px' }}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsCollapsed(false)}
-          className="hover:bg-purple-100 dark:hover:bg-purple-900/20"
-        >
-          <Maximize2 className="w-5 h-5 text-purple-600" />
-        </Button>
-        <div className="flex-1 flex flex-col items-center gap-3">
-          {[
-            { tab: 'quick' as TabType, icon: Zap },
-            { tab: 'writing' as TabType, icon: PenTool },
-            { tab: 'legal' as TabType, icon: Scale },
-            { tab: 'precedent' as TabType, icon: BookOpen },
-            { tab: 'control' as TabType, icon: CheckCircle2 },
-            { tab: 'final' as TabType, icon: Package },
-          ].map(({ tab, icon: Icon }) => (
-            <Button
-              key={tab}
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                setActiveTab(tab);
-                setIsCollapsed(false);
-              }}
-              className={cn(
-                'hover:bg-purple-100 dark:hover:bg-purple-900/20',
-                activeTab === tab && 'bg-purple-100 dark:bg-purple-900/20 text-purple-600'
-              )}
-            >
-              <Icon className="w-5 h-5" />
-            </Button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div
-      className="fixed right-0 top-0 h-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-l border-gray-200/50 dark:border-gray-700/50 z-50 flex flex-col shadow-2xl transition-all duration-300"
-      style={{ width: '440px' }}
-    >
+    <div className="w-full h-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border-l border-gray-200/50 dark:border-gray-700/50 flex flex-col shadow-2xl">
       {/* Header */}
       <div className="p-4 border-b border-gray-200/50 dark:border-gray-700/50">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-lg">
               <Brain className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                🤖 LexMind AI
+                🤖 Dilekçe AI
               </h2>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Dilekçenizi yapay zekâ ile analiz edin, geliştirin ve güçlendirin.
+                Dilekçe Analizi
               </p>
             </div>
           </div>
@@ -300,9 +250,6 @@ export function PetitionAIPanel({ petition, selectedText, onApplyToDocument }: P
             </div>
             <Button variant="ghost" size="icon" onClick={handleNewChat} className="hover:bg-purple-100 dark:hover:bg-purple-900/20">
               <RefreshCw className="w-4 h-4 text-purple-600" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(true)} className="hover:bg-purple-100 dark:hover:bg-purple-900/20">
-              <Minimize2 className="w-4 h-4 text-purple-600" />
             </Button>
           </div>
         </div>
