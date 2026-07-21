@@ -402,7 +402,140 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
+      phoneNumber: user.phoneNumber,
       roles: user.roles.map(ur => ur.role.name),
     }));
+  }
+
+  async getUserById(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new HttpException('Kullanıcı bulunamadı', HttpStatus.NOT_FOUND);
+    }
+
+    return {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      roles: user.roles.map(ur => ur.role.name),
+    };
+  }
+
+  async updateUser(id: string, updateDto: any) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new HttpException('Kullanıcı bulunamadı', HttpStatus.NOT_FOUND);
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        firstName: updateDto.firstName,
+        lastName: updateDto.lastName,
+        email: updateDto.email,
+        phoneNumber: updateDto.phoneNumber,
+      },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    return {
+      id: updatedUser.id,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      email: updatedUser.email,
+      phoneNumber: updatedUser.phoneNumber,
+      roles: updatedUser.roles.map(ur => ur.role.name),
+    };
+  }
+
+  async deleteUser(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new HttpException('Kullanıcı bulunamadı', HttpStatus.NOT_FOUND);
+    }
+
+    await this.prisma.user.delete({
+      where: { id },
+    });
+  }
+
+  async updateUserRoles(id: string, roles: string[]) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new HttpException('Kullanıcı bulunamadı', HttpStatus.NOT_FOUND);
+    }
+
+    // Delete existing user roles
+    await this.prisma.userRole.deleteMany({
+      where: { userId: id },
+    });
+
+    // Add new roles
+    for (const roleName of roles) {
+      const role = await this.prisma.role.findFirst({
+        where: { name: roleName },
+      });
+
+      if (role) {
+        await this.prisma.userRole.create({
+          data: {
+            userId: id,
+            roleId: role.id,
+          },
+        });
+      }
+    }
+
+    // Return updated user with roles
+    const updatedUser = await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!updatedUser) {
+      throw new HttpException('Kullanıcı bulunamadı', HttpStatus.NOT_FOUND);
+    }
+
+    return {
+      id: updatedUser.id,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      email: updatedUser.email,
+      phoneNumber: updatedUser.phoneNumber,
+      roles: updatedUser.roles.map(ur => ur.role.name),
+    };
   }
 }

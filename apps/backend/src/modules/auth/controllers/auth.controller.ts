@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Put, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Get, Put, Delete, Param, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto/login.dto';
@@ -99,5 +99,49 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
   async getUsers(@Request() req: any) {
     return this.authService.getUsers();
+  }
+
+  @Get('users/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Kullanıcı detaylarını getir' })
+  @ApiResponse({ status: 200, description: 'Kullanıcı detayları getirildi' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  @ApiResponse({ status: 404, description: 'Kullanıcı bulunamadı' })
+  async getUserById(@Request() req: any, @Param('id') id: string) {
+    return this.authService.getUserById(id);
+  }
+
+  @Put('users/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Kullanıcı bilgilerini güncelle' })
+  @ApiResponse({ status: 200, description: 'Kullanıcı güncellendi' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  @ApiResponse({ status: 404, description: 'Kullanıcı bulunamadı' })
+  async updateUser(@Request() req: any, @Param('id') id: string, @Body() updateDto: any) {
+    return this.authService.updateUser(id, updateDto);
+  }
+
+  @Delete('users/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Kullanıcı sil' })
+  @ApiResponse({ status: 204, description: 'Kullanıcı silindi' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  @ApiResponse({ status: 404, description: 'Kullanıcı bulunamadı' })
+  async deleteUser(@Request() req: any, @Param('id') id: string) {
+    return this.authService.deleteUser(id);
+  }
+
+  @Put('users/:id/roles')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Kullanıcı rollerini güncelle' })
+  @ApiResponse({ status: 200, description: 'Roller güncellendi' })
+  @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  @ApiResponse({ status: 404, description: 'Kullanıcı bulunamadı' })
+  async updateUserRoles(@Request() req: any, @Param('id') id: string, @Body() body: { roles: string[] }) {
+    return this.authService.updateUserRoles(id, body.roles);
   }
 }

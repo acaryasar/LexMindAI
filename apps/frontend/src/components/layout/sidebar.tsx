@@ -76,6 +76,11 @@ const navigation = [
     ],
   },
   {
+    name: 'Kullanıcılar',
+    href: '/users',
+    icon: Users,
+  },
+  {
     name: 'Ayarlar',
     href: '/settings',
     icon: Settings,
