@@ -38,6 +38,7 @@ import { clientsApi } from '@/lib/api/clients';
 import { casesApi } from '@/lib/api/cases';
 import { hearingsApi, Hearing } from '@/lib/api/hearings';
 import { tasksApi } from '@/lib/api/tasks';
+import { calendarApi, CalendarEvent } from '@/lib/api/calendar';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -48,6 +49,7 @@ export default function DashboardPage() {
     upcomingHearings: 0,
     pendingTasks: 0,
   });
+  const [todayEvents, setTodayEvents] = useState<CalendarEvent[]>([]);
   const [recentActivities] = useState([
     { id: 1, action: 'Yeni dava oluşturuldu', time: '2 saat önce', type: 'case' },
     { id: 2, action: 'Belge yüklendi', time: '3 saat önce', type: 'document' },
@@ -63,16 +65,28 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const [clientsResponse, casesResponse, hearingsResponse, tasksResponse] = await Promise.all([
+      const [clientsResponse, casesResponse, hearingsResponse, tasksResponse, eventsResponse] = await Promise.all([
         clientsApi.getAll(1, 1),
         casesApi.getAll(1, 1, undefined, 'ACTIVE'),
         hearingsApi.getAll(1, 100),
         tasksApi.getAll(1, 1, undefined, 'TODO'),
+        calendarApi.getUpcoming(1),
       ]);
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const todayEventsList = eventsResponse.filter(event => {
+        const eventDate = new Date(event.date);
+        return eventDate >= today && eventDate < tomorrow;
+      }).sort((a, b) => {
+        const timeA = a.time || '00:00';
+        const timeB = b.time || '00:00';
+        return timeA.localeCompare(timeB);
+      });
+
       const upcomingHearingsList = hearingsResponse.data
         .filter(hearing => new Date(hearing.date) >= today)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -85,12 +99,81 @@ export default function DashboardPage() {
         pendingTasks: tasksResponse.meta.total,
       });
 
+      setTodayEvents(todayEventsList);
       setUpcomingHearings(upcomingHearingsList);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper functions for event types
+  const getEventConfig = (type: string) => {
+    const configs: Record<string, { icon: any; color: string; label: string; badgeColor: string }> = {
+      HEARING: { icon: Scale, color: 'blue', label: 'Duruşma', badgeColor: 'blue' },
+      CLIENT_MEETING: { icon: Users, color: 'green', label: 'Müvekkil Görüşmesi', badgeColor: 'green' },
+      DOCUMENT_REVIEW: { icon: ScrollText, color: 'purple', label: 'Dilekçe Teslimi', badgeColor: 'purple' },
+      INTERNAL_MEETING: { icon: Users, color: 'indigo', label: 'İç Toplantı', badgeColor: 'indigo' },
+      PHONE_CALL: { icon: Phone, color: 'pink', label: 'Telefon Görüşmesi', badgeColor: 'pink' },
+      VIDEO_CALL: { icon: Video, color: 'teal', label: 'Video Görüşme', badgeColor: 'teal' },
+      DEADLINE: { icon: Clock3, color: 'orange', label: 'Son Tarih', badgeColor: 'orange' },
+      REMINDER: { icon: CircleCheckBig, color: 'green', label: 'Hatırlatma', badgeColor: 'green' },
+      MEETING: { icon: Users, color: 'blue', label: 'Toplantı', badgeColor: 'blue' },
+      OTHER: { icon: FolderOpen, color: 'gray', label: 'Diğer', badgeColor: 'gray' },
+    };
+    return configs[type] || configs.OTHER;
+  };
+
+  const getCountdown = (event: CalendarEvent) => {
+    if (!event.time) return null;
+    const now = new Date();
+    const eventTime = new Date(event.date);
+    const [hours, minutes] = event.time.split(':').map(Number);
+    eventTime.setHours(hours, minutes, 0, 0);
+    const diff = eventTime.getTime() - now.getTime();
+    if (diff <= 0) return 'Şu an';
+    const minutesDiff = Math.floor(diff / 60000);
+    if (minutesDiff < 60) return `${minutesDiff} dk sonra`;
+    const hoursDiff = Math.floor(minutesDiff / 60);
+    if (hoursDiff < 24) return `${hoursDiff} saat ${minutesDiff % 60} dk sonra`;
+    return `${Math.floor(hoursDiff / 24)} gün sonra`;
+  };
+
+  const handleOpenCase = (caseNumber: string) => {
+    router.push(`/cases/${caseNumber}`);
+  };
+
+  const handleOpenMaps = (location: string) => {
+    const encodedLocation = encodeURIComponent(location);
+    window.open(`https://maps.google.com/?q=${encodedLocation}`, '_blank');
+  };
+
+  const handleJoinMeeting = () => {
+    window.open('https://meet.google.com', '_blank');
+  };
+
+  const handleOpenNotes = () => {
+    // Open notes dialog or navigate to notes page
+    router.push('/notes');
+  };
+
+  const handleViewPetition = () => {
+    // Open petition document
+    router.push('/documents');
+  };
+
+  const handleAISummary = () => {
+    // Open AI summary dialog
+    router.push('/ai/summary');
+  };
+
+  const handleOpenFile = () => {
+    router.push('/files');
+  };
+
+  const handleAIAnalysis = () => {
+    router.push('/ai/analysis');
   };
 
   const kpiData = [
@@ -210,260 +293,184 @@ export default function DashboardPage() {
 
                   {/* Timeline Items */}
                   <div className="space-y-4">
-                    {/* Event 1 - Court Hearing - Current Event */}
-                    <div className="relative flex items-start group">
-                      {/* Time Column */}
-                      <div className="w-[80px] flex-shrink-0 pr-4">
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-gray-900 dark:text-white">09:30</p>
-                          <p className="text-xs text-gray-500">AM</p>
-                        </div>
+                    {todayEvents.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p>Bugün için planlanan etkinlik yok</p>
                       </div>
+                    ) : (
+                      todayEvents.map((event, index) => {
+                        const config = getEventConfig(event.type);
+                        const Icon = config.icon;
+                        const countdown = getCountdown(event);
+                        const isFirst = index === 0;
+                        const isCurrent = countdown === 'Şu an';
 
-                      {/* Timeline Node with Pulse Animation */}
-                      <div className="absolute left-[76px] w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-gray-900 shadow-md z-10 animate-pulse"></div>
-
-                      {/* Event Card - Current Event Highlighting */}
-                      <div className="flex-1 ml-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-md hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 border border-blue-200 dark:border-blue-800 group-hover:border-blue-300 dark:group-hover:border-blue-700">
-                          {/* Event Header */}
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                                <Scale className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-gray-900 dark:text-white">Duruşma</p>
-                                <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">Court Hearing</span>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs font-medium text-orange-600 dark:text-orange-400">20 dk sonra başlıyor</p>
-                            </div>
-                          </div>
-
-                          {/* Event Details */}
-                          <div className="space-y-2 mb-3">
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <Building2 className="w-4 h-4 mr-2" />
-                              <span>Ankara 3. İş Mahkemesi</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <FileText className="w-4 h-4 mr-2" />
-                              <span>Dava: 2026/154</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <Users className="w-4 h-4 mr-2" />
-                              <span>Müvekkil: ABC Holding</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <MapPin className="w-4 h-4 mr-2" />
-                              <span>Durum Salonu 12</span>
-                            </div>
-                          </div>
-
-                          {/* AI Insight */}
-                          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 mb-3 border border-purple-100 dark:border-purple-800">
-                            <div className="flex items-start space-x-2">
-                              <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
-                              <p className="text-xs text-purple-700 dark:text-purple-300">Bu duruşma 30 dakika sonra başlıyor. Trafik gecikmeye neden olabilir. Duruşma notlarını hazırlayın.</p>
-                            </div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex items-center space-x-2">
-                            <Button size="sm" className="flex-1">
-                              Davayı Aç
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Navigation className="w-4 h-4 mr-1" />
-                              Yol Tarifi
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Event 2 - Client Meeting */}
-                    <div className="relative flex items-start group">
-                      <div className="w-[80px] flex-shrink-0 pr-4">
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-gray-900 dark:text-white">11:00</p>
-                          <p className="text-xs text-gray-500">AM</p>
-                        </div>
-                      </div>
-
-                      <div className="absolute left-[76px] w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-gray-900 shadow-md z-10"></div>
-
-                      <div className="flex-1 ml-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-gray-700 group-hover:border-blue-200 dark:group-hover:border-blue-800">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                                <Users className="w-4 h-4 text-green-600 dark:text-green-400" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-gray-900 dark:text-white">Müvekkil Görüşmesi</p>
-                                <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">Client Meeting</span>
+                        return (
+                          <div key={event.id} className="relative flex items-start group">
+                            {/* Time Column */}
+                            <div className="w-[80px] flex-shrink-0 pr-4">
+                              <div className="text-right">
+                                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                                  {event.time || '--:--'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(event.date).toLocaleDateString('tr-TR', { month: 'short' })}
+                                </p>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-xs font-medium text-blue-600 dark:text-blue-400">1 saat 50 dk sonra</p>
-                            </div>
-                          </div>
 
-                          <div className="space-y-2 mb-3">
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <Users className="w-4 h-4 mr-2" />
-                              <span>Müvekkil: XYZ Şirketi</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <Video className="w-4 h-4 mr-2" />
-                              <span>Video Toplantısı</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <Clock3 className="w-4 h-4 mr-2" />
-                              <span>Süre: 45 dakika</span>
-                            </div>
-                          </div>
+                            {/* Timeline Node */}
+                            <div className={`absolute left-[76px] w-4 h-4 rounded-full bg-${config.color}-500 border-4 border-white dark:border-gray-900 shadow-md z-10 ${isCurrent ? 'animate-pulse' : ''}`}></div>
 
-                          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 mb-3 border border-purple-100 dark:border-purple-800">
-                            <div className="flex items-start space-x-2">
-                              <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
-                              <p className="text-xs text-purple-700 dark:text-purple-300">Müvekkil bu sabah yeni kanıt yükledi. Duruşmadan önce inceleyin.</p>
-                            </div>
-                          </div>
+                            {/* Event Card */}
+                            <div className="flex-1 ml-4">
+                              <div className={`bg-white dark:bg-gray-800 rounded-2xl p-4 ${isFirst ? 'shadow-md' : 'shadow-sm'} hover:shadow-lg transition-all duration-200 ${isFirst ? 'border-l-4 border-l-blue-500 border border-blue-200 dark:border-blue-800' : 'border border-gray-100 dark:border-gray-700'} group-hover:border-blue-200 dark:group-hover:border-blue-800`}>
+                                {/* Event Header */}
+                                <div className="flex items-start justify-between mb-3">
+                                  <div className="flex items-center space-x-2">
+                                    <div className={`w-8 h-8 rounded-lg bg-${config.color}-bg dark:bg-${config.color}-900/20 flex items-center justify-center`}>
+                                      <Icon className={`w-4 h-4 text-${config.color}-600 dark:text-${config.color}-400`} />
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-gray-900 dark:text-white">{config.label}</p>
+                                      <span className={`text-xs bg-${config.color}-100 dark:bg-${config.color}-900/30 text-${config.color}-700 dark:text-${config.color}-300 px-2 py-0.5 rounded-full`}>
+                                        {event.type}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    {countdown && (
+                                      <p className={`text-xs font-medium ${isCurrent ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}>
+                                        {countdown}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
 
-                          <div className="flex items-center space-x-2">
-                            <Button size="sm" className="flex-1">
-                              Toplantıya Katıl
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <NotebookPen className="w-4 h-4 mr-1" />
-                              Notlar
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                                {/* Event Details */}
+                                <div className="space-y-2 mb-3">
+                                  {event.location && (
+                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                      <MapPin className="w-4 h-4 mr-2" />
+                                      <span>{event.location}</span>
+                                    </div>
+                                  )}
+                                  {event.duration && (
+                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                      <Clock3 className="w-4 h-4 mr-2" />
+                                      <span>Süre: {event.duration} dakika</span>
+                                    </div>
+                                  )}
+                                  {event.notes && (
+                                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                      <NotebookPen className="w-4 h-4 mr-2" />
+                                      <span className="truncate">{event.notes}</span>
+                                    </div>
+                                  )}
+                                </div>
 
-                    {/* Event 3 - Document Review */}
-                    <div className="relative flex items-start group">
-                      <div className="w-[80px] flex-shrink-0 pr-4">
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-gray-900 dark:text-white">14:30</p>
-                          <p className="text-xs text-gray-500">PM</p>
-                        </div>
-                      </div>
+                                {/* AI Insight */}
+                                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 mb-3 border border-purple-100 dark:border-purple-800">
+                                  <div className="flex items-start space-x-2">
+                                    <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+                                    <p className="text-xs text-purple-700 dark:text-purple-300">
+                                      {isCurrent ? 'Bu etkinlik şu an başlıyor. Hazırlıklarınızı tamamlayın.' : 'Bu etkinlik için hazırlık yapmayı unutmayın.'}
+                                    </p>
+                                  </div>
+                                </div>
 
-                      <div className="absolute left-[76px] w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-gray-900 shadow-md z-10"></div>
-
-                      <div className="flex-1 ml-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-gray-700 group-hover:border-blue-200 dark:group-hover:border-blue-800">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
-                                <ScrollText className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                {/* Conditional Action Buttons */}
+                                <div className="flex items-center space-x-2">
+                                  {event.type === 'HEARING' && (
+                                    <>
+                                      <Button size="sm" className="flex-1" onClick={() => handleOpenCase('')}>
+                                        Davayı Aç
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={() => handleOpenMaps(event.location || '')}>
+                                        <Navigation className="w-4 h-4 mr-1" />
+                                        Yol Tarifi
+                                      </Button>
+                                    </>
+                                  )}
+                                  {event.type === 'CLIENT_MEETING' && (
+                                    <>
+                                      <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
+                                        Toplantıya Katıl
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                        <NotebookPen className="w-4 h-4 mr-1" />
+                                        Notlar
+                                      </Button>
+                                    </>
+                                  )}
+                                  {event.type === 'DOCUMENT_REVIEW' && (
+                                    <>
+                                      <Button size="sm" className="flex-1" onClick={handleViewPetition}>
+                                        Dilekçeyi Gör
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={handleAISummary}>
+                                        <Sparkles className="w-4 h-4 mr-1" />
+                                        AI Özet
+                                      </Button>
+                                    </>
+                                  )}
+                                  {event.type === 'INTERNAL_MEETING' && (
+                                    <>
+                                      <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
+                                        Toplantıya Katıl
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                        <NotebookPen className="w-4 h-4 mr-1" />
+                                        Notlar
+                                      </Button>
+                                    </>
+                                  )}
+                                  {event.type === 'VIDEO_CALL' && (
+                                    <>
+                                      <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
+                                        Görüşmeye Katıl
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                        <NotebookPen className="w-4 h-4 mr-1" />
+                                        Notlar
+                                      </Button>
+                                    </>
+                                  )}
+                                  {event.type === 'PHONE_CALL' && (
+                                    <>
+                                      <Button size="sm" className="flex-1">
+                                        Aramayı Başlat
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                        <NotebookPen className="w-4 h-4 mr-1" />
+                                        Notlar
+                                      </Button>
+                                    </>
+                                  )}
+                                  {(event.type === 'DEADLINE' || event.type === 'REMINDER') && (
+                                    <Button size="sm" className="flex-1" onClick={() => router.push('/tasks')}>
+                                      Görevleri Gör
+                                    </Button>
+                                  )}
+                                  {event.type === 'OTHER' && (
+                                    <>
+                                      <Button size="sm" className="flex-1" onClick={handleOpenFile}>
+                                        Dosyayı Aç
+                                      </Button>
+                                      <Button size="sm" variant="outline" onClick={handleAIAnalysis}>
+                                        <Sparkles className="w-4 h-4 mr-1" />
+                                        AI Analizi
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-semibold text-gray-900 dark:text-white">Dilekçe Teslimi</p>
-                                <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full">Petition</span>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs font-medium text-blue-600 dark:text-blue-400">5 saat sonra</p>
                             </div>
                           </div>
-
-                          <div className="space-y-2 mb-3">
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <FileText className="w-4 h-4 mr-2" />
-                              <span>Dava: 2026/155</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <Building2 className="w-4 h-4 mr-2" />
-                              <span>İstanbul 5. Asliye Hukuk Mahkemesi</span>
-                            </div>
-                          </div>
-
-                          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 mb-3 border border-purple-100 dark:border-purple-800">
-                            <div className="flex items-start space-x-2">
-                              <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
-                              <p className="text-xs text-purple-700 dark:text-purple-300">Dilekçe taslağı hazır. AI özeti kullanabilirsiniz.</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <Button size="sm" className="flex-1">
-                              Dilekçeyi Gör
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Sparkles className="w-4 h-4 mr-1" />
-                              AI Özet
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Event 4 - File Review */}
-                    <div className="relative flex items-start group">
-                      <div className="w-[80px] flex-shrink-0 pr-4">
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-gray-900 dark:text-white">16:00</p>
-                          <p className="text-xs text-gray-500">PM</p>
-                        </div>
-                      </div>
-
-                      <div className="absolute left-[76px] w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-gray-900 shadow-md z-10"></div>
-
-                      <div className="flex-1 ml-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-gray-700 group-hover:border-blue-200 dark:group-hover:border-blue-800">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
-                                <FolderOpen className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-gray-900 dark:text-white">Dosya İncelemesi</p>
-                                <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded-full">Research</span>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs font-medium text-blue-600 dark:text-blue-400">6.5 saat sonra</p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2 mb-3">
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <FileText className="w-4 h-4 mr-2" />
-                              <span>Dava: 2026/145</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                              <Search className="w-4 h-4 mr-2" />
-                              <span>Benzemeyen kararlar araştırması</span>
-                            </div>
-                          </div>
-
-                          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 mb-3 border border-purple-100 dark:border-purple-800">
-                            <div className="flex items-start space-x-2">
-                              <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
-                              <p className="text-xs text-purple-700 dark:text-purple-300">Benzer bir mahkeme kararı bulundu. İncelemenizi öneriyoruz.</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <Button size="sm" className="flex-1">
-                              Dosyayı Aç
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Sparkles className="w-4 h-4 mr-1" />
-                              AI Analizi
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               </CardContent>

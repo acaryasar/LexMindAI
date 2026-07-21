@@ -665,6 +665,8 @@ async function main() {
     for (let day = 0; day < 14; day++) {
       const eventDate = new Date();
       eventDate.setDate(eventDate.getDate() + day);
+      // Set time to noon to avoid timezone issues
+      eventDate.setHours(12, 0, 0, 0);
 
       // Create 2-4 events per day
       const numEvents = getRandomNumber(2, 4);

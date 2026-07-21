@@ -39,10 +39,11 @@ export class CalendarController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('type') type?: string,
+    @Request() req?: any,
   ) {
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
-    return this.calendarService.getEvents(start, end, type);
+    return this.calendarService.getEvents(start, end, type, req?.user?.id, req?.user?.roles);
   }
 
   @Get('events/:id')
@@ -73,8 +74,8 @@ export class CalendarController {
   @Get('upcoming')
   @ApiOperation({ summary: 'Yaklaşan etkinlikler' })
   @ApiResponse({ status: 200, description: 'Yaklaşan etkinlikler getirildi' })
-  getUpcomingEvents(@Query('days') days?: string) {
+  getUpcomingEvents(@Query('days') days?: string, @Request() req?: any) {
     const daysCount = days ? parseInt(days) : 7;
-    return this.calendarService.getUpcomingEvents(daysCount);
+    return this.calendarService.getUpcomingEvents(daysCount, req?.user?.id, req?.user?.roles);
   }
 }

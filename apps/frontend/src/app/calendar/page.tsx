@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Plus, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Edit, Trash2 } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Edit, Trash2, NotebookPen } from 'lucide-react';
 import { calendarApi, CalendarEvent, CreateCalendarEventDto, UpdateCalendarEventDto } from '@/lib/api/calendar';
 import { useAlert } from '@/components/ui/alert-dialog';
 
@@ -19,6 +19,8 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [selectedDayEvents, setSelectedDayEvents] = useState<CalendarEvent[]>([]);
+  const [isDayDialogOpen, setIsDayDialogOpen] = useState(false);
   const [formData, setFormData] = useState<CreateCalendarEventDto>({
     title: '',
     date: new Date().toISOString().split('T')[0],
@@ -146,6 +148,20 @@ export default function CalendarPage() {
     }
   };
 
+  const handleDayClick = (day: number) => {
+    const dayEvents = events.filter(e => {
+      const eventDate = new Date(e.date);
+      return eventDate.getDate() === day &&
+             eventDate.getMonth() === currentDate.getMonth() &&
+             eventDate.getFullYear() === currentDate.getFullYear();
+    });
+
+    if (dayEvents.length > 0) {
+      setSelectedDayEvents(dayEvents);
+      setIsDayDialogOpen(true);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -211,13 +227,7 @@ export default function CalendarPage() {
                       className={`p-2 min-h-[80px] border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${
                         isToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                       }`}
-                      onClick={() => {
-                        if (dayEvents.length === 1) {
-                          handleEditEvent(dayEvents[0]);
-                        } else if (dayEvents.length > 1) {
-                          handleCreateEvent();
-                        }
-                      }}
+                      onClick={() => handleDayClick(day)}
                     >
                       <span className={`text-sm font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
                         {day}
@@ -384,6 +394,73 @@ export default function CalendarPage() {
           </Button>
           <Button onClick={handleSubmit}>
             {editingEvent ? 'Güncelle' : 'Oluştur'}
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
+      {/* Day Events Dialog */}
+      <Dialog open={isDayDialogOpen} onOpenChange={setIsDayDialogOpen}>
+        <DialogHeader>
+          <DialogTitle>
+            {selectedDayEvents.length > 0
+              ? `${new Date(selectedDayEvents[0].date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })} Etkinlikleri`
+              : 'Etkinlikler'}
+          </DialogTitle>
+          <DialogClose onClick={() => setIsDayDialogOpen(false)} />
+        </DialogHeader>
+        <DialogContent>
+          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            {selectedDayEvents.map((event) => (
+              <div
+                key={event.id}
+                className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => {
+                  setIsDayDialogOpen(false);
+                  handleEditEvent(event);
+                }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full ${
+                      typeColors[event.type as keyof typeof typeColors] || typeColors.OTHER
+                    }`}
+                  >
+                    {typeLabels[event.type as keyof typeof typeLabels] || event.type}
+                  </span>
+                  {event.time && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {event.time}
+                    </span>
+                  )}
+                </div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-1">
+                  {event.title}
+                </h4>
+                {event.location && (
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    <MapPin className="w-4 h-4" />
+                    <span className="truncate">{event.location}</span>
+                  </div>
+                )}
+                {event.notes && (
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                    <NotebookPen className="w-4 h-4" />
+                    <span className="truncate">{event.notes}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsDayDialogOpen(false)}>
+            Kapat
+          </Button>
+          <Button onClick={() => {
+            setIsDayDialogOpen(false);
+            handleCreateEvent();
+          }}>
+            Yeni Etkinlik
           </Button>
         </DialogFooter>
       </Dialog>

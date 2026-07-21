@@ -18,8 +18,14 @@ export class CalendarService {
     return event;
   }
 
-  async getEvents(startDate?: Date, endDate?: Date, type?: string) {
+  async getEvents(startDate?: Date, endDate?: Date, type?: string, userId?: string, userRoles?: string[]) {
     const where: any = {};
+
+    // Role-based filtering
+    const isAdminOrPartner = userRoles?.includes('ADMIN') || userRoles?.includes('MANAGING_PARTNER');
+    if (!isAdminOrPartner && userId) {
+      where.createdBy = userId;
+    }
 
     if (startDate || endDate) {
       where.date = {};
@@ -87,18 +93,26 @@ export class CalendarService {
     });
   }
 
-  async getUpcomingEvents(days: number = 7) {
+  async getUpcomingEvents(days: number = 7, userId?: string, userRoles?: string[]) {
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + days);
 
-    return this.prisma.calendarEvent.findMany({
-      where: {
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
+    const where: any = {
+      date: {
+        gte: startDate,
+        lte: endDate,
       },
+    };
+
+    // Role-based filtering
+    const isAdminOrPartner = userRoles?.includes('ADMIN') || userRoles?.includes('MANAGING_PARTNER');
+    if (!isAdminOrPartner && userId) {
+      where.createdBy = userId;
+    }
+
+    return this.prisma.calendarEvent.findMany({
+      where,
       orderBy: { date: 'asc' },
     });
   }
