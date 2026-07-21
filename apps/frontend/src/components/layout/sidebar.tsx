@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ChevronRight,
   Search,
+  ScrollText,
 } from 'lucide-react';
 
 const navigation = [
@@ -49,6 +50,11 @@ const navigation = [
     name: 'İçtihat Arama',
     href: '/precedent-search',
     icon: Search,
+  },
+  {
+    name: 'Dilekçeler',
+    href: '/petitions',
+    icon: ScrollText,
   },
   {
     name: 'AI Asistan',
