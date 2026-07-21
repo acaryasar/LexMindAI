@@ -481,7 +481,7 @@ async function main() {
   console.log('Creating tasks...');
   for (let i = 0; i < 50; i++) {
     const caseData = getRandomItem(cases);
-    
+
     await prisma.task.create({
       data: {
         title: getRandomItem([
@@ -503,6 +503,192 @@ async function main() {
         createdBy: adminUser.id,
       },
     });
+  }
+
+  // Enhanced seeding: Link lawyers to unique clients and create cases with hearings
+  console.log('Enhanced seeding: Linking lawyers to clients and creating cases...');
+
+  // Get all lawyers with LAWYER role
+  const lawyers = await prisma.user.findMany({
+    where: {
+      roles: {
+        some: {
+          role: {
+            name: 'LAWYER'
+          }
+        }
+      }
+    }
+  });
+
+  console.log(`Found ${lawyers.length} lawyers`);
+
+  // Create 10 unique clients per lawyer
+  const lawyerClientsMap = new Map<string, any[]>();
+  for (const lawyer of lawyers) {
+    const lawyerClients = [];
+    for (let i = 0; i < 10; i++) {
+      const firstName = getRandomItem(turkishNames.firstNames);
+      const lastName = getRandomItem(turkishNames.lastNames);
+      const city = getRandomItem(turkishCities);
+      const nationalId = generateTurkishNationalId();
+
+      const client = await prisma.client.upsert({
+        where: { nationalId },
+        update: {},
+        create: {
+          firstName,
+          lastName,
+          email: generateEmail(firstName, lastName),
+          phoneNumber: generatePhoneNumber(),
+          nationalId,
+          address: generateAddress(city),
+          tags: getRandomItem([['VIP'], ['Kurumsal'], ['Bireysel'], ['Yüksek Risk'], []]),
+        },
+      });
+
+      // Link client to lawyer
+      await prisma.clientLawyer.create({
+        data: {
+          clientId: client.id,
+          userId: lawyer.id,
+          isPrimary: i === 0,
+          status: 'ACTIVE',
+        },
+      }).catch(() => {});
+
+      lawyerClients.push(client);
+    }
+    lawyerClientsMap.set(lawyer.id, lawyerClients);
+    console.log(`Created 10 clients for lawyer ${lawyer.firstName} ${lawyer.lastName}`);
+  }
+
+  // Create 40 cases distributed among lawyers and clients
+  console.log('Creating 40 cases with hearings...');
+  const enhancedCases = [];
+  for (let i = 0; i < 40; i++) {
+    const lawyer = getRandomItem(lawyers);
+    const lawyerClients = lawyerClientsMap.get(lawyer.id) || [];
+    const client = getRandomItem(lawyerClients);
+    const city = getRandomItem(turkishCities);
+    const caseNumber = `${getRandomNumber(2020, 2024)}/${getRandomNumber(1000, 9999)}`;
+
+    const caseData = await prisma.case.upsert({
+      where: { caseNumber },
+      update: {},
+      create: {
+        caseNumber,
+        title: `${getRandomItem(caseTypes)} - ${client.firstName} ${client.lastName}`,
+        description: getRandomItem(caseDescriptions),
+        status: 'ACTIVE',
+        type: getRandomItem(['CIVIL', 'CRIMINAL', 'FAMILY', 'COMMERCIAL', 'ADMINISTRATIVE']),
+        courtName: `${city} ${getRandomItem(courtTypes)}`,
+        courtCity: city,
+        startDate: getRandomDate(2020, 2024),
+      },
+    });
+    enhancedCases.push(caseData);
+
+    // Link client to case
+    await prisma.caseClient.create({
+      data: {
+        caseId: caseData.id,
+        clientId: client.id,
+        role: 'CLIENT',
+      },
+    });
+
+    // Assign lawyer to case
+    await prisma.caseLawyer.create({
+      data: {
+        caseId: caseData.id,
+        userId: lawyer.id,
+        role: 'LEAD_LAWYER',
+      },
+    });
+
+    // Create 3 hearings per case
+    // Hearing 1: Random date in 2025
+    const hearing1Date = getRandomDate(2025, 2025);
+    await prisma.caseHearing.create({
+      data: {
+        caseId: caseData.id,
+        date: hearing1Date,
+        time: `${getRandomNumber(9, 17)}:00`,
+        location: `${caseData.courtName}, Duruşma Salonu ${getRandomNumber(1, 10)}`,
+        notes: 'İlk duruşma',
+      },
+    });
+
+    // Hearing 2: Last week
+    const lastWeekDate = new Date();
+    lastWeekDate.setDate(lastWeekDate.getDate() - getRandomNumber(1, 7));
+    await prisma.caseHearing.create({
+      data: {
+        caseId: caseData.id,
+        date: lastWeekDate,
+        time: `${getRandomNumber(9, 17)}:00`,
+        location: `${caseData.courtName}, Duruşma Salonu ${getRandomNumber(1, 10)}`,
+        notes: 'Geçen haftaki duruşma',
+      },
+    });
+
+    // Hearing 3: Next week
+    const nextWeekDate = new Date();
+    nextWeekDate.setDate(nextWeekDate.getDate() + getRandomNumber(1, 7));
+    await prisma.caseHearing.create({
+      data: {
+        caseId: caseData.id,
+        date: nextWeekDate,
+        time: `${getRandomNumber(9, 17)}:00`,
+        location: `${caseData.courtName}, Duruşma Salonu ${getRandomNumber(1, 10)}`,
+        notes: 'Gelecek haftaki duruşma',
+      },
+    });
+  }
+  console.log('Created 40 cases with 3 hearings each (120 hearings total)');
+
+  // Create calendar events for lawyers (today + 2 weeks)
+  console.log('Creating calendar events for lawyers...');
+  const eventTypes = ['HEARING', 'CLIENT_MEETING', 'DOCUMENT_REVIEW', 'INTERNAL_MEETING', 'DEADLINE', 'PHONE_CALL', 'VIDEO_CALL'];
+  const eventTitles: Record<string, string[]> = {
+    HEARING: ['Duruşma', 'Mahkeme Görüşmesi', 'Tanıklık Dinlenmesi'],
+    CLIENT_MEETING: ['Müvekkil Görüşmesi', 'Danışmanlık Toplantısı', 'Vekaletname İmzalanması'],
+    DOCUMENT_REVIEW: ['Dilekçe İncelemesi', 'Belge Hazırlığı', 'Sözleşme Gözden Geçirme'],
+    INTERNAL_MEETING: ['Takım Toplantısı', 'Durum Değerlendirmesi', 'Strateji Görüşmesi'],
+    DEADLINE: ['Son Teslim Tarihi', 'İtiraz Süresi', 'Cevap Süresi'],
+    PHONE_CALL: ['Telefon Görüşmesi', 'Müvekkil Araması', 'Mahkeme İletişimi'],
+    VIDEO_CALL: ['Video Toplantısı', 'Online Görüşme', 'Uzaktan Danışmanlık']
+  };
+
+  for (const lawyer of lawyers) {
+    for (let day = 0; day < 14; day++) {
+      const eventDate = new Date();
+      eventDate.setDate(eventDate.getDate() + day);
+
+      // Create 2-4 events per day
+      const numEvents = getRandomNumber(2, 4);
+      for (let e = 0; e < numEvents; e++) {
+        const eventType = getRandomItem(eventTypes);
+        const eventTitle = getRandomItem(eventTitles[eventType]);
+        const eventHour = getRandomNumber(9, 17);
+        const eventMinute = getRandomNumber(0, 1) === 0 ? '00' : '30';
+
+        await prisma.calendarEvent.create({
+          data: {
+            title: eventTitle,
+            type: eventType,
+            date: eventDate,
+            time: `${eventHour}:${eventMinute}`,
+            duration: 60,
+            location: eventType === 'HEARING' ? getRandomItem(turkishCities) + ' Mahkemesi' : 'Ofis',
+            notes: `${eventType} - ${eventTitle}`,
+            createdBy: lawyer.id,
+          },
+        });
+      }
+    }
+    console.log(`Created calendar events for lawyer ${lawyer.firstName} ${lawyer.lastName}`);
   }
 
   console.log('Seed completed successfully!');
