@@ -143,18 +143,16 @@ export default function DashboardPage() {
               return (
                 <Card key={kpi.title}>
                   <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                          {kpi.title}
-                        </p>
-                        <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                          {kpi.value}
-                        </p>
-                      </div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 text-center">
+                      {kpi.title}
+                    </p>
+                    <div className="flex items-center gap-3 justify-center">
                       <div className={`w-12 h-12 rounded-lg ${colorClasses[kpi.color as keyof typeof colorClasses]} flex items-center justify-center`}>
                         <Icon className="w-6 h-6 text-white" />
                       </div>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                        {kpi.value}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

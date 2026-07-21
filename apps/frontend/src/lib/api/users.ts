@@ -18,4 +18,12 @@ export const usersApi = {
     });
     return response.data;
   },
+
+  async getLawyers(): Promise<User[]> {
+    const token = localStorage.getItem('accessToken');
+    const response = await axios.get(`${API_BASE_URL}/auth/users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data.filter((user: User) => user.roles.includes('LAWYER'));
+  },
 };

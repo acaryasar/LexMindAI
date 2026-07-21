@@ -105,7 +105,7 @@ export default function CasesPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {filteredCases.map((case_) => (
-              <Card key={case_.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => console.log('Case clicked:', case_.id)}>
+              <Card key={case_.id} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push(`/cases/${case_.id}`)}>
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

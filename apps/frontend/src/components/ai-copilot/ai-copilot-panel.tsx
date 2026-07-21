@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { generateMockRecommendations } from '@/lib/mock-data';
 
 interface AICopilotPanelProps {
-  context?: 'dashboard' | 'client' | 'case' | 'document';
+  context?: 'dashboard' | 'client' | 'case' | 'document' | 'hearing';
   entityId?: string;
 }
 
@@ -91,6 +91,9 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
       } else if (context === 'document') {
         setPanelTitle('Belge AI');
         setPanelSubtitle('Belge Analizi');
+      } else if (context === 'hearing') {
+        setPanelTitle('Duruşma AI');
+        setPanelSubtitle('Duruşma Analizi');
       }
 
       setRecommendations(mockRecommendations);

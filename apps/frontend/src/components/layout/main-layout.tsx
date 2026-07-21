@@ -46,6 +46,12 @@ export function MainLayout({ children, showAIPanel = false }: MainLayoutProps) {
       return { context: 'document' as const, entityId };
     }
 
+    if (pathname.startsWith('/hearings/') && pathname !== '/hearings') {
+      const parts = pathname.split('/');
+      const entityId = parts[2];
+      return { context: 'hearing' as const, entityId };
+    }
+
     // Route-based context mapping
     if (pathname === '/dashboard') {
       return { context: 'dashboard' as const, entityId: undefined };
@@ -61,6 +67,10 @@ export function MainLayout({ children, showAIPanel = false }: MainLayoutProps) {
 
     if (pathname.startsWith('/documents')) {
       return { context: 'document' as const, entityId: undefined };
+    }
+
+    if (pathname.startsWith('/hearings')) {
+      return { context: 'hearing' as const, entityId: undefined };
     }
 
     if (pathname.startsWith('/legal-research')) {
