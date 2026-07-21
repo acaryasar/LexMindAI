@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useMemo } from 'react';
 import { Sidebar } from './sidebar';
 import { Header } from './header';
 import { AICopilotPanel } from '@/components/ai-copilot/ai-copilot-panel';
+import { PetitionAIPanel } from '@/components/ai-copilot/petition-ai-panel';
 import { useAuthStore } from '@/stores/auth.store';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -77,6 +78,10 @@ export function MainLayout({ children, showAIPanel = false }: MainLayoutProps) {
       return { context: 'dashboard' as const, entityId: undefined };
     }
 
+    if (pathname.startsWith('/petitions')) {
+      return { context: 'petition' as const, entityId: undefined };
+    }
+
     // Default to dashboard context for other routes
     return { context: 'dashboard' as const, entityId: undefined };
   }, [pathname, showAIPanel]);
@@ -98,7 +103,11 @@ export function MainLayout({ children, showAIPanel = false }: MainLayoutProps) {
       {/* Global AI Panel */}
       {showAIPanel && aiPanelContext && (
         <div className="hidden lg:block fixed right-0 top-[64px] h-[calc(100vh-64px)] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 w-80 z-40">
-          <AICopilotPanel context={aiPanelContext.context} entityId={aiPanelContext.entityId} />
+          {aiPanelContext.context === 'petition' ? (
+            <PetitionAIPanel />
+          ) : (
+            <AICopilotPanel context={aiPanelContext.context} entityId={aiPanelContext.entityId} />
+          )}
         </div>
       )}
     </div>
