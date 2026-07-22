@@ -58,10 +58,12 @@ export default function DashboardPage() {
   const [editTimeDialogOpen, setEditTimeDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [addParticipantDialogOpen, setAddParticipantDialogOpen] = useState(false);
+  const [editNotesDialogOpen, setEditNotesDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [newTime, setNewTime] = useState('');
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [selectedParticipantId, setSelectedParticipantId] = useState('');
+  const [eventNotes, setEventNotes] = useState<Record<string, string>>({});
   const [recentActivities] = useState([
     { id: 1, action: 'Yeni dava oluşturuldu', time: '2 saat önce', type: 'case' },
     { id: 2, action: 'Belge yüklendi', time: '3 saat önce', type: 'document' },
@@ -276,6 +278,29 @@ export default function DashboardPage() {
     }
   };
 
+  const handleStartEditingNotes = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setEventNotes(prev => ({ ...prev, [event.id]: event.notes || '' }));
+    setEditNotesDialogOpen(true);
+  };
+
+  const handleCancelEditingNotes = () => {
+    setEditNotesDialogOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleSaveNotes = async () => {
+    if (!selectedEvent) return;
+    try {
+      await calendarApi.update(selectedEvent.id, { notes: eventNotes[selectedEvent.id] });
+      await fetchDashboardData();
+      setEditNotesDialogOpen(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      console.error('Error saving notes:', error);
+    }
+  };
+
   const handleAIAnalysis = () => {
     router.push('/ai/analysis');
   };
@@ -471,12 +496,25 @@ export default function DashboardPage() {
                                           <span>Süre: {event.duration} dakika</span>
                                         </div>
                                       )}
-                                      {event.notes && (
-                                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                                          <NotebookPen className="w-4 h-4 mr-2" />
-                                          <span className="truncate">{event.notes}</span>
-                                        </div>
-                                      )}
+                                      
+                                      {/* Notes Section */}
+                                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                        <NotebookPen className="w-4 h-4 mr-2" />
+                                        <span>Notlar</span>
+                                      </div>
+                                      <div 
+                                        className="min-h-[40px] p-2 bg-gray-50 dark:bg-gray-800 rounded-md text-sm text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleStartEditingNotes(event);
+                                        }}
+                                      >
+                                        {event.notes ? (
+                                          <p className="whitespace-pre-wrap">{event.notes}</p>
+                                        ) : (
+                                          <p className="text-gray-400 dark:text-gray-500 italic">Not eklemek için tıklayın...</p>
+                                        )}
+                                      </div>
                                     </div>
 
                                     {/* AI Insight */}
@@ -537,7 +575,10 @@ export default function DashboardPage() {
                                           <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
                                             Toplantıya Katıl
                                           </Button>
-                                          <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                          <Button size="sm" variant="outline" onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleStartEditingNotes(event);
+                                          }}>
                                             <NotebookPen className="w-4 h-4 mr-1" />
                                             Notlar
                                           </Button>
@@ -559,7 +600,10 @@ export default function DashboardPage() {
                                           <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
                                             Toplantıya Katıl
                                           </Button>
-                                          <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                          <Button size="sm" variant="outline" onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleStartEditingNotes(event);
+                                          }}>
                                             <NotebookPen className="w-4 h-4 mr-1" />
                                             Notlar
                                           </Button>
@@ -570,7 +614,10 @@ export default function DashboardPage() {
                                           <Button size="sm" className="flex-1" onClick={handleJoinMeeting}>
                                             Görüşmeye Katıl
                                           </Button>
-                                          <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                          <Button size="sm" variant="outline" onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleStartEditingNotes(event);
+                                          }}>
                                             <NotebookPen className="w-4 h-4 mr-1" />
                                             Notlar
                                           </Button>
@@ -581,7 +628,10 @@ export default function DashboardPage() {
                                           <Button size="sm" className="flex-1">
                                             Aramayı Başlat
                                           </Button>
-                                          <Button size="sm" variant="outline" onClick={handleOpenNotes}>
+                                          <Button size="sm" variant="outline" onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleStartEditingNotes(event);
+                                          }}>
                                             <NotebookPen className="w-4 h-4 mr-1" />
                                             Notlar
                                           </Button>
@@ -813,6 +863,36 @@ export default function DashboardPage() {
               Ekle
             </Button>
           )}
+        </DialogFooter>
+      </Dialog>
+
+      {/* Edit Notes Dialog */}
+      <Dialog open={editNotesDialogOpen} onOpenChange={setEditNotesDialogOpen}>
+        <DialogHeader>
+          <DialogTitle>Notları Düzenle</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="notes">Notlar</Label>
+              <textarea
+                id="notes"
+                value={selectedEvent ? eventNotes[selectedEvent.id] || '' : ''}
+                onChange={(e) => setEventNotes(prev => ({ ...prev, [selectedEvent?.id || '']: e.target.value }))}
+                className="w-full mt-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                rows={6}
+                placeholder="Notlarınızı buraya yazın..."
+              />
+            </div>
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={handleCancelEditingNotes}>
+            İptal
+          </Button>
+          <Button onClick={handleSaveNotes}>
+            Kaydet
+          </Button>
         </DialogFooter>
       </Dialog>
     </div>
