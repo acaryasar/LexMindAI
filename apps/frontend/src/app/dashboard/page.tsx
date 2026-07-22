@@ -66,26 +66,30 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const endOfToday = new Date(today);
+      endOfToday.setHours(23, 59, 59, 999);
+
       const [clientsResponse, casesResponse, hearingsResponse, tasksResponse, eventsResponse] = await Promise.all([
         clientsApi.getAll(1, 1),
         casesApi.getAll(1, 1, undefined, 'ACTIVE'),
         hearingsApi.getAll(1, 100),
         tasksApi.getAll(1, 1, undefined, 'TODO'),
-        calendarApi.getUpcoming(1),
+        calendarApi.getAll(today.toISOString(), endOfToday.toISOString()),
       ]);
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
 
       const todayEventsList = eventsResponse.filter(event => {
         const eventDate = new Date(event.date);
-        return eventDate >= today && eventDate < tomorrow;
+        return eventDate >= today && eventDate <= endOfToday;
       }).sort((a, b) => {
-        const timeA = a.time || '00:00';
-        const timeB = b.time || '00:00';
-        return timeA.localeCompare(timeB);
+        // Parse time strings to minutes for proper sorting
+        const parseTime = (time: string | undefined) => {
+          if (!time) return 0;
+          const [hours, minutes] = time.split(':').map(Number);
+          return hours * 60 + minutes;
+        };
+        return parseTime(a.time) - parseTime(b.time);
       });
 
       const upcomingHearingsList = hearingsResponse.data
@@ -275,7 +279,6 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-xl">Bugünün Ajandası</CardTitle>
-                    <p className="text-sm text-gray-500 mt-1">Bugünkü programınız</p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button variant="ghost" size="sm" className="h-8">

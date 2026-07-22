@@ -89,21 +89,14 @@ export class CalendarService {
   async getEvents(startDate?: Date, endDate?: Date, type?: string, userId?: string, userRoles?: string[]) {
     const where: any = {};
 
-    // Role-based filtering - filter by participants OR createdBy (for backward compatibility)
+    // Role-based filtering - ADMIN and MANAGING_PARTNER see all events
     const isAdminOrPartner = userRoles?.includes('ADMIN') || userRoles?.includes('MANAGING_PARTNER');
     if (!isAdminOrPartner && userId) {
-      where.OR = [
-        {
-          participants: {
-            some: {
-              userId: userId,
-            },
-          },
+      where.participants = {
+        some: {
+          userId: userId,
         },
-        {
-          createdBy: userId,
-        },
-      ];
+      };
     }
 
     if (startDate || endDate) {
@@ -205,21 +198,14 @@ export class CalendarService {
       },
     };
 
-    // Role-based filtering - filter by participants OR createdBy (for backward compatibility)
+    // Role-based filtering - ADMIN and MANAGING_PARTNER see all events
     const isAdminOrPartner = userRoles?.includes('ADMIN') || userRoles?.includes('MANAGING_PARTNER');
     if (!isAdminOrPartner && userId) {
-      where.OR = [
-        {
-          participants: {
-            some: {
-              userId: userId,
-            },
-          },
+      where.participants = {
+        some: {
+          userId: userId,
         },
-        {
-          createdBy: userId,
-        },
-      ];
+      };
     }
 
     return this.prisma.calendarEvent.findMany({
