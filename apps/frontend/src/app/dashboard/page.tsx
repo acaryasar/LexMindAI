@@ -6,6 +6,9 @@ import { MainLayout } from '@/components/layout/main-layout';
 import { AICopilotPanel } from '@/components/ai-copilot/ai-copilot-panel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Scale,
   Users,
@@ -39,6 +42,7 @@ import { casesApi } from '@/lib/api/cases';
 import { hearingsApi, Hearing } from '@/lib/api/hearings';
 import { tasksApi } from '@/lib/api/tasks';
 import { calendarApi, CalendarEvent } from '@/lib/api/calendar';
+import { usersApi, User } from '@/lib/api/users';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -51,6 +55,13 @@ export default function DashboardPage() {
   });
   const [todayEvents, setTodayEvents] = useState<CalendarEvent[]>([]);
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
+  const [editTimeDialogOpen, setEditTimeDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [addParticipantDialogOpen, setAddParticipantDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [newTime, setNewTime] = useState('');
+  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
+  const [selectedParticipantId, setSelectedParticipantId] = useState('');
   const [recentActivities] = useState([
     { id: 1, action: 'Yeni dava oluşturuldu', time: '2 saat önce', type: 'case' },
     { id: 2, action: 'Belge yüklendi', time: '3 saat önce', type: 'document' },
@@ -62,7 +73,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchAvailableUsers();
   }, []);
+
+  const fetchAvailableUsers = async () => {
+    try {
+      const users = await usersApi.getUsers();
+      setAvailableUsers(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -175,6 +196,84 @@ export default function DashboardPage() {
 
   const handleOpenFile = () => {
     router.push('/files');
+  };
+
+  // Event management handlers
+  const handleEditTime = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setNewTime(event.time || '');
+    setEditTimeDialogOpen(true);
+  };
+
+  const handleSaveTime = async () => {
+    if (!selectedEvent) return;
+    try {
+      await calendarApi.update(selectedEvent.id, { time: newTime });
+      await fetchDashboardData();
+      setEditTimeDialogOpen(false);
+      setSelectedEvent(null);
+      setNewTime('');
+    } catch (error) {
+      console.error('Error updating event time:', error);
+    }
+  };
+
+  const handleDeleteEvent = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedEvent) return;
+    try {
+      await calendarApi.delete(selectedEvent.id);
+      await fetchDashboardData();
+      setDeleteDialogOpen(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      console.error('Error deleting event:', error);
+    }
+  };
+
+  const handleAddParticipant = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setSelectedParticipantId('');
+    setAddParticipantDialogOpen(true);
+  };
+
+  const handleSaveParticipant = async () => {
+    if (!selectedEvent || !selectedParticipantId) return;
+    try {
+      const currentParticipantIds = selectedEvent.participants?.map(p => p.userId) || [];
+      await calendarApi.update(selectedEvent.id, { 
+        participantIds: [...currentParticipantIds, selectedParticipantId] 
+      });
+      await fetchDashboardData();
+      setAddParticipantDialogOpen(false);
+      setSelectedEvent(null);
+      setSelectedParticipantId('');
+    } catch (error) {
+      console.error('Error adding participant:', error);
+    }
+  };
+
+  const handleRemoveParticipant = async (participantUserId: string) => {
+    if (!selectedEvent) return;
+    try {
+      const currentParticipantIds = selectedEvent.participants?.map(p => p.userId) || [];
+      const updatedParticipantIds = currentParticipantIds.filter(id => id !== participantUserId);
+      await calendarApi.update(selectedEvent.id, { 
+        participantIds: updatedParticipantIds 
+      });
+      await fetchDashboardData();
+      // Update selectedEvent to reflect changes
+      setSelectedEvent({
+        ...selectedEvent,
+        participants: selectedEvent.participants?.filter(p => p.userId !== participantUserId) || []
+      });
+    } catch (error) {
+      console.error('Error removing participant:', error);
+    }
   };
 
   const handleAIAnalysis = () => {
@@ -390,6 +489,36 @@ export default function DashboardPage() {
                                       </div>
                                     </div>
 
+                                    {/* Event Management Actions */}
+                                    <div className="flex items-center space-x-2 pt-2 border-t border-gray-100 dark:border-gray-700" onClick={(e) => e.stopPropagation()}>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="flex-1 text-xs"
+                                        onClick={() => handleEditTime(event)}
+                                      >
+                                        <Clock3 className="w-3 h-3 mr-1" />
+                                        Saat Düzenle
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="flex-1 text-xs"
+                                        onClick={() => handleAddParticipant(event)}
+                                      >
+                                        <Users className="w-3 h-3 mr-1" />
+                                        Katılımcı Ekle
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="destructive" 
+                                        className="flex-1 text-xs"
+                                        onClick={() => handleDeleteEvent(event)}
+                                      >
+                                        Sil
+                                      </Button>
+                                    </div>
+
                                     {/* Conditional Action Buttons */}
                                     <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                                       {event.type === 'HEARING' && (
@@ -559,6 +688,133 @@ export default function DashboardPage() {
           </Card>
         </div>
       </MainLayout>
+
+      {/* Edit Time Dialog */}
+      <Dialog open={editTimeDialogOpen} onOpenChange={setEditTimeDialogOpen}>
+        <DialogHeader>
+          <DialogTitle>Saat Düzenle</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="time">Yeni Saat</Label>
+              <Input
+                id="time"
+                type="time"
+                value={newTime}
+                onChange={(e) => setNewTime(e.target.value)}
+              />
+            </div>
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setEditTimeDialogOpen(false)}>
+            İptal
+          </Button>
+          <Button onClick={handleSaveTime}>
+            Kaydet
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogHeader>
+          <DialogTitle>Etkinliği Sil</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Bu etkinliği silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+          </p>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+            İptal
+          </Button>
+          <Button variant="destructive" onClick={handleConfirmDelete}>
+            Sil
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
+      {/* Add Participant Dialog */}
+      <Dialog open={addParticipantDialogOpen} onOpenChange={setAddParticipantDialogOpen}>
+        <DialogHeader>
+          <DialogTitle>Katılımcı Yönetimi</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <div className="space-y-4 py-4">
+            {/* Existing Participants */}
+            {selectedEvent && selectedEvent.participants && selectedEvent.participants.length > 0 && (
+              <div>
+                <Label className="text-sm font-medium">Mevcut Katılımcılar</Label>
+                <div className="mt-2 space-y-2 max-h-40 overflow-y-auto">
+                  {selectedEvent.participants.map((participant) => (
+                    <div 
+                      key={participant.id} 
+                      className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-md"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                          <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                            {participant.user.firstName[0]}{participant.user.lastName[0]}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {participant.user.firstName} {participant.user.lastName}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {participant.user.email}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        onClick={() => handleRemoveParticipant(participant.userId)}
+                      >
+                        <CircleCheckBig className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add New Participant */}
+            <div>
+              <Label htmlFor="participant">Yeni Katılımcı Ekle</Label>
+              <select
+                id="participant"
+                value={selectedParticipantId}
+                onChange={(e) => setSelectedParticipantId(e.target.value)}
+                className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              >
+                <option value="">Kullanıcı seçin...</option>
+                {availableUsers
+                  .filter(user => !selectedEvent?.participants?.some(p => p.userId === user.id))
+                  .map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.firstName} {user.lastName} ({user.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setAddParticipantDialogOpen(false)}>
+            Kapat
+          </Button>
+          {selectedParticipantId && (
+            <Button onClick={handleSaveParticipant}>
+              Ekle
+            </Button>
+          )}
+        </DialogFooter>
+      </Dialog>
     </div>
   );
 }

@@ -151,10 +151,47 @@ export class CalendarService {
   async updateEvent(id: string, updateEventDto: UpdateEventDto, userId: string) {
     const event = await this.prisma.calendarEvent.findUnique({
       where: { id },
+      include: {
+        participants: true,
+      },
     });
 
     if (!event) {
       throw new NotFoundException('Etkinlik bulunamadı');
+    }
+
+    // Handle participant updates
+    if (updateEventDto.participantIds) {
+      // Delete existing participants
+      await this.prisma.calendarEventParticipant.deleteMany({
+        where: { eventId: id },
+      });
+
+      // Create new participants
+      const participantData = updateEventDto.participantIds.map((userId) => ({
+        eventId: id,
+        userId,
+        status: 'ACCEPTED',
+      }));
+
+      if (participantData.length > 0) {
+        await this.prisma.calendarEventParticipant.createMany({
+          data: participantData,
+        });
+      }
+
+      // Remove participantIds from updateEventDto to avoid Prisma error
+      const { participantIds, ...eventUpdateData } = updateEventDto;
+
+      const updated = await this.prisma.calendarEvent.update({
+        where: { id },
+        data: {
+          ...eventUpdateData,
+          updatedBy: userId,
+        },
+      });
+
+      return updated;
     }
 
     const updated = await this.prisma.calendarEvent.update({
