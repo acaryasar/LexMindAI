@@ -25,11 +25,12 @@ export class AIGatewayService {
     context?: any,
     userId?: string,
   ): Promise<{ response: string; usage?: any }> {
+    let aiConfig = null;
     try {
       const startTime = Date.now();
 
       // Get user-specific AI configuration
-      const aiConfig = await this.getUserAIConfig(userId);
+      aiConfig = await this.getUserAIConfig(userId);
 
       // Initialize OpenAI with user's API key or fallback to default
       const openai = this.getOpenAIClient(aiConfig);
@@ -58,6 +59,14 @@ export class AIGatewayService {
       };
     } catch (error) {
       this.logger.error('AI Chat error:', error);
+      this.logger.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        userId,
+        hasConfig: !!aiConfig,
+        hasApiKey: !!aiConfig?.apiKey,
+        provider: aiConfig?.provider,
+      });
       throw error;
     }
   }

@@ -5,6 +5,7 @@ import {
   BadRequestException,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -22,6 +23,8 @@ import axios from 'axios';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -310,21 +313,34 @@ export class AuthService {
   }
 
   async updateAIConfig(userId: string, aiConfig: { provider: string; apiKey: string; model: string; settings?: any }) {
-    const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY') || 'default-encryption-key';
-    
-    const encryptedApiKey = EncryptionUtil.encrypt(aiConfig.apiKey, encryptionKey);
+    try {
+      this.logger.log(`Updating AI config for user ${userId}`, {
+        provider: aiConfig.provider,
+        hasApiKey: !!aiConfig.apiKey,
+        model: aiConfig.model,
+      });
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        aiProvider: aiConfig.provider,
-        aiApiKey: encryptedApiKey,
-        aiModel: aiConfig.model,
-        aiSettings: aiConfig.settings || {},
-      },
-    });
+      const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY') || 'default-encryption-key';
+      
+      const encryptedApiKey = EncryptionUtil.encrypt(aiConfig.apiKey, encryptionKey);
 
-    return { success: true, message: 'AI konfigürasyonu güncellendi' };
+      const result = await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          aiProvider: aiConfig.provider,
+          aiApiKey: encryptedApiKey,
+          aiModel: aiConfig.model,
+          aiSettings: aiConfig.settings || {},
+        },
+      });
+
+      this.logger.log('AI config updated successfully', { userId });
+
+      return { success: true, message: 'AI konfigürasyonu güncellendi' };
+    } catch (error) {
+      this.logger.error('Failed to update AI config:', error);
+      throw error;
+    }
   }
 
   async getAIConfig(userId: string) {
