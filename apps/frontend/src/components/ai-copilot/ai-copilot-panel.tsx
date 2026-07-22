@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Brain, Clock, TrendingUp, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Brain, Clock, TrendingUp, Sparkles, FileText, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generateMockRecommendations } from '@/lib/mock-data';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface AICopilotPanelProps {
   context?: 'dashboard' | 'client' | 'case' | 'document' | 'hearing';
@@ -43,6 +45,7 @@ interface DailyPlan {
 }
 
 export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPanelProps) {
+  const router = useRouter();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [topPriority, setTopPriority] = useState<Recommendation | null>(null);
   const [dailyPlan, setDailyPlan] = useState<DailyPlan | null>(null);
@@ -51,6 +54,9 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
   const [expandedRec, setExpandedRec] = useState<string | null>(null);
   const [panelTitle, setPanelTitle] = useState('LexMind AI');
   const [panelSubtitle, setPanelSubtitle] = useState('Yasal AI Asistanınız');
+  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [currentSummary, setCurrentSummary] = useState<string>('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   useEffect(() => {
     // Fetch recommendations and daily plan
@@ -109,6 +115,57 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
   function getRandomNumber(min: number, max: number) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
+
+  const handleAISummary = async (recommendation: Recommendation) => {
+    try {
+      setSummaryLoading(true);
+      setSummaryDialogOpen(true);
+      
+      // TODO: Replace with actual AI API call
+      // const response = await fetch('/api/v1/ai/summary', {
+      //   method: 'POST',
+      //   body: JSON.stringify({ type: recommendation.type, description: recommendation.description })
+      // });
+      // const data = await response.json();
+      
+      // Mock AI summary
+      setTimeout(() => {
+        setCurrentSummary(`
+          <strong>AI Özet:</strong>
+          
+          <p><strong>Konu:</strong> ${recommendation.title}</p>
+          <p><strong>Açıklama:</strong> ${recommendation.description}</p>
+          <p><strong>Öneri:</strong> ${recommendation.reason}</p>
+          
+          <p><strong>Detaylı Analiz:</strong></p>
+          <ul>
+            <li>Bu öneri sistem tarafından otomatik olarak oluşturulmuştur</li>
+            <li>Öncelik seviyesi: ${recommendation.priority}</li>
+            <li>Güven skoru: %${recommendation.confidenceScore}</li>
+            ${recommendation.businessImpact ? `<li>İş etkisi: ${recommendation.businessImpact}</li>` : ''}
+            ${recommendation.legalImpact ? `<li>Yasal etkisi: ${recommendation.legalImpact}</li>` : ''}
+          </ul>
+          
+          <p><strong>Önerilen Eylemler:</strong></p>
+          <ol>
+            <li>Öncelikli olarak bu konuyu inceleyin</li>
+            <li>İlgili müvekkil ile iletişime geçin</li>
+            <li>Gerekirse ek bilgi toplayın</li>
+          </ol>
+        `);
+        setSummaryLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error generating AI summary:', error);
+      setCurrentSummary('Özet oluşturulurken bir hata oluştu.');
+      setSummaryLoading(false);
+    }
+  };
+
+  const handleResearch = (recommendation: Recommendation) => {
+    // Navigate to legal research page with the recommendation context
+    router.push('/legal-research');
+  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -227,6 +284,7 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
                 {topPriority.actions.map((action) => (
                   <button
                     key={action.id}
+                    onClick={() => action.type === 'summarize' ? handleAISummary(topPriority) : handleResearch(topPriority)}
                     className={cn(
                       'w-full px-4 py-2.5 text-sm font-medium rounded-xl transition-all',
                       'bg-gradient-to-r from-purple-500 to-purple-600 text-white',
@@ -235,7 +293,7 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
                       'flex items-center justify-center gap-2'
                     )}
                   >
-                    <Sparkles className="w-4 h-4" />
+                    {action.type === 'summarize' ? <FileText className="w-4 h-4" /> : <Search className="w-4 h-4" />}
                     {action.label}
                   </button>
                 ))}
@@ -332,6 +390,7 @@ Açıkla
                     {rec.actions.map((action) => (
                       <button
                         key={action.id}
+                        onClick={() => action.type === 'summarize' ? handleAISummary(rec) : handleResearch(rec)}
                         className={cn(
                           'w-full px-4 py-2.5 text-sm font-medium rounded-xl transition-all',
                           'bg-gradient-to-r from-purple-500 to-purple-600 text-white',
@@ -340,7 +399,7 @@ Açıkla
                           'flex items-center justify-center gap-2'
                         )}
                       >
-                        <Sparkles className="w-4 h-4" />
+                        {action.type === 'summarize' ? <FileText className="w-4 h-4" /> : <Search className="w-4 h-4" />}
                         {action.label}
                       </button>
                     ))}
@@ -359,6 +418,27 @@ Açıkla
 Günümü Optimize Et
         </button>
       </div>
+
+      {/* AI Summary Dialog */}
+      <Dialog open={summaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
+        <DialogHeader>
+          <DialogTitle>AI Özet</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <div className="py-4">
+            {summaryLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              </div>
+            ) : (
+              <div 
+                className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300"
+                dangerouslySetInnerHTML={{ __html: currentSummary }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
