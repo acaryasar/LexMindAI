@@ -36,6 +36,10 @@ import {
   ShieldAlert,
   Navigation,
   NotebookPen,
+  DollarSign,
+  Target,
+  Activity,
+  BarChart3,
 } from 'lucide-react';
 import { clientsApi } from '@/lib/api/clients';
 import { casesApi } from '@/lib/api/cases';
@@ -59,6 +63,8 @@ export default function DashboardPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [addParticipantDialogOpen, setAddParticipantDialogOpen] = useState(false);
   const [editNotesDialogOpen, setEditNotesDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [selectedReportType, setSelectedReportType] = useState<'hearing' | 'ai' | 'case' | 'client' | 'finance' | 'task' | 'activity' | 'performance' | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [newTime, setNewTime] = useState('');
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
@@ -301,6 +307,42 @@ export default function DashboardPage() {
     }
   };
 
+  const handleOpenReportDialog = () => {
+    setReportDialogOpen(true);
+  };
+
+  const handleSelectReportType = (type: 'hearing' | 'ai' | 'case' | 'client' | 'finance' | 'task' | 'activity' | 'performance') => {
+    setSelectedReportType(type);
+    setReportDialogOpen(false);
+    // Navigate to report page based on type
+    switch (type) {
+      case 'hearing':
+        router.push('/reports/hearing-schedule');
+        break;
+      case 'ai':
+        router.push('/reports/ai-analysis');
+        break;
+      case 'case':
+        router.push('/reports/case-status');
+        break;
+      case 'client':
+        router.push('/reports/client');
+        break;
+      case 'finance':
+        router.push('/reports/finance');
+        break;
+      case 'task':
+        router.push('/reports/task');
+        break;
+      case 'activity':
+        router.push('/reports/activity');
+        break;
+      case 'performance':
+        router.push('/reports/performance');
+        break;
+    }
+  };
+
   const handleAIAnalysis = () => {
     router.push('/ai/analysis');
   };
@@ -353,11 +395,11 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex space-x-3">
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleOpenReportDialog}>
                 <FileText className="w-4 h-4 mr-2" />
                 Rapor Oluştur
               </Button>
-              <Button>
+              <Button onClick={() => router.push('/cases/new')}>
                 <Scale className="w-4 h-4 mr-2" />
                 Yeni Dava
               </Button>
@@ -706,7 +748,11 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-3">
                 {upcomingHearings.map((hearing) => (
-                  <div key={hearing.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <div 
+                    key={hearing.id} 
+                    className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    onClick={() => router.push(`/hearings/${hearing.id}`)}
+                  >
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
                         <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
@@ -892,6 +938,147 @@ export default function DashboardPage() {
           </Button>
           <Button onClick={handleSaveNotes}>
             Kaydet
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
+      {/* Report Selection Dialog */}
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <DialogHeader>
+          <DialogTitle>Rapor Seçin</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Oluşturmak istediğiniz rapor türünü seçin:
+            </p>
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto py-4"
+                onClick={() => handleSelectReportType('hearing')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">Duruşma Takvimi Raporu</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Yaklaşan duruşmalar ve detayları</p>
+                  </div>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto py-4"
+                onClick={() => handleSelectReportType('ai')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">AI Analiz Raporu</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">AI tarafından yapılan analizler ve öneriler</p>
+                  </div>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto py-4"
+                onClick={() => handleSelectReportType('case')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center">
+                    <Scale className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">Dava Durum Raporu</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Aktif davaların durum özeti</p>
+                  </div>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto py-4"
+                onClick={() => handleSelectReportType('client')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">Müvekkil Raporu</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Müvekkil bazlı özet ve aktiviteler</p>
+                  </div>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto py-4"
+                onClick={() => handleSelectReportType('finance')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center">
+                    <DollarSign className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">Finansal Raporu</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Gelir/gider özeti ve ödemeler</p>
+                  </div>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto py-4"
+                onClick={() => handleSelectReportType('task')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                    <Target className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">Görev Raporu</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Bekleyen görevler ve deadline'lar</p>
+                  </div>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto py-4"
+                onClick={() => handleSelectReportType('activity')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-cyan-100 dark:bg-cyan-900/20 flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">Aktivite Raporu</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Son aktiviteler ve kullanıcı bazlı özet</p>
+                  </div>
+                </div>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start h-auto py-4"
+                onClick={() => handleSelectReportType('performance')}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-lg bg-pink-100 dark:bg-pink-900/20 flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-pink-600 dark:text-pink-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">Performans Raporu</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">KPI metrikleri ve trend analizi</p>
+                  </div>
+                </div>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setReportDialogOpen(false)}>
+            İptal
           </Button>
         </DialogFooter>
       </Dialog>
