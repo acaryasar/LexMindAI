@@ -63,7 +63,7 @@ export default function SettingsPage() {
       });
       setAiConfig({
         provider: response.data.provider || '',
-        apiKey: '',
+        apiKey: '', // Never expose real API key to frontend
         model: response.data.model || '',
       });
     } catch (error) {
@@ -337,6 +337,7 @@ export default function SettingsPage() {
                     <option value="">Seçiniz</option>
                     <option value="openai">OpenAI</option>
                     <option value="anthropic">Anthropic</option>
+                    <option value="openrouter">OpenRouter</option>
                     <option value="google">Google AI</option>
                   </select>
                   {activeTooltip === 'provider' && (

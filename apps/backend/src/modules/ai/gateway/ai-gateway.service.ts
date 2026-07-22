@@ -294,7 +294,14 @@ export class AIGatewayService {
 
   private getOpenAIClient(aiConfig: any): OpenAI {
     if (aiConfig?.apiKey) {
-      return new OpenAI({ apiKey: aiConfig.apiKey });
+      const config: any = { apiKey: aiConfig.apiKey };
+      
+      // Set base URL for OpenRouter
+      if (aiConfig.provider === 'openrouter') {
+        config.baseURL = 'https://openrouter.ai/api/v1';
+      }
+      
+      return new OpenAI(config);
     }
     
     // Fallback to default configuration

@@ -405,6 +405,49 @@ export class AuthService {
             message: 'Anthropic API anahtarı geçerli',
           };
         }
+      } else if (provider === 'openrouter') {
+        // Validate OpenRouter API key
+        const response = await axios.post(
+          'https://openrouter.ai/api/v1/chat/completions',
+          {
+            model: 'openai/gpt-4o-mini',
+            max_tokens: 10,
+            messages: [{ role: 'user', content: 'Hi' }],
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            timeout: 10000,
+          },
+        );
+
+        if (response.status === 200) {
+          return {
+            valid: true,
+            message: 'OpenRouter API anahtarı geçerli',
+            models: ['openai/gpt-4o', 'openai/gpt-4o-mini', 'anthropic/claude-3-opus', 'anthropic/claude-3-sonnet'],
+          };
+        }
+      } else if (provider === 'google') {
+        // Validate Google AI API key
+        const response = await axios.post(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+          {
+            contents: [{ parts: [{ text: 'Hi' }] }],
+          },
+          {
+            timeout: 10000,
+          },
+        );
+
+        if (response.status === 200) {
+          return {
+            valid: true,
+            message: 'Google AI API anahtarı geçerli',
+          };
+        }
       }
 
       throw new BadRequestException('Desteklenmeyen sağlayıcı');
