@@ -16,6 +16,7 @@ import { DailyPlannerModule } from './modules/daily-planner/daily-planner.module
 import { HearingsModule } from './modules/hearings/hearings.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { EmailModule } from './modules/email/email.module';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { EmailModule } from './modules/email/email.module';
     HearingsModule,
     NotificationsModule,
     EmailModule,
+    ReportsModule,
   ],
 })
 export class AppModule {}

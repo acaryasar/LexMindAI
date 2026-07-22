@@ -56,4 +56,31 @@ api.interceptors.response.use(
   }
 );
 
+// Reports API
+export const reportsApi = {
+  getHearingSchedule: (filter?: 'upcoming' | 'past' | 'all') =>
+    api.get('/reports/hearing-schedule', { params: { filter } }),
+  
+  getAIAnalysis: () =>
+    api.get('/reports/ai-analysis'),
+  
+  getCaseStatus: (filter?: 'active' | 'pending' | 'completed' | 'all') =>
+    api.get('/reports/case-status', { params: { filter } }),
+  
+  getClient: () =>
+    api.get('/reports/client'),
+  
+  getFinance: (filter?: 'income' | 'expense' | 'all') =>
+    api.get('/reports/finance', { params: { filter } }),
+  
+  getTask: (filter?: 'pending' | 'in_progress' | 'completed' | 'all') =>
+    api.get('/reports/task', { params: { filter } }),
+  
+  getActivity: (filter?: 'case' | 'document' | 'finance' | 'ai' | 'hearing' | 'task' | 'all') =>
+    api.get('/reports/activity', { params: { filter } }),
+  
+  getPerformance: () =>
+    api.get('/reports/performance'),
+};
+
 export default api;

@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Search,
   ScrollText,
+  BarChart3,
 } from 'lucide-react';
 
 const navigation = [
@@ -55,6 +56,21 @@ const navigation = [
     name: 'Dilekçeler',
     href: '/petitions',
     icon: ScrollText,
+  },
+  {
+    name: 'Raporlar',
+    href: '/reports',
+    icon: BarChart3,
+    children: [
+      { name: 'Duruşma Takvimi', href: '/reports/hearing-schedule' },
+      { name: 'AI Analiz', href: '/reports/ai-analysis' },
+      { name: 'Dava Durumu', href: '/reports/case-status' },
+      { name: 'Müvekkil', href: '/reports/client' },
+      { name: 'Finansal', href: '/reports/finance' },
+      { name: 'Görev', href: '/reports/task' },
+      { name: 'Aktivite', href: '/reports/activity' },
+      { name: 'Performans', href: '/reports/performance' },
+    ],
   },
   {
     name: 'AI Asistan',
