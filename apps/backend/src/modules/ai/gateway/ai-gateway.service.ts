@@ -62,7 +62,7 @@ export class AIGatewayService {
     }
   }
 
-  async documentAnalysis(documentId: string, analysisType: string, prompt?: string): Promise<string> {
+  async documentAnalysis(documentId: string, analysisType: string, prompt?: string, userId?: string): Promise<string> {
     try {
       const document = await this.prisma.document.findUnique({
         where: { id: documentId },
@@ -72,20 +72,26 @@ export class AIGatewayService {
         throw new Error('Document not found');
       }
 
+      // Get user-specific AI configuration
+      const aiConfig = await this.getUserAIConfig(userId);
+
+      // Initialize OpenAI with user's API key or fallback to default
+      const openai = this.getOpenAIClient(aiConfig);
+
       // In production, you would extract text from the document here
       // For now, we'll use a placeholder
       const documentContent = `Document: ${document.name}\nType: ${document.mimeType}\nSize: ${document.size}`;
 
       const systemPrompt = `You are a legal document analysis assistant. Analyze the following document based on the requested analysis type: ${analysisType}.`;
 
-      const completion = await this.openai.chat.completions.create({
-        model: this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
+      const completion = await openai.chat.completions.create({
+        model: aiConfig?.model || this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `${prompt || 'Analyze this document'}\n\n${documentContent}` },
         ],
-        temperature: 0.7,
-        max_tokens: 2000,
+        temperature: (aiConfig?.settings as any)?.temperature || 0.7,
+        max_tokens: (aiConfig?.settings as any)?.maxTokens || 2000,
       });
 
       return completion.choices[0].message.content || '';
@@ -95,20 +101,26 @@ export class AIGatewayService {
     }
   }
 
-  async legalWriting(writingType: string, subject: string, context?: string, tone?: string): Promise<string> {
+  async legalWriting(writingType: string, subject: string, context?: string, tone?: string, userId?: string): Promise<string> {
     try {
+      // Get user-specific AI configuration
+      const aiConfig = await this.getUserAIConfig(userId);
+
+      // Initialize OpenAI with user's API key or fallback to default
+      const openai = this.getOpenAIClient(aiConfig);
+
       const systemPrompt = `You are a legal writing assistant. Write a ${writingType} with the following subject: ${subject}. Use a ${tone || 'professional'} tone.`;
 
       const userPrompt = context ? `Context: ${context}\n\nSubject: ${subject}` : `Subject: ${subject}`;
 
-      const completion = await this.openai.chat.completions.create({
-        model: this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
+      const completion = await openai.chat.completions.create({
+        model: aiConfig?.model || this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.7,
-        max_tokens: 3000,
+        temperature: (aiConfig?.settings as any)?.temperature || 0.7,
+        max_tokens: (aiConfig?.settings as any)?.maxTokens || 3000,
       });
 
       return completion.choices[0].message.content || '';
@@ -118,8 +130,14 @@ export class AIGatewayService {
     }
   }
 
-  async research(query: string, documentIds?: string[]): Promise<string> {
+  async research(query: string, documentIds?: string[], userId?: string): Promise<string> {
     try {
+      // Get user-specific AI configuration
+      const aiConfig = await this.getUserAIConfig(userId);
+
+      // Initialize OpenAI with user's API key or fallback to default
+      const openai = this.getOpenAIClient(aiConfig);
+
       let context = '';
 
       // If documentIds provided, search in those documents
@@ -140,14 +158,14 @@ export class AIGatewayService {
 
       const userPrompt = context ? `Context:\n${context}\n\nQuery: ${query}` : `Query: ${query}`;
 
-      const completion = await this.openai.chat.completions.create({
-        model: this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
+      const completion = await openai.chat.completions.create({
+        model: aiConfig?.model || this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.7,
-        max_tokens: 2000,
+        temperature: (aiConfig?.settings as any)?.temperature || 0.7,
+        max_tokens: (aiConfig?.settings as any)?.maxTokens || 2000,
       });
 
       return completion.choices[0].message.content || '';

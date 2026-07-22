@@ -122,6 +122,7 @@ export class AIService {
       documentAnalysisDto.documentId,
       documentAnalysisDto.analysisType || 'general',
       documentAnalysisDto.prompt,
+      userId,
     );
 
     return {
@@ -136,6 +137,7 @@ export class AIService {
       legalWritingDto.subject,
       legalWritingDto.context,
       legalWritingDto.tone,
+      userId,
     );
 
     return {
@@ -149,6 +151,7 @@ export class AIService {
     const response = await this.aiGateway.research(
       researchDto.query,
       researchDto.documentIds || [],
+      userId,
     );
 
     return {
@@ -177,5 +180,57 @@ export class AIService {
       where: { status: 'ACTIVE' },
       orderBy: { category: 'asc', name: 'asc' },
     });
+  }
+
+  async generateSummary(body: { type: string; description: string; title?: string; reason?: string }, userId: string) {
+    // Build prompt for AI summary
+    const prompt = `
+      Aşağıdaki öneri için detaylı bir AI özeti oluştur:
+      
+      Tür: ${body.type}
+      Başlık: ${body.title || 'Belirtilmemiş'}
+      Açıklama: ${body.description}
+      Öneri: ${body.reason || 'Belirtilmemiş'}
+      
+      Lütfen şu formatta bir özet oluştur:
+      1. Konu ve açıklama özeti
+      2. Detaylı analiz (öncelik seviyesi, güven skoru, iş etkisi, yasal etkisi)
+      3. Önerilen eylemler (adım adım)
+      4. Ek notlar ve uyarılar
+    `;
+
+    try {
+      const { response, usage } = await this.aiGateway.chat(prompt, undefined, { type: 'summary' });
+      
+      return {
+        summary: response,
+        usage,
+      };
+    } catch (error) {
+      // Fallback to basic summary if AI fails
+      return {
+        summary: `
+          <strong>AI Özet:</strong>
+          
+          <p><strong>Konu:</strong> ${body.title || 'Belirtilmemiş'}</p>
+          <p><strong>Açıklama:</strong> ${body.description}</p>
+          <p><strong>Öneri:</strong> ${body.reason || 'Belirtilmemiş'}</p>
+          
+          <p><strong>Detaylı Analiz:</strong></p>
+          <ul>
+            <li>Bu öneri sistem tarafından otomatik olarak oluşturulmuştur</li>
+            <li>Tür: ${body.type}</li>
+          </ul>
+          
+          <p><strong>Önerilen Eylemler:</strong></p>
+          <ol>
+            <li>Öncelikli olarak bu konuyu inceleyin</li>
+            <li>İlgili müvekkil ile iletişime geçin</li>
+            <li>Gerekirse ek bilgi toplayın</li>
+          </ol>
+        `,
+        usage: null,
+      };
+    }
   }
 }

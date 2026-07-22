@@ -6,6 +6,7 @@ import { Brain, Clock, TrendingUp, Sparkles, FileText, Search } from 'lucide-rea
 import { cn } from '@/lib/utils';
 import { generateMockRecommendations } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { aiApi } from '@/lib/api';
 
 interface AICopilotPanelProps {
   context?: 'dashboard' | 'client' | 'case' | 'document' | 'hearing';
@@ -121,43 +122,18 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
       setSummaryLoading(true);
       setSummaryDialogOpen(true);
       
-      // TODO: Replace with actual AI API call
-      // const response = await fetch('/api/v1/ai/summary', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ type: recommendation.type, description: recommendation.description })
-      // });
-      // const data = await response.json();
+      const response = await aiApi.generateSummary({
+        type: recommendation.type,
+        title: recommendation.title,
+        description: recommendation.description,
+        reason: recommendation.reason,
+      });
       
-      // Mock AI summary
-      setTimeout(() => {
-        setCurrentSummary(`
-          <strong>AI Özet:</strong>
-          
-          <p><strong>Konu:</strong> ${recommendation.title}</p>
-          <p><strong>Açıklama:</strong> ${recommendation.description}</p>
-          <p><strong>Öneri:</strong> ${recommendation.reason}</p>
-          
-          <p><strong>Detaylı Analiz:</strong></p>
-          <ul>
-            <li>Bu öneri sistem tarafından otomatik olarak oluşturulmuştur</li>
-            <li>Öncelik seviyesi: ${recommendation.priority}</li>
-            <li>Güven skoru: %${recommendation.confidenceScore}</li>
-            ${recommendation.businessImpact ? `<li>İş etkisi: ${recommendation.businessImpact}</li>` : ''}
-            ${recommendation.legalImpact ? `<li>Yasal etkisi: ${recommendation.legalImpact}</li>` : ''}
-          </ul>
-          
-          <p><strong>Önerilen Eylemler:</strong></p>
-          <ol>
-            <li>Öncelikli olarak bu konuyu inceleyin</li>
-            <li>İlgili müvekkil ile iletişime geçin</li>
-            <li>Gerekirse ek bilgi toplayın</li>
-          </ol>
-        `);
-        setSummaryLoading(false);
-      }, 1000);
+      setCurrentSummary(response.data.summary);
+      setSummaryLoading(false);
     } catch (error) {
       console.error('Error generating AI summary:', error);
-      setCurrentSummary('Özet oluşturulurken bir hata oluştu.');
+      setCurrentSummary('Özet oluşturulurken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
       setSummaryLoading(false);
     }
   };

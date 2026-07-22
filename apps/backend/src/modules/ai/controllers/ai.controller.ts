@@ -97,4 +97,11 @@ export class AIController {
   getPrompts() {
     return this.aiService.getPrompts();
   }
+
+  @Post('summary')
+  @ApiOperation({ summary: 'AI Özet oluştur' })
+  @ApiResponse({ status: 200, description: 'Özet oluşturuldu' })
+  generateSummary(@Body() body: { type: string; description: string; title?: string; reason?: string }, @Request() req: any) {
+    return this.aiService.generateSummary(body, req.user.id);
+  }
 }

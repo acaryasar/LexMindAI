@@ -83,4 +83,10 @@ export const reportsApi = {
     api.get('/reports/performance'),
 };
 
+// AI API
+export const aiApi = {
+  generateSummary: (body: { type: string; description: string; title?: string; reason?: string }) =>
+    api.post('/ai/summary', body),
+};
+
 export default api;
