@@ -1,16 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { AIGatewayService } from '../gateway/ai-gateway.service';
 import { ChatDto } from '../dto/chat.dto';
 import { DocumentAnalysisDto } from '../dto/document-analysis.dto';
 import { LegalWritingDto } from '../dto/legal-writing.dto';
 import { ResearchDto } from '../dto/research.dto';
+import { AIOrchestrator } from '../orchestrator/ai-orchestrator.service';
 
 @Injectable()
 export class AIService {
+  private readonly logger = new Logger(AIService.name);
+
   constructor(
     private prisma: PrismaService,
     private aiGateway: AIGatewayService,
+    private aiOrchestrator: AIOrchestrator,
   ) {}
 
   async chat(chatDto: ChatDto, userId: string) {
@@ -231,6 +235,91 @@ export class AIService {
         `,
         usage: null,
       };
+    }
+  }
+
+  async getDailyBriefing(userId: string) {
+    this.logger.log(`Getting daily briefing for user: ${userId}`);
+
+    // Check if briefing exists in cache (AIMemory)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const cacheKey = `daily_briefing_${userId}_${today.toISOString().split('T')[0]}`;
+
+    try {
+      const cachedBriefing = await this.prisma.aIMemory.findFirst({
+        where: {
+          userId,
+          key: cacheKey,
+        },
+      });
+
+      if (cachedBriefing) {
+        this.logger.log(`Found cached briefing for user: ${userId}`);
+        return {
+          briefing: JSON.parse(cachedBriefing.value),
+          cached: true,
+          timestamp: cachedBriefing.createdAt,
+        };
+      }
+
+      // If no cache, generate briefing on-demand (lazy loading)
+      this.logger.log(`No cached briefing found, generating for user: ${userId}`);
+      return this.refreshDailyBriefing(userId);
+    } catch (error) {
+      this.logger.error(`Error getting daily briefing for user ${userId}:`, error);
+      throw error;
+    }
+  }
+
+  async refreshDailyBriefing(userId: string) {
+    this.logger.log(`Refreshing daily briefing for user: ${userId}`);
+
+    try {
+      // Use AIOrchestrator to generate briefing
+      const briefing = await this.aiOrchestrator.orchestrate({
+        agentType: 'dashboard',
+        userId,
+        input: { action: 'daily_briefing' },
+        context: { userId },
+      });
+
+      // Cache the briefing in AIMemory
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const cacheKey = `daily_briefing_${userId}_${today.toISOString().split('T')[0]}`;
+
+      const existing = await this.prisma.aIMemory.findFirst({
+        where: {
+          userId,
+          key: cacheKey,
+        },
+      });
+
+      if (existing) {
+        await this.prisma.aIMemory.update({
+          where: { id: existing.id },
+          data: { value: JSON.stringify(briefing) },
+        });
+      } else {
+        await this.prisma.aIMemory.create({
+          data: {
+            userId,
+            key: cacheKey,
+            value: JSON.stringify(briefing),
+          },
+        });
+      }
+
+      this.logger.log(`Daily briefing refreshed and cached for user: ${userId}`);
+      return {
+        briefing,
+        cached: false,
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      this.logger.error(`Error refreshing daily briefing for user ${userId}:`, error);
+      throw error;
     }
   }
 }

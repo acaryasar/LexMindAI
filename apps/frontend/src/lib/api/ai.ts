@@ -167,4 +167,15 @@ export const aiApi = {
     const response = await api.get('/ai/telemetry/executions', { params: { userId, limit } });
     return response.data;
   },
+
+  // Daily Briefing
+  getDailyBriefing: async () => {
+    const response = await api.get('/ai/daily-briefing');
+    return response.data;
+  },
+
+  refreshDailyBriefing: async () => {
+    const response = await api.post('/ai/daily-briefing/refresh');
+    return response.data;
+  },
 };

@@ -104,4 +104,18 @@ export class AIController {
   generateSummary(@Body() body: { type: string; description: string; title?: string; reason?: string }, @Request() req: any) {
     return this.aiService.generateSummary(body, req.user.id);
   }
+
+  @Get('daily-briefing')
+  @ApiOperation({ summary: 'Günlük AI Brifing' })
+  @ApiResponse({ status: 200, description: 'Günlük brifing getirildi' })
+  getDailyBriefing(@Request() req: any) {
+    return this.aiService.getDailyBriefing(req.user.id);
+  }
+
+  @Post('daily-briefing/refresh')
+  @ApiOperation({ summary: 'Günlük AI Brifing Yenile' })
+  @ApiResponse({ status: 200, description: 'Brifing yenilendi' })
+  refreshDailyBriefing(@Request() req: any) {
+    return this.aiService.refreshDailyBriefing(req.user.id);
+  }
 }

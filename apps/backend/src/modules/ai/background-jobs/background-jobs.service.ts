@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AIOrchestrator } from '../orchestrator/ai-orchestrator.service';
 import { PrismaService } from '@database/prisma.service';
+import { AIService } from '../services/ai.service';
 
 @Injectable()
 export class BackgroundJobsService {
@@ -9,6 +10,7 @@ export class BackgroundJobsService {
   constructor(
     private aiOrchestrator: AIOrchestrator,
     private prisma: PrismaService,
+    private aiService: AIService,
   ) {}
 
   async generateDailyBriefings(): Promise<void> {
@@ -21,14 +23,8 @@ export class BackgroundJobsService {
 
       for (const user of users) {
         try {
-          const briefing = await this.aiOrchestrator.orchestrate({
-            agentType: 'dashboard',
-            userId: user.id,
-            input: { action: 'daily_briefing' },
-            context: { userId: user.id },
-          });
-
-          this.logger.log(`Daily briefing generated for user: ${user.id}`);
+          await this.aiService.refreshDailyBriefing(user.id);
+          this.logger.log(`Daily briefing generated and cached for user: ${user.id}`);
         } catch (error) {
           this.logger.error(`Failed to generate briefing for user ${user.id}:`, error);
         }

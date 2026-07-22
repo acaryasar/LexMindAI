@@ -389,10 +389,7 @@ export default function DashboardPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Ana Sayfa
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Hoş geldiniz, işlerinizi buradan yönetebilirsiniz
-              </p>
+              </h1>              
             </div>
             <div className="flex space-x-3">
               <Button variant="outline" onClick={handleOpenReportDialog}>

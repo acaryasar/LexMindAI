@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Clock, TrendingUp, Sparkles, FileText, Search } from 'lucide-react';
+import { Brain, Clock, TrendingUp, Sparkles, FileText, Search, Calendar, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { generateMockRecommendations } from '@/lib/mock-data';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { aiApi as aiBriefingApi } from '@/lib/api/ai';
 import { aiApi } from '@/lib/api';
 
 interface AICopilotPanelProps {
@@ -58,11 +59,21 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [currentSummary, setCurrentSummary] = useState<string>('');
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'recommendations' | 'briefing'>('recommendations');
+  const [dailyBriefing, setDailyBriefing] = useState<any>(null);
+  const [briefingLoading, setBriefingLoading] = useState(false);
 
   useEffect(() => {
     // Fetch recommendations and daily plan
     fetchAIData();
   }, []);
+
+  useEffect(() => {
+    // Fetch daily briefing when tab changes to briefing
+    if (activeTab === 'briefing') {
+      fetchDailyBriefing();
+    }
+  }, [activeTab]);
 
   const fetchAIData = async () => {
     try {
@@ -110,6 +121,30 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
       console.error('Failed to fetch AI data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDailyBriefing = async () => {
+    try {
+      setBriefingLoading(true);
+      const response = await aiBriefingApi.getDailyBriefing();
+      setDailyBriefing(response);
+    } catch (error) {
+      console.error('Failed to fetch daily briefing:', error);
+    } finally {
+      setBriefingLoading(false);
+    }
+  };
+
+  const handleRefreshBriefing = async () => {
+    try {
+      setBriefingLoading(true);
+      const response = await aiBriefingApi.refreshDailyBriefing();
+      setDailyBriefing(response);
+    } catch (error) {
+      console.error('Failed to refresh daily briefing:', error);
+    } finally {
+      setBriefingLoading(false);
     }
   };
 
@@ -222,10 +257,43 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
         )}
       </div>
 
-      {/* Top Priority Card */}
-      {topPriority && (
-        <div className="mb-6">
-          <div className="bg-white rounded-2xl shadow-lg shadow-purple-100/50 border border-gray-100 overflow-hidden">
+      {/* Tab Navigation */}
+      <div className="mb-6">
+        <div className="flex gap-2 bg-gray-100 rounded-xl p-1">
+          <button
+            onClick={() => setActiveTab('recommendations')}
+            className={cn(
+              'flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all',
+              activeTab === 'recommendations'
+                ? 'bg-white text-purple-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            )}
+          >
+            <Sparkles className="w-4 h-4 inline mr-1" />
+            Öneriler
+          </button>
+          <button
+            onClick={() => setActiveTab('briefing')}
+            className={cn(
+              'flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all',
+              activeTab === 'briefing'
+                ? 'bg-white text-purple-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            )}
+          >
+            <Calendar className="w-4 h-4 inline mr-1" />
+            Günlük Brifing
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'recommendations' ? (
+        <>
+          {/* Top Priority Card */}
+          {topPriority && (
+            <div className="mb-6">
+              <div className="bg-white rounded-2xl shadow-lg shadow-purple-100/50 border border-gray-100 overflow-hidden">
             <div className={`h-1 ${getPriorityColor(topPriority.priority)}`} />
             <div className="p-5">
               <div className="flex items-start justify-between mb-3">
@@ -394,6 +462,58 @@ Açıkla
 Günümü Optimize Et
         </button>
       </div>
+        </>
+      ) : (
+        <>
+          {/* Daily Briefing Content */}
+          <div className="space-y-4">
+            {briefingLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              </div>
+            ) : dailyBriefing ? (
+              <>
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-2xl border border-purple-200/50 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-purple-600" />
+                      <span className="text-sm font-semibold text-purple-900">
+                        {new Date().toLocaleDateString('tr-TR', { weekday: 'long', month: 'long', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleRefreshBriefing}
+                      className="text-purple-600 hover:text-purple-700 transition-colors"
+                      title="Brifing Yenile"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {dailyBriefing.cached && (
+                    <div className="text-xs text-purple-600 mb-2">
+                      Cache'den yüklendi
+                    </div>
+                  )}
+                  <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                    <div dangerouslySetInnerHTML={{ __html: dailyBriefing.briefing?.result || dailyBriefing.briefing }} />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Günlük brifing bulunamadı</p>
+                <button
+                  onClick={handleRefreshBriefing}
+                  className="mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+                >
+                  Brifing Oluştur
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {/* AI Summary Dialog */}
       <Dialog open={summaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
