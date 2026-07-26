@@ -1,5 +1,6 @@
 import { Controller, Post, Body, Get, Put, Delete, Param, UseGuards, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from '../services/auth.service';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
@@ -10,6 +11,8 @@ import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { JwtRefreshGuard } from '../guards/jwt-refresh.guard';
+import { RolesGuard } from '../guards/roles.guard';
+import { SetMetadata } from '@nestjs/common';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -17,18 +20,22 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 requests per hour
   @ApiOperation({ summary: 'Yeni kullanıcı kaydı' })
   @ApiResponse({ status: 201, description: 'Kullanıcı başarıyla kaydedildi', type: AuthResponseDto })
   @ApiResponse({ status: 409, description: 'E-posta zaten kayıtlı' })
+  @ApiResponse({ status: 429, description: 'Çok fazla istek' })
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     return this.authService.register(registerDto);
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Kullanıcı girişi' })
   @ApiResponse({ status: 200, description: 'Giriş başarılı', type: AuthResponseDto })
   @ApiResponse({ status: 401, description: 'Geçersiz kimlik bilgileri' })
+  @ApiResponse({ status: 429, description: 'Çok fazla istek' })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(loginDto);
   }
@@ -95,54 +102,64 @@ export class AuthController {
   }
 
   @Get('users')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER'])
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Tüm kullanıcıları getir' })
   @ApiResponse({ status: 200, description: 'Kullanıcılar getirildi' })
   @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  @ApiResponse({ status: 403, description: 'Yetkiniz yok' })
   async getUsers(@Request() req: any) {
     return this.authService.getUsers();
   }
 
   @Get('users/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER'])
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Kullanıcı detaylarını getir' })
   @ApiResponse({ status: 200, description: 'Kullanıcı detayları getirildi' })
   @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  @ApiResponse({ status: 403, description: 'Yetkiniz yok' })
   @ApiResponse({ status: 404, description: 'Kullanıcı bulunamadı' })
   async getUserById(@Request() req: any, @Param('id') id: string) {
     return this.authService.getUserById(id);
   }
 
   @Put('users/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER'])
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Kullanıcı bilgilerini güncelle' })
   @ApiResponse({ status: 200, description: 'Kullanıcı güncellendi' })
   @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  @ApiResponse({ status: 403, description: 'Yetkiniz yok' })
   @ApiResponse({ status: 404, description: 'Kullanıcı bulunamadı' })
   async updateUser(@Request() req: any, @Param('id') id: string, @Body() updateDto: any) {
     return this.authService.updateUser(id, updateDto);
   }
 
   @Delete('users/:id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER'])
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Kullanıcı sil' })
   @ApiResponse({ status: 204, description: 'Kullanıcı silindi' })
   @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  @ApiResponse({ status: 403, description: 'Yetkiniz yok' })
   @ApiResponse({ status: 404, description: 'Kullanıcı bulunamadı' })
   async deleteUser(@Request() req: any, @Param('id') id: string) {
     return this.authService.deleteUser(id);
   }
 
   @Put('users/:id/roles')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER'])
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Kullanıcı rollerini güncelle' })
   @ApiResponse({ status: 200, description: 'Roller güncellendi' })
   @ApiResponse({ status: 401, description: 'Yetkisiz erişim' })
+  @ApiResponse({ status: 403, description: 'Yetkiniz yok' })
   @ApiResponse({ status: 404, description: 'Kullanıcı bulunamadı' })
   async updateUserRoles(@Request() req: any, @Param('id') id: string, @Body() body: { roles: string[] }) {
     return this.authService.updateUserRoles(id, body.roles);
@@ -168,9 +185,11 @@ export class AuthController {
   }
 
   @Post('forgot-password')
+  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 requests per hour
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Şifremi unuttum' })
   @ApiResponse({ status: 200, description: 'Şifre sıfırlama bağlantısı gönderildi' })
+  @ApiResponse({ status: 429, description: 'Çok fazla istek' })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<{ message: string }> {
     return this.authService.forgotPassword(forgotPasswordDto);
   }

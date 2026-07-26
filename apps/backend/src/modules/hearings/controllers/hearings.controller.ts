@@ -57,8 +57,8 @@ export class HearingsController {
   @ApiOperation({ summary: 'Duruşma detayı' })
   @ApiResponse({ status: 200, description: 'Duruşma detayı getirildi' })
   @ApiResponse({ status: 404, description: 'Duruşma bulunamadı' })
-  findOne(@Param('id') id: string) {
-    return this.hearingsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.hearingsService.findOne(id, req.user.id, req.user.role);
   }
 
   @Patch(':id')

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { CreateHearingDto } from '../dto/create-hearing.dto';
 import { UpdateHearingDto } from '../dto/update-hearing.dto';
@@ -95,7 +95,7 @@ export class HearingsService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string, userRole?: string) {
     const hearing = await this.prisma.caseHearing.findUnique({
       where: { id },
       include: {
@@ -104,6 +104,11 @@ export class HearingsService {
             id: true,
             caseNumber: true,
             title: true,
+            lawyers: {
+              select: {
+                userId: true,
+              },
+            },
           },
         },
       },
@@ -111,6 +116,16 @@ export class HearingsService {
 
     if (!hearing) {
       throw new NotFoundException('Duruşma bulunamadı');
+    }
+
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isAssignedLawyer = hearing.case?.lawyers?.some(
+      (lawyer) => lawyer.userId === userId
+    );
+
+    if (!isAdminOrPartner && !isAssignedLawyer) {
+      throw new ForbiddenException('Bu duruşmaya erişim yetkiniz yok');
     }
 
     return {

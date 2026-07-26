@@ -58,8 +58,8 @@ export class ClientsController {
   @ApiOperation({ summary: 'Müşteri detayı' })
   @ApiResponse({ status: 200, description: 'Müşteri detayı getirildi' })
   @ApiResponse({ status: 404, description: 'Müşteri bulunamadı' })
-  findOne(@Param('id') id: string) {
-    return this.clientsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.clientsService.findOne(id, req.user.id, req.user.role);
   }
 
   @Patch(':id')

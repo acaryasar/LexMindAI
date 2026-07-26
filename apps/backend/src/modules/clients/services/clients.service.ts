@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { CreateClientDto } from '../dto/create-client.dto';
 import { UpdateClientDto } from '../dto/update-client.dto';
@@ -10,6 +10,8 @@ import { EmailService } from '@modules/email/services/email.service';
 
 @Injectable()
 export class ClientsService {
+  private readonly logger = new Logger(ClientsService.name);
+
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
@@ -117,18 +119,34 @@ export class ClientsService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string, userRole?: string) {
     const client = await this.prisma.client.findUnique({
       where: { id },
       include: {
         contacts: true,
         addresses: true,
         documents: true,
+        lawyers: {
+          select: {
+            userId: true,
+            status: true,
+          },
+        },
       },
     });
 
     if (!client) {
       throw new NotFoundException('Müşteri bulunamadı');
+    }
+
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isAssignedLawyer = client.lawyers?.some(
+      (lawyer) => lawyer.userId === userId && lawyer.status === 'ACTIVE'
+    );
+
+    if (!isAdminOrPartner && !isAssignedLawyer) {
+      throw new ForbiddenException('Bu müşteriye erişim yetkiniz yok');
     }
 
     return client;
@@ -287,7 +305,7 @@ export class ClientsService {
       },
     });
 
-    console.log('Checking existing assignment:', { clientId, userId: assignLawyerDto.userId, existing });
+    this.logger.debug(`Checking existing assignment for client ${clientId}`);
 
     if (existing && existing.status === 'ACTIVE') {
       throw new ConflictException('Bu avukat zaten atanmış');

@@ -6,6 +6,8 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  ForbiddenException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -43,7 +45,7 @@ export class AuthService {
 
     // If no password provided, generate a temporary random password
     const passwordToHash = registerDto.password || this.generateRandomPassword();
-    const hashedPassword = await bcrypt.hash(passwordToHash, 10);
+    const hashedPassword = await bcrypt.hash(passwordToHash, 12);
 
     const user = await this.prisma.user.create({
       data: {
@@ -320,7 +322,10 @@ export class AuthService {
         model: aiConfig.model,
       });
 
-      const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY') || 'default-encryption-key';
+      const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
+      if (!encryptionKey) {
+        throw new InternalServerErrorException('ENCRYPTION_KEY yapılandırılmamış');
+      }
       
       const encryptedApiKey = EncryptionUtil.encrypt(aiConfig.apiKey, encryptionKey);
 
@@ -358,14 +363,17 @@ export class AuthService {
       throw new UnauthorizedException('Kullanıcı bulunamadı');
     }
 
-    const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY') || 'default-encryption-key';
+    const encryptionKey = this.configService.get<string>('ENCRYPTION_KEY');
+    if (!encryptionKey) {
+      throw new InternalServerErrorException('ENCRYPTION_KEY yapılandırılmamış');
+    }
     
     let decryptedApiKey = null;
     if (user.aiApiKey) {
       try {
         decryptedApiKey = EncryptionUtil.decrypt(user.aiApiKey, encryptionKey);
       } catch (error) {
-        console.error('Failed to decrypt API key:', error);
+        this.logger.error('Failed to decrypt API key');
       }
     }
 
@@ -647,6 +655,11 @@ export class AuthService {
   }
 
   async getUserRolesByEmailAndPassword(email: string, password: string) {
+    // Security: Disable demo endpoint in production
+    if (process.env.NODE_ENV === 'production') {
+      throw new ForbiddenException('Demo endpoint production ortamında kullanılamaz');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: {
@@ -688,7 +701,7 @@ export class AuthService {
         email: u.email,
         firstName: u.firstName,
         lastName: u.lastName,
-        password: 'demo123', // Demo password for testing
+        password: 'demo123', // Demo password for testing - ONLY IN DEVELOPMENT
         roles: u.roles.map(ur => ur.role.name),
       })),
     };
@@ -772,7 +785,7 @@ export class AuthService {
     }
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(resetPasswordDto.password, 10);
+    const hashedPassword = await bcrypt.hash(resetPasswordDto.password, 12);
 
     // Update user password
     await this.prisma.user.update({
@@ -819,7 +832,7 @@ export class AuthService {
     }
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
+    const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 12);
 
     // Update user password
     await this.prisma.user.update({

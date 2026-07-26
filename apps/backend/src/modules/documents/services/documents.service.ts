@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { UploadDocumentDto } from '../dto/upload-document.dto';
 import { UpdateDocumentDto } from '../dto/update-document.dto';
@@ -121,6 +121,17 @@ export class DocumentsService {
 
     if (!document) {
       throw new NotFoundException('Dosya bulunamadı');
+    }
+
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isSharedWithUser = document.shares?.some(
+      (share) => share.sharedWith === userId && (!share.expiresAt || new Date() < share.expiresAt)
+    );
+    const isCreator = document.createdBy === userId;
+
+    if (!isAdminOrPartner && !isSharedWithUser && !isCreator) {
+      throw new ForbiddenException('Bu dosyaya erişim yetkiniz yok');
     }
 
     return document;
