@@ -106,7 +106,7 @@ export class DocumentsService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string, userRole?: string) {
     const document = await this.prisma.document.findUnique({
       where: { id },
       include: {
@@ -126,7 +126,7 @@ export class DocumentsService {
     return document;
   }
 
-  async update(id: string, updateDocumentDto: UpdateDocumentDto, userId: string) {
+  async update(id: string, updateDocumentDto: UpdateDocumentDto, userId: string, userRole?: string) {
     const document = await this.prisma.document.findUnique({
       where: { id },
     });
@@ -163,7 +163,7 @@ export class DocumentsService {
       },
     });
 
-    return this.findOne(id);
+    return this.findOne(id, userId, userRole);
   }
 
   async remove(id: string, userId: string) {
@@ -212,7 +212,7 @@ export class DocumentsService {
         path: path,
         size: file.size,
         notes: notes,
-        createdBy: userId,
+        createdBy: userId || null,
       },
     });
 

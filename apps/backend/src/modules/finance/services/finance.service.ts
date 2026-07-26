@@ -54,7 +54,7 @@ export class FinanceService {
     };
   }
 
-  async getInvoice(id: string) {
+  async getInvoice(id: string, userId: string, userRole: string) {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id },
       include: {
@@ -68,15 +68,25 @@ export class FinanceService {
       throw new NotFoundException('Fatura bulunamadı');
     }
 
+    // Ownership kontrolü - sadece ADMIN veya oluşturan kullanıcı erişebilir
+    if (userRole !== 'ADMIN' && invoice.createdBy !== userId) {
+      throw new NotFoundException('Fatura bulunamadı');
+    }
+
     return invoice;
   }
 
-  async updateInvoice(id: string, updateInvoiceDto: UpdateInvoiceDto, userId: string) {
+  async updateInvoice(id: string, updateInvoiceDto: UpdateInvoiceDto, userId: string, userRole?: string) {
     const invoice = await this.prisma.invoice.findUnique({
       where: { id },
     });
 
     if (!invoice) {
+      throw new NotFoundException('Fatura bulunamadı');
+    }
+
+    // Ownership kontrolü - sadece ADMIN veya oluşturan kullanıcı güncelleyebilir
+    if (userRole && userRole !== 'ADMIN' && invoice.createdBy !== userId) {
       throw new NotFoundException('Fatura bulunamadı');
     }
 

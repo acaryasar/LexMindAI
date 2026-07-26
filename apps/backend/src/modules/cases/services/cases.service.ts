@@ -55,7 +55,7 @@ export class CasesService {
       });
     }
 
-    return this.findOne(caseData.id);
+    return this.findOne(caseData.id, userId, 'ADMIN');
   }
 
   async findAll(page: number = 1, limit: number = 10, search?: string, status?: string, userId?: string, userRole?: string) {
@@ -98,9 +98,7 @@ export class CasesService {
               client: true,
             },
           },
-          lawyers: {
-            include: { user: true },
-          },
+          lawyers: true,
           tags: true,
         },
       }),
@@ -118,7 +116,7 @@ export class CasesService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string, userRole?: string) {
     const caseData = await this.prisma.case.findUnique({
       where: { id },
       include: {
@@ -152,7 +150,7 @@ export class CasesService {
     return caseData;
   }
 
-  async update(id: string, updateCaseDto: UpdateCaseDto, userId: string) {
+  async update(id: string, updateCaseDto: UpdateCaseDto, userId: string, userRole?: string) {
     const caseData = await this.prisma.case.findUnique({
       where: { id },
     });
@@ -207,7 +205,7 @@ export class CasesService {
       }
     }
 
-    return this.findOne(id);
+    return this.findOne(id, userId, userRole);
   }
 
   async remove(id: string, userId: string) {
@@ -462,9 +460,6 @@ export class CasesService {
 
     const lawyers = await this.prisma.caseLawyer.findMany({
       where: { caseId },
-      include: {
-        user: true,
-      },
       orderBy: { createdAt: 'desc' },
     });
 
