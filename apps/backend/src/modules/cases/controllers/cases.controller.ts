@@ -60,8 +60,8 @@ export class CasesController {
   @ApiOperation({ summary: 'Dava detayı' })
   @ApiResponse({ status: 200, description: 'Dava detayı getirildi' })
   @ApiResponse({ status: 404, description: 'Dava bulunamadı' })
-  findOne(@Param('id') id: string) {
-    return this.casesService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.casesService.findOne(id, req.user.id, req.user.role);
   }
 
   @Patch(':id')
@@ -69,7 +69,7 @@ export class CasesController {
   @ApiResponse({ status: 200, description: 'Dava başarıyla güncellendi' })
   @ApiResponse({ status: 404, description: 'Dava bulunamadı' })
   update(@Param('id') id: string, @Body() updateCaseDto: UpdateCaseDto, @Request() req: any) {
-    return this.casesService.update(id, updateCaseDto, req.user.id);
+    return this.casesService.update(id, updateCaseDto, req.user.id, req.user.role);
   }
 
   @Delete(':id')

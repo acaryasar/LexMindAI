@@ -55,15 +55,15 @@ export class FinanceController {
   @ApiOperation({ summary: 'Fatura detayı' })
   @ApiResponse({ status: 200, description: 'Fatura detayı getirildi' })
   @ApiResponse({ status: 404, description: 'Fatura bulunamadı' })
-  getInvoice(@Param('id') id: string) {
-    return this.financeService.getInvoice(id);
+  getInvoice(@Param('id') id: string, @Request() req: any) {
+    return this.financeService.getInvoice(id, req.user.id, req.user.role);
   }
 
   @Patch('invoices/:id')
   @ApiOperation({ summary: 'Fatura güncelle' })
   @ApiResponse({ status: 200, description: 'Fatura başarıyla güncellendi' })
   updateInvoice(@Param('id') id: string, @Body() updateInvoiceDto: UpdateInvoiceDto, @Request() req: any) {
-    return this.financeService.updateInvoice(id, updateInvoiceDto, req.user.id);
+    return this.financeService.updateInvoice(id, updateInvoiceDto, req.user.id, req.user.role);
   }
 
   // Payments

@@ -78,8 +78,8 @@ export class DocumentsController {
   @ApiOperation({ summary: 'Dosya detayı' })
   @ApiResponse({ status: 200, description: 'Dosya detayı getirildi' })
   @ApiResponse({ status: 404, description: 'Dosya bulunamadı' })
-  findOne(@Param('id') id: string) {
-    return this.documentsService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.documentsService.findOne(id, req.user.id, req.user.role);
   }
 
   @Patch(':id')
@@ -87,7 +87,7 @@ export class DocumentsController {
   @ApiResponse({ status: 200, description: 'Dosya başarıyla güncellendi' })
   @ApiResponse({ status: 404, description: 'Dosya bulunamadı' })
   update(@Param('id') id: string, @Body() updateDocumentDto: UpdateDocumentDto, @Request() req: any) {
-    return this.documentsService.update(id, updateDocumentDto, req.user.id);
+    return this.documentsService.update(id, updateDocumentDto, req.user.id, req.user.role);
   }
 
   @Delete(':id')
