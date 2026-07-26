@@ -50,8 +50,8 @@ export class CalendarController {
   @ApiOperation({ summary: 'Etkinlik detayı' })
   @ApiResponse({ status: 200, description: 'Etkinlik detayı getirildi' })
   @ApiResponse({ status: 404, description: 'Etkinlik bulunamadı' })
-  getEvent(@Param('id') id: string) {
-    return this.calendarService.getEvent(id);
+  getEvent(@Param('id') id: string, @Request() req: any) {
+    return this.calendarService.getEvent(id, req.user.id, req.user.role);
   }
 
   @Patch('events/:id')
@@ -59,7 +59,7 @@ export class CalendarController {
   @ApiResponse({ status: 200, description: 'Etkinlik başarıyla güncellendi' })
   @ApiResponse({ status: 404, description: 'Etkinlik bulunamadı' })
   updateEvent(@Param('id') id: string, @Body() updateEventDto: UpdateEventDto, @Request() req: any) {
-    return this.calendarService.updateEvent(id, updateEventDto, req.user.id);
+    return this.calendarService.updateEvent(id, updateEventDto, req.user.id, req.user.role);
   }
 
   @Delete('events/:id')
@@ -68,7 +68,7 @@ export class CalendarController {
   @ApiResponse({ status: 204, description: 'Etkinlik başarıyla silindi' })
   @ApiResponse({ status: 404, description: 'Etkinlik bulunamadı' })
   deleteEvent(@Param('id') id: string, @Request() req: any) {
-    return this.calendarService.deleteEvent(id, req.user.id);
+    return this.calendarService.deleteEvent(id, req.user.id, req.user.role);
   }
 
   @Get('upcoming')

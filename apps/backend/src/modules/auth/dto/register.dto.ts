@@ -3,6 +3,8 @@ import {
   IsNotEmpty,
   IsString,
   IsOptional,
+  MinLength,
+  Matches,
 } from 'class-validator';
 
 export class RegisterDto {
@@ -12,6 +14,10 @@ export class RegisterDto {
 
   @IsOptional()
   @IsString()
+  @MinLength(12, { message: 'Şifre en az 12 karakter olmalıdır' })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+    message: 'Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir',
+  })
   password?: string;
 
   @IsNotEmpty({ message: 'Ad zorunludur' })

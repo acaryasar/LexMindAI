@@ -142,13 +142,34 @@ export class HearingsService {
     };
   }
 
-  async update(id: string, updateHearingDto: UpdateHearingDto) {
+  async update(id: string, updateHearingDto: UpdateHearingDto, userId?: string, userRole?: string) {
     const hearing = await this.prisma.caseHearing.findUnique({
       where: { id },
+      include: {
+        case: {
+          select: {
+            lawyers: {
+              select: {
+                userId: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!hearing) {
       throw new NotFoundException('Duruşma bulunamadı');
+    }
+
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isAssignedLawyer = hearing.case?.lawyers?.some(
+      (lawyer) => lawyer.userId === userId
+    );
+
+    if (!isAdminOrPartner && !isAssignedLawyer) {
+      throw new ForbiddenException('Bu duruşmayı güncelleme yetkiniz yok');
     }
 
     return this.prisma.caseHearing.update({
@@ -162,13 +183,34 @@ export class HearingsService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId?: string, userRole?: string) {
     const hearing = await this.prisma.caseHearing.findUnique({
       where: { id },
+      include: {
+        case: {
+          select: {
+            lawyers: {
+              select: {
+                userId: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!hearing) {
       throw new NotFoundException('Duruşma bulunamadı');
+    }
+
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isAssignedLawyer = hearing.case?.lawyers?.some(
+      (lawyer) => lawyer.userId === userId
+    );
+
+    if (!isAdminOrPartner && !isAssignedLawyer) {
+      throw new ForbiddenException('Bu duruşmayı silme yetkiniz yok');
     }
 
     await this.prisma.caseHearing.delete({

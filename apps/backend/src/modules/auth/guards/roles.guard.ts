@@ -19,7 +19,11 @@ export class RolesGuard implements CanActivate {
       return false;
     }
 
-    const userRoles = user.roles.map((ur: any) => ur.role.name);
+    // Handle both string array (from JWT) and object array (from database)
+    const userRoles = Array.isArray(user.roles) && typeof user.roles[0] === 'string'
+      ? user.roles
+      : user.roles.map((ur: any) => ur.role?.name || ur.role);
+    
     return requiredRoles.some((role) => userRoles.includes(role));
   }
 }

@@ -65,8 +65,8 @@ export class HearingsController {
   @ApiOperation({ summary: 'Duruşma güncelle' })
   @ApiResponse({ status: 200, description: 'Duruşma başarıyla güncellendi' })
   @ApiResponse({ status: 404, description: 'Duruşma bulunamadı' })
-  update(@Param('id') id: string, @Body() updateHearingDto: UpdateHearingDto) {
-    return this.hearingsService.update(id, updateHearingDto);
+  update(@Param('id') id: string, @Body() updateHearingDto: UpdateHearingDto, @Request() req: any) {
+    return this.hearingsService.update(id, updateHearingDto, req.user.id, req.user.role);
   }
 
   @Delete(':id')
@@ -74,7 +74,7 @@ export class HearingsController {
   @ApiOperation({ summary: 'Duruşma sil' })
   @ApiResponse({ status: 204, description: 'Duruşma başarıyla silindi' })
   @ApiResponse({ status: 404, description: 'Duruşma bulunamadı' })
-  remove(@Param('id') id: string) {
-    return this.hearingsService.remove(id);
+  remove(@Param('id') id: string, @Request() req: any) {
+    return this.hearingsService.remove(id, req.user.id, req.user.role);
   }
 }

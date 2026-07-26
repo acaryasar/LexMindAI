@@ -3,23 +3,38 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
+import { WinstonLogger } from './common/logger.service';
+import * as crypto from 'crypto';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
+  });
+
+  // Use Winston logger
+  const logger = app.get(WinstonLogger);
+  app.useLogger(logger);
+
+  // Generate nonce for CSP
+  const nonce = Buffer.from(crypto.randomBytes(16)).toString('base64');
 
   // Security headers with helmet
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", `'nonce-${nonce}'`],
+        scriptSrc: ["'self'", `'nonce-${nonce}'`],
         imgSrc: ["'self'", "data:", "https:"],
         connectSrc: ["'self'", "https:"],
         fontSrc: ["'self'"],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
         frameSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: ["'none'"],
+        upgradeInsecureRequests: [],
       },
     },
     hsts: {
@@ -31,6 +46,9 @@ async function bootstrap() {
     noSniff: true,
     frameguard: { action: 'deny' },
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    crossOriginEmbedderPolicy: { policy: 'require-corp' },
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
+    crossOriginResourcePolicy: { policy: 'same-origin' },
   }));
 
   // Global prefix
@@ -58,21 +76,25 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger documentation
-  const config = new DocumentBuilder()
-    .setTitle('LexMind AI API')
-    .setDescription('Enterprise Development Kit for Law Firms')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  // Swagger documentation (only in development)
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('LexMind AI API')
+      .setDescription('Enterprise Development Kit for Law Firms')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
 
-  console.log(`🚀 Application is running on: http://localhost:${port}/${apiPrefix}`);
-  console.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
+  if (process.env.NODE_ENV === 'development') {
+    logger.log(`🚀 Application is running on: http://localhost:${port}/${apiPrefix}`);
+    logger.log(`📚 Swagger documentation: http://localhost:${port}/api/docs`);
+  }
 }
 
 bootstrap();

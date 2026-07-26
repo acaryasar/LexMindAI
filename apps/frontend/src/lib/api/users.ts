@@ -13,7 +13,7 @@ export interface User {
 
 export const usersApi = {
   async getUsers(): Promise<User[]> {
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     const response = await axios.get(`${API_BASE_URL}/auth/users`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -21,7 +21,7 @@ export const usersApi = {
   },
 
   async getLawyers(): Promise<User[]> {
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     const response = await axios.get(`${API_BASE_URL}/auth/users`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -29,7 +29,7 @@ export const usersApi = {
   },
 
   async getById(id: string): Promise<User> {
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     const response = await axios.get(`${API_BASE_URL}/auth/users/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -37,7 +37,7 @@ export const usersApi = {
   },
 
   async update(id: string, data: Partial<User>): Promise<User> {
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     const response = await axios.put(`${API_BASE_URL}/auth/users/${id}`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -45,7 +45,7 @@ export const usersApi = {
   },
 
   async delete(id: string): Promise<void> {
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     await axios.delete(`${API_BASE_URL}/auth/users/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -57,7 +57,7 @@ export const usersApi = {
   },
 
   async updateRoles(id: string, roles: string[]): Promise<User> {
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     const response = await axios.put(`${API_BASE_URL}/auth/users/${id}/roles`, { roles }, {
       headers: { Authorization: `Bearer ${token}` },
     });

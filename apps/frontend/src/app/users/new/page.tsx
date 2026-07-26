@@ -32,7 +32,7 @@ export default function NewUserPage() {
   const fetchRoles = async () => {
     try {
       setLoadingRoles(true);
-      const token = localStorage.getItem('accessToken');
+      const token = sessionStorage.getItem('accessToken');
       const response = await api.get('/auth/roles', {
         headers: { Authorization: `Bearer ${token}` },
       });

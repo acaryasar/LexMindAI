@@ -57,7 +57,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Kullanıcı çıkışı' })
   @ApiResponse({ status: 204, description: 'Çıkış başarılı' })
   async logout(@Request() req: any): Promise<void> {
-    await this.authService.logout(req.user.id);
+    // Extract JTI from token for blacklisting
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    const decoded = this.authService.decodeToken(token);
+    
+    await this.authService.logout(req.user.id, decoded?.jti);
   }
 
   @Get('profile')

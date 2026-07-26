@@ -13,6 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@database/prisma.service';
 import { EmailService } from '../../email/services/email.service';
+import { RedisService } from '@common/redis.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
@@ -32,6 +33,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private emailService: EmailService,
+    private redisService: RedisService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -154,9 +156,35 @@ export class AuthService {
       throw new UnauthorizedException('Hesap aktif değil');
     }
 
+    // Check if account is locked
+    const lockoutKey = `lockout:${user.id}`;
+    const isLocked = await this.redisService.exists(lockoutKey);
+    if (isLocked) {
+      const ttl = await this.redisService.getClient().ttl(lockoutKey);
+      const minutesLeft = Math.ceil(ttl / 60);
+      throw new UnauthorizedException(
+        `Hesap çok fazla başarısız giriş denemesi nedeniyle kilitlendi. ${minutesLeft} dakika sonra tekrar deneyin.`,
+      );
+    }
+
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
 
     if (!isPasswordValid) {
+      // Track failed login attempts in Redis
+      const attemptsKey = `login_attempts:${user.id}`;
+      const attempts = await this.redisService.get(attemptsKey);
+      const attemptCount = attempts ? parseInt(attempts) + 1 : 1;
+
+      await this.redisService.set(attemptsKey, attemptCount.toString(), 15 * 60); // 15 minutes window
+
+      // Lock account after 5 failed attempts
+      if (attemptCount >= 5) {
+        await this.redisService.set(lockoutKey, 'true', 15 * 60); // Lock for 15 minutes
+        throw new UnauthorizedException(
+          'Hesap çok fazla başarısız giriş denemesi nedeniyle kilitlendi. 15 dakika sonra tekrar deneyin.',
+        );
+      }
+
       // Log failed login attempt
       await this.prisma.loginHistory.create({
         data: {
@@ -164,8 +192,16 @@ export class AuthService {
           success: false,
         },
       });
-      throw new UnauthorizedException('Geçersiz e-posta veya şifre');
+
+      const remainingAttempts = 5 - attemptCount;
+      throw new UnauthorizedException(
+        `Geçersiz e-posta veya şifre. Kalan deneme hakkı: ${remainingAttempts}`,
+      );
     }
+
+    // Clear failed login attempts on successful login
+    const attemptsKey = `login_attempts:${user.id}`;
+    await this.redisService.del(attemptsKey);
 
     // Update last login
     await this.prisma.user.update({
@@ -225,15 +261,31 @@ export class AuthService {
     return tokens;
   }
 
-  async logout(userId: string): Promise<void> {
+  async logout(userId: string, jti?: string): Promise<void> {
+    // Revoke all refresh tokens
     await this.prisma.refreshToken.updateMany({
       where: { userId },
       data: { revokedAt: new Date() },
     });
+
+    // Blacklist access token if JTI provided
+    if (jti) {
+      const ttl = 15 * 60; // 15 minutes (access token expiry)
+      await this.redisService.set(`blacklist:${jti}`, 'true', ttl);
+    }
+  }
+
+  decodeToken(token: string): any {
+    try {
+      return this.jwtService.decode(token);
+    } catch (error) {
+      return null;
+    }
   }
 
   private async generateTokens(userId: string, email: string) {
-    const payload = { sub: userId, email };
+    const jti = this.generateRandomToken(); // JWT ID for blacklist
+    const payload = { sub: userId, email, jti };
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: this.configService.get<string>('JWT_EXPIRES_IN') || '15m',
@@ -248,7 +300,7 @@ export class AuthService {
       },
     );
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, jti };
   }
 
   private async saveRefreshToken(userId: string, token: string): Promise<void> {
@@ -265,15 +317,20 @@ export class AuthService {
   }
 
   private generateRandomToken(): string {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    // Cryptographically secure random token generation
+    const token = require('crypto').randomBytes(32).toString('hex');
+    return token;
   }
 
   private generateRandomPassword(): string {
+    // Cryptographically secure random password generation
+    const crypto = require('crypto');
     const length = 16;
     const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
     let password = '';
+    const randomValues = crypto.randomBytes(length);
     for (let i = 0; i < length; i++) {
-      password += charset.charAt(Math.floor(Math.random() * charset.length));
+      password += charset[randomValues[i] % charset.length];
     }
     return password;
   }
@@ -701,7 +758,7 @@ export class AuthService {
         email: u.email,
         firstName: u.firstName,
         lastName: u.lastName,
-        password: 'demo123', // Demo password for testing - ONLY IN DEVELOPMENT
+        password: 'Use forgot-password to reset', // Don't expose actual passwords
         roles: u.roles.map(ur => ur.role.name),
       })),
     };

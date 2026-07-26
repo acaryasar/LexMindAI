@@ -42,8 +42,8 @@ export default function LoginPage() {
       const response = await api.post('/auth/login', data);
       const { access_token, refresh_token, user } = response.data;
 
-      localStorage.setItem('accessToken', access_token);
-      localStorage.setItem('refreshToken', refresh_token);
+      sessionStorage.setItem('accessToken', access_token);
+      sessionStorage.setItem('refreshToken', refresh_token);
 
       setAuth(user, access_token, refresh_token);
       router.push('/dashboard');

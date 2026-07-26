@@ -57,7 +57,7 @@ export default function SettingsPage() {
   const fetchAIConfig = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
+      const token = sessionStorage.getItem('accessToken');
       const response = await axios.get('http://localhost:3001/api/v1/auth/ai-config', {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -76,7 +76,7 @@ export default function SettingsPage() {
   const handleSaveAIConfig = async () => {
     try {
       setSaving(true);
-      const token = localStorage.getItem('accessToken');
+      const token = sessionStorage.getItem('accessToken');
       await axios.put('http://localhost:3001/api/v1/auth/ai-config', aiConfig, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -98,7 +98,7 @@ export default function SettingsPage() {
     try {
       setTesting(true);
       setTestResult(null);
-      const token = localStorage.getItem('accessToken');
+      const token = sessionStorage.getItem('accessToken');
       const response = await axios.post('http://localhost:3001/api/v1/auth/validate-ai-key', 
         { provider: aiConfig.provider, apiKey: aiConfig.apiKey },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -144,7 +144,7 @@ export default function SettingsPage() {
     try {
       setChangingPassword(true);
       setPasswordResult(null);
-      const token = localStorage.getItem('accessToken');
+      const token = sessionStorage.getItem('accessToken');
       await axios.post('http://localhost:3001/api/v1/auth/change-password',
         {
           currentPassword: passwordData.currentPassword,

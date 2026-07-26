@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { CreateEventDto } from '../dto/create-event.dto';
 import { UpdateEventDto } from '../dto/update-event.dto';
@@ -136,28 +136,59 @@ export class CalendarService {
     });
   }
 
-  async getEvent(id: string) {
+  async getEvent(id: string, userId?: string, userRole?: string) {
     const event = await this.prisma.calendarEvent.findUnique({
       where: { id },
+      include: {
+        participants: {
+          select: {
+            userId: true,
+          },
+        },
+      },
     });
 
     if (!event) {
       throw new NotFoundException('Etkinlik bulunamadı');
     }
 
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isParticipant = event.participants?.some(
+      (participant) => participant.userId === userId
+    );
+
+    if (!isAdminOrPartner && !isParticipant) {
+      throw new ForbiddenException('Bu etkinliğe erişim yetkiniz yok');
+    }
+
     return event;
   }
 
-  async updateEvent(id: string, updateEventDto: UpdateEventDto, userId: string) {
+  async updateEvent(id: string, updateEventDto: UpdateEventDto, userId: string, userRole?: string) {
     const event = await this.prisma.calendarEvent.findUnique({
       where: { id },
       include: {
-        participants: true,
+        participants: {
+          select: {
+            userId: true,
+          },
+        },
       },
     });
 
     if (!event) {
       throw new NotFoundException('Etkinlik bulunamadı');
+    }
+
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isParticipant = event.participants?.some(
+      (participant) => participant.userId === userId
+    );
+
+    if (!isAdminOrPartner && !isParticipant) {
+      throw new ForbiddenException('Bu etkinliği güncelleme yetkiniz yok');
     }
 
     // Handle participant updates
@@ -205,13 +236,30 @@ export class CalendarService {
     return updated;
   }
 
-  async deleteEvent(id: string, userId: string) {
+  async deleteEvent(id: string, userId: string, userRole?: string) {
     const event = await this.prisma.calendarEvent.findUnique({
       where: { id },
+      include: {
+        participants: {
+          select: {
+            userId: true,
+          },
+        },
+      },
     });
 
     if (!event) {
       throw new NotFoundException('Etkinlik bulunamadı');
+    }
+
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isParticipant = event.participants?.some(
+      (participant) => participant.userId === userId
+    );
+
+    if (!isAdminOrPartner && !isParticipant) {
+      throw new ForbiddenException('Bu etkinliği silme yetkiniz yok');
     }
 
     await this.prisma.calendarEvent.update({

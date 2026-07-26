@@ -54,8 +54,8 @@ export class TasksController {
   @ApiOperation({ summary: 'Görev detayı' })
   @ApiResponse({ status: 200, description: 'Görev detayı getirildi' })
   @ApiResponse({ status: 404, description: 'Görev bulunamadı' })
-  findOne(@Param('id') id: string) {
-    return this.tasksService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.tasksService.findOne(id, req.user.id, req.user.role);
   }
 
   @Patch(':id')
@@ -63,7 +63,7 @@ export class TasksController {
   @ApiResponse({ status: 200, description: 'Görev başarıyla güncellendi' })
   @ApiResponse({ status: 404, description: 'Görev bulunamadı' })
   update(@Param('id') id: string, @Body() updateTaskDto: UpdateTaskDto, @Request() req: any) {
-    return this.tasksService.update(id, updateTaskDto, req.user.id);
+    return this.tasksService.update(id, updateTaskDto, req.user.id, req.user.role);
   }
 
   @Delete(':id')
@@ -72,7 +72,7 @@ export class TasksController {
   @ApiResponse({ status: 204, description: 'Görev başarıyla silindi' })
   @ApiResponse({ status: 404, description: 'Görev bulunamadı' })
   remove(@Param('id') id: string, @Request() req: any) {
-    return this.tasksService.remove(id, req.user.id);
+    return this.tasksService.remove(id, req.user.id, req.user.role);
   }
 
   @Post(':id/comments')

@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 interface User {
   id: string;
@@ -19,30 +18,57 @@ interface AuthState {
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
+export const useAuthStore = create<AuthState>()((set) => ({
+  user: null,
+  accessToken: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  setAuth: (user, accessToken, refreshToken) => {
+    // Store tokens in sessionStorage instead of localStorage for better security
+    sessionStorage.setItem('accessToken', accessToken);
+    sessionStorage.setItem('refreshToken', refreshToken);
+    sessionStorage.setItem('user', JSON.stringify(user));
+    
+    set({
+      user,
+      accessToken,
+      refreshToken,
+      isAuthenticated: true,
+    });
+  },
+  logout: () => {
+    // Clear tokens from sessionStorage
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('user');
+    
+    set({
       user: null,
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      setAuth: (user, accessToken, refreshToken) =>
-        set({
-          user,
-          accessToken,
-          refreshToken,
-          isAuthenticated: true,
-        }),
-      logout: () =>
-        set({
-          user: null,
-          accessToken: null,
-          refreshToken: null,
-          isAuthenticated: false,
-        }),
-    }),
-    {
-      name: 'auth-storage',
-    }
-  )
-);
+    });
+  },
+}));
+
+// Initialize state from sessionStorage on app load
+const initializeAuth = () => {
+  const accessToken = sessionStorage.getItem('accessToken');
+  const refreshToken = sessionStorage.getItem('refreshToken');
+  const userStr = sessionStorage.getItem('user');
+  
+  if (accessToken && refreshToken && userStr) {
+    const user = JSON.parse(userStr);
+    useAuthStore.setState({
+      user,
+      accessToken,
+      refreshToken,
+      isAuthenticated: true,
+    });
+  }
+};
+
+// Call initialization
+if (typeof window !== 'undefined') {
+  initializeAuth();
+}

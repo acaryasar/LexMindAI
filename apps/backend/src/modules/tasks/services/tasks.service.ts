@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@database/prisma.service';
 import { CreateTaskDto } from '../dto/create-task.dto';
 import { UpdateTaskDto } from '../dto/update-task.dto';
@@ -58,7 +58,7 @@ export class TasksService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string, userRole?: string) {
     const task = await this.prisma.task.findUnique({
       where: { id },
       include: {
@@ -72,16 +72,32 @@ export class TasksService {
       throw new NotFoundException('Görev bulunamadı');
     }
 
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isOwner = task.createdBy === userId;
+
+    if (!isAdminOrPartner && !isOwner) {
+      throw new ForbiddenException('Bu göreve erişim yetkiniz yok');
+    }
+
     return task;
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto, userId: string) {
+  async update(id: string, updateTaskDto: UpdateTaskDto, userId: string, userRole?: string) {
     const task = await this.prisma.task.findUnique({
       where: { id },
     });
 
     if (!task) {
       throw new NotFoundException('Görev bulunamadı');
+    }
+
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isOwner = task.createdBy === userId;
+
+    if (!isAdminOrPartner && !isOwner) {
+      throw new ForbiddenException('Bu görevi güncelleme yetkiniz yok');
     }
 
     const updated = await this.prisma.task.update({
@@ -95,13 +111,21 @@ export class TasksService {
     return updated;
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string, userRole?: string) {
     const task = await this.prisma.task.findUnique({
       where: { id },
     });
 
     if (!task) {
       throw new NotFoundException('Görev bulunamadı');
+    }
+
+    // Authorization check - IDOR protection
+    const isAdminOrPartner = userRole === 'ADMIN' || userRole === 'MANAGING_PARTNER';
+    const isOwner = task.createdBy === userId;
+
+    if (!isAdminOrPartner && !isOwner) {
+      throw new ForbiddenException('Bu görevi silme yetkiniz yok');
     }
 
     await this.prisma.task.update({

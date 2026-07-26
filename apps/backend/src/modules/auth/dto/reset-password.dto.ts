@@ -7,12 +7,12 @@ export class ResetPasswordDto {
   @IsNotEmpty({ message: 'Token zorunludur' })
   token: string;
 
-  @ApiProperty({ example: 'NewPassword123!' })
+  @ApiProperty({ example: 'NewPassword123!@' })
   @IsString()
   @IsNotEmpty({ message: 'Şifre zorunludur' })
-  @MinLength(8, { message: 'Şifre en az 8 karakter olmalıdır' })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
-    message: 'Şifre en az bir büyük harf, bir küçük harf ve bir rakam içermelidir',
+  @MinLength(12, { message: 'Şifre en az 12 karakter olmalıdır' })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+    message: 'Şifre en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir',
   })
   password: string;
 }
