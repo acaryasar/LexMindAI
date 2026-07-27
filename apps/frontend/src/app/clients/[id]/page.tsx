@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { 
   Phone, Mail, Video, Copy, Edit, Plus, FileText, Calendar, 
   TrendingUp, Clock, DollarSign, AlertCircle, ChevronRight,
@@ -33,19 +34,22 @@ export default function ClientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAssignLawyerDialog, setShowAssignLawyerDialog] = useState(false);
+  const [selectedLawyerId, setSelectedLawyerId] = useState('');
+  const [isPrimaryLawyer, setIsPrimaryLawyer] = useState(false);
+  const [assignmentReason, setAssignmentReason] = useState('');
 
   const tabs = [
-    { id: 'overview', label: 'Genel Bakış' },
-    { id: 'cases', label: 'Davalar' },
-    { id: 'documents', label: 'Belgeler' },
-    { id: 'lawyers', label: 'Avukatlar' },
-    { id: 'communications', label: 'İletişimler' },
-    { id: 'meetings', label: 'Toplantılar' },
-    { id: 'tasks', label: 'Görevler' },
-    { id: 'financial', label: 'Finansal' },
-    { id: 'timeline', label: 'Zaman Çizelgesi' },
-    { id: 'notes', label: 'Notlar' },
-    { id: 'ai-insights', label: 'AI İçgörüleri' },
+    { id: 'overview', label: 'Genel Bakış', icon: User },
+    { id: 'cases', label: 'Davalar', icon: FileText },
+    { id: 'documents', label: 'Belgeler', icon: FileText },
+    { id: 'lawyers', label: 'Avukatlar', icon: User },
+    { id: 'communications', label: 'İletişimler', icon: MessageSquare },
+    { id: 'meetings', label: 'Toplantılar', icon: Calendar },
+    { id: 'tasks', label: 'Görevler', icon: CheckCircle },
+    { id: 'financial', label: 'Finansal', icon: DollarSign },
+    { id: 'timeline', label: 'Zaman Çizelgesi', icon: Clock },
+    { id: 'notes', label: 'Notlar', icon: FileText },
+    { id: 'ai-insights', label: 'AI İçgörüleri', icon: Brain },
   ];
 
   useEffect(() => {
@@ -104,316 +108,265 @@ export default function ClientDetailPage() {
     <MainLayout showAIPanel={true}>
       <div className="space-y-6 lg:mr-80 md:mr-64 mr-0">
           {/* Header */}
-          <div className="bg-white border-b border-gray-200 px-8 py-6">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-              <button onClick={() => router.push('/clients')} className="hover:text-gray-900">
-                Müvekkiller
-              </button>
-              <ChevronRight className="w-4 h-4" />
-              <span className="text-gray-900">Müvekkil Detay</span>
-            </div>
-
-            {/* Client Info */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-4">
-                {/* Profile Photo */}
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                  {client.firstName[0]}{client.lastName[0]}
-                </div>
-
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="icon" onClick={() => router.push('/clients')}>
+                <ChevronRight className="w-5 h-5 rotate-180" />
+              </Button>
+              <div>
+                <div className="flex items-center space-x-3">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                     {client.firstName} {client.lastName}
                   </h1>
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-purple-100 text-purple-700 border-purple-200">
-                      {client.type === 'corporate' ? 'Kurumsal' : 'Bireysel'}
-                    </Badge>
-                    <Badge className="bg-green-100 text-green-700 border-green-200">
-                      Aktif
-                    </Badge>
-                    <span className="text-sm text-gray-500">
-                      TC: {client.nationalId}
-                    </span>
-                  </div>
+                  <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                    {client.type === 'corporate' ? 'Kurumsal' : 'Bireysel'}
+                  </Badge>
+                  <Badge className="bg-green-100 text-green-700 border-green-200">
+                    Aktif
+                  </Badge>
                 </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
-                  <Phone className="w-4 h-4 mr-2" />
-                  Ara
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Mail className="w-4 h-4 mr-2" />
-                  E-posta
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Video className="w-4 h-4 mr-2" />
-                  Video
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Copy className="w-4 h-4 mr-2" />
-                  Kopyala
-                </Button>
-                <Button className="bg-purple-600 hover:bg-purple-700">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Düzenle
-                </Button>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">
+                  TC: {client.nationalId}
+                </p>
               </div>
             </div>
-
-            {/* Primary Action Buttons */}
-            <div className="flex items-center gap-2 mt-6">
+            <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Yeni Dava
+                <Phone className="w-4 h-4 mr-2" />
+                Ara
               </Button>
               <Button variant="outline" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Görev Oluştur
+                <Mail className="w-4 h-4 mr-2" />
+                E-posta
               </Button>
               <Button variant="outline" size="sm">
-                <FileText className="w-4 h-4 mr-2" />
-                Belge Yükle
-              </Button>
-              <Button variant="outline" size="sm">
-                <Calendar className="w-4 h-4 mr-2" />
-                Toplantı Planla
-              </Button>
-              <Button className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700" size="sm">
-                <Sparkles className="w-4 h-4 mr-2" />
-                AI Raporu Oluştur
+                <Edit className="w-4 h-4 mr-2" />
+                Düzenle
               </Button>
             </div>
           </div>
 
           {/* Summary Cards */}
-          <div className="px-8 py-6 bg-gray-50">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              <Card className="bg-white border-gray-200">
-                <CardContent className="p-4">
-                  <p className="text-xs text-gray-500 mb-2 text-center">İlişki Puanı</p>
-                  <div className="flex items-center gap-2 justify-center">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
-                      <TrendingUp className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">85</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4">
+                <p className="text-xs text-gray-500 mb-2 text-center">İlişki Puanı</p>
+                <div className="flex items-center gap-2 justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4 text-white" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="text-2xl font-bold text-gray-900">85</div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-white border-gray-200">
-                <CardContent className="p-4">
-                  <p className="text-xs text-gray-500 mb-2 text-center">Açık Davalar</p>
-                  <div className="flex items-center gap-2 justify-center">
-                    <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">3</div>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4">
+                <p className="text-xs text-gray-500 mb-2 text-center">Açık Davalar</p>
+                <div className="flex items-center gap-2 justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-white" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="text-2xl font-bold text-gray-900">3</div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-white border-gray-200">
-                <CardContent className="p-4">
-                  <p className="text-xs text-gray-500 mb-2 text-center">Kapalı Davalar</p>
-                  <div className="flex items-center gap-2 justify-center">
-                    <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
-                      <CheckCircle className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">12</div>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4">
+                <p className="text-xs text-gray-500 mb-2 text-center">Kapalı Davalar</p>
+                <div className="flex items-center gap-2 justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 text-white" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="text-2xl font-bold text-gray-900">12</div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-white border-gray-200">
-                <CardContent className="p-4">
-                  <p className="text-xs text-gray-500 mb-2 text-center">Toplam Gelir</p>
-                  <div className="flex items-center gap-2 justify-center">
-                    <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
-                      <DollarSign className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">₺125K</div>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4">
+                <p className="text-xs text-gray-500 mb-2 text-center">Toplam Gelir</p>
+                <div className="flex items-center gap-2 justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
+                    <DollarSign className="w-4 h-4 text-white" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="text-2xl font-bold text-gray-900">₺125K</div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-white border-gray-200">
-                <CardContent className="p-4">
-                  <p className="text-xs text-gray-500 mb-2 text-center">Bakiye</p>
-                  <div className="flex items-center gap-2 justify-center">
-                    <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
-                      <AlertCircle className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">₺15K</div>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4">
+                <p className="text-xs text-gray-500 mb-2 text-center">Bakiye</p>
+                <div className="flex items-center gap-2 justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-orange-500 flex items-center justify-center">
+                    <AlertCircle className="w-4 h-4 text-white" />
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="text-2xl font-bold text-gray-900">₺15K</div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-white border-gray-200">
-                <CardContent className="p-4">
-                  <p className="text-xs text-gray-500 mb-2 text-center">Son İletişim</p>
-                  <div className="flex items-center gap-2 justify-center">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
-                      <Clock className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">5g</div>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4">
+                <p className="text-xs text-gray-500 mb-2 text-center">Son İletişim</p>
+                <div className="flex items-center gap-2 justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-white" />
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                  <div className="text-2xl font-bold text-gray-900">5g</div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Tabs */}
-          <div className="px-8 py-4 bg-white border-b border-gray-200">
-            <div className="flex items-center gap-1 flex-wrap">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    'px-4 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap',
-                    activeTab === tab.id
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-wrap gap-2">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <Button
+                      key={tab.id}
+                      variant={activeTab === tab.id ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setActiveTab(tab.id)}
+                      className="flex items-center space-x-2"
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{tab.label}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Tab Content */}
-          <div className="px-8 py-6">
-            {activeTab === 'overview' && (
-              <div className="space-y-6">
+          {activeTab === 'overview' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Genel Bakış</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 {/* Client Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Müşteri Bilgileri</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="text-sm text-gray-500 mb-1 block">Ad Soyad</label>
-                        <p className="text-gray-900 font-medium">{client.firstName} {client.lastName}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500 mb-1 block">TC Kimlik No</label>
-                        <p className="text-gray-900 font-medium">{client.nationalId}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500 mb-1 block">E-posta</label>
-                        <p className="text-gray-900 font-medium">{client.email}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500 mb-1 block">Telefon</label>
-                        <p className="text-gray-900 font-medium">{client.phoneNumber}</p>
-                      </div>
-                      <div className="col-span-2">
-                        <label className="text-sm text-gray-500 mb-1 block">Adres</label>
-                        <p className="text-gray-900 font-medium">{client.address}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500 mb-1 block">Müşteri Türü</label>
-                        <p className="text-gray-900 font-medium">{client.type === 'corporate' ? 'Kurumsal' : 'Bireysel'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-gray-500 mb-1 block">Kayıt Tarihi</label>
-                        <p className="text-gray-900 font-medium">{new Date(client.createdAt).toLocaleDateString('tr-TR')}</p>
-                      </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Müşteri Bilgileri</h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="text-sm text-gray-500 mb-1 block">Ad Soyad</label>
+                      <p className="text-gray-900 font-medium">{client.firstName} {client.lastName}</p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div>
+                      <label className="text-sm text-gray-500 mb-1 block">TC Kimlik No</label>
+                      <p className="text-gray-900 font-medium">{client.nationalId}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-500 mb-1 block">E-posta</label>
+                      <p className="text-gray-900 font-medium">{client.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-500 mb-1 block">Telefon</label>
+                      <p className="text-gray-900 font-medium">{client.phoneNumber}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-sm text-gray-500 mb-1 block">Adres</label>
+                      <p className="text-gray-900 font-medium">{client.address}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-500 mb-1 block">Müşteri Türü</label>
+                      <p className="text-gray-900 font-medium">{client.type === 'corporate' ? 'Kurumsal' : 'Bireysel'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-500 mb-1 block">Kayıt Tarihi</label>
+                      <p className="text-gray-900 font-medium">{new Date(client.createdAt).toLocaleDateString('tr-TR')}</p>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Recent Cases */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Son Davalar</CardTitle>
-                      <Button variant="outline" size="sm" onClick={() => setActiveTab('cases')}>
-                        Tümünü Gör
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {cases.slice(0, 3).map((caseItem) => (
-                        <div key={caseItem.id} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-semibold text-gray-900">{caseItem.caseNumber}</span>
-                                <Badge className={cn(
-                                  'text-xs',
-                                  caseItem.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
-                                  caseItem.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                                  'bg-gray-100 text-gray-700'
-                                )}>
-                                  {caseItem.status === 'ACTIVE' ? 'Aktif' : 
-                                   caseItem.status === 'PENDING' ? 'Beklemede' : 'Kapalı'}
-                                </Badge>
-                              </div>
-                              <h4 className="text-sm font-medium text-gray-900">{caseItem.title}</h4>
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Son Davalar</h3>
+                    <Button variant="outline" size="sm" onClick={() => setActiveTab('cases')}>
+                      Tümünü Gör
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {cases.slice(0, 3).map((caseItem) => (
+                      <div key={caseItem.id} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-gray-900">{caseItem.caseNumber}</span>
+                              <Badge className={cn(
+                                'text-xs',
+                                caseItem.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
+                                caseItem.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-gray-100 text-gray-700'
+                              )}>
+                                {caseItem.status === 'ACTIVE' ? 'Aktif' : 
+                                 caseItem.status === 'PENDING' ? 'Beklemede' : 'Kapalı'}
+                              </Badge>
                             </div>
-                            <Button variant="ghost" size="sm">
-                              <ChevronRight className="w-4 h-4" />
-                            </Button>
+                            <h4 className="text-sm font-medium text-gray-900">{caseItem.title}</h4>
                           </div>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>{caseItem.courtName}</span>
-                            <span>•</span>
-                            <span>{new Date(caseItem.startDate).toLocaleDateString('tr-TR')}</span>
-                          </div>
+                          <Button variant="ghost" size="sm">
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>{caseItem.courtName}</span>
+                          <span>•</span>
+                          <span>{new Date(caseItem.startDate).toLocaleDateString('tr-TR')}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 {/* Recent Documents */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Son Belgeler</CardTitle>
-                      <Button variant="outline" size="sm" onClick={() => setActiveTab('documents')}>
-                        Tümünü Gör
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {documents.slice(0, 3).map((doc) => (
-                        <div key={doc.id} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900">{doc.name}</h4>
-                              <p className="text-xs text-gray-500">{doc.fileName}</p>
-                            </div>
-                            <Badge className="bg-blue-100 text-blue-700 text-xs">
-                              {doc.category}
-                            </Badge>
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Son Belgeler</h3>
+                    <Button variant="outline" size="sm" onClick={() => setActiveTab('documents')}>
+                      Tümünü Gör
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    {documents.slice(0, 3).map((doc) => (
+                      <div key={doc.id} className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">{doc.name}</h4>
+                            <p className="text-xs text-gray-500">{doc.fileName}</p>
                           </div>
-                          <div className="flex items-center gap-4 text-xs text-gray-500">
-                            <span>{new Date(doc.createdAt).toLocaleDateString('tr-TR')}</span>
-                            <span>•</span>
-                            <span>{(doc.size / 1024).toFixed(0)} KB</span>
-                          </div>
+                          <Badge className="bg-blue-100 text-blue-700 text-xs">
+                            {doc.category}
+                          </Badge>
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>{new Date(doc.createdAt).toLocaleDateString('tr-TR')}</span>
+                          <span>•</span>
+                          <span>{(doc.size / 1024).toFixed(0)} KB</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-            {/* Cases Tab */}
-            {activeTab === 'cases' && (
-              <div className="space-y-4">
+          {/* Cases Tab */}
+          {activeTab === 'cases' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Davalar</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -489,12 +442,17 @@ export default function ClientDetailPage() {
                     </Card>
                   ))}
                 </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          )}
 
-            {/* Documents Tab */}
-            {activeTab === 'documents' && (
-              <div className="space-y-4">
+          {/* Documents Tab */}
+          {activeTab === 'documents' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Belgeler</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -545,12 +503,17 @@ export default function ClientDetailPage() {
                     </Card>
                   ))}
                 </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          )}
 
-            {/* Lawyers Tab */}
-            {activeTab === 'lawyers' && (
-              <div className="space-y-4">
+          {/* Lawyers Tab */}
+          {activeTab === 'lawyers' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Avukatlar</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -638,105 +601,114 @@ export default function ClientDetailPage() {
                 </div>
 
                 {/* Assign Lawyer Dialog */}
-                {showAssignLawyerDialog && (
-                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <Card className="w-full max-w-md">
-                      <CardHeader>
-                        <CardTitle>Avukat Ata</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Avukat Seç</label>
-                          <select
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            id="lawyer-select"
-                          >
-                            <option value="">Avukat seçin...</option>
-                            {availableLawyers.map((lawyer: UserType) => (
-                              <option key={lawyer.id} value={lawyer.id}>
-                                {lawyer.firstName} {lawyer.lastName}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Ana Avukat</label>
+                <Dialog open={showAssignLawyerDialog} onOpenChange={setShowAssignLawyerDialog}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Avukat Ata</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Avukat Seç</label>
+                        <select
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          value={selectedLawyerId}
+                          onChange={(e) => setSelectedLawyerId(e.target.value)}
+                        >
+                          <option value="">Avukat seçin...</option>
+                          {availableLawyers.map((lawyer: UserType) => (
+                            <option key={lawyer.id} value={lawyer.id}>
+                              {lawyer.firstName} {lawyer.lastName}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Ana Avukat</label>
+                        <div className="flex items-center">
                           <input
                             type="checkbox"
                             id="is-primary"
                             className="w-4 h-4"
+                            checked={isPrimaryLawyer}
+                            onChange={(e) => setIsPrimaryLawyer(e.target.checked)}
                           />
                           <span className="ml-2 text-sm text-gray-600">Bu avukatı ana avukat olarak işaretle</span>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Atama Nedeni</label>
-                          <textarea
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            rows={3}
-                            placeholder="Atama nedenini girin..."
-                            id="reason-input"
-                          />
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            variant="outline"
-                            onClick={() => setShowAssignLawyerDialog(false)}
-                          >
-                            İptal
-                          </Button>
-                          <Button
-                            onClick={async () => {
-                              const lawyerId = (document.getElementById('lawyer-select') as HTMLSelectElement).value;
-                              const isPrimary = (document.getElementById('is-primary') as HTMLInputElement).checked;
-                              const reason = (document.getElementById('reason-input') as HTMLTextAreaElement).value;
-                              
-                              if (!lawyerId) {
-                                showAlert('error', 'Lütfen bir avukat seçin.');
-                                return;
-                              }
-
-                              try {
-                                await clientsApi.assignLawyer(params.id as string, {
-                                  userId: lawyerId,
-                                  isPrimary,
-                                  reason
-                                });
-                                fetchClientData();
-                                setShowAssignLawyerDialog(false);
-                                showAlert('success', 'Avukat başarıyla atandı.');
-                              } catch (error) {
-                                showAlert('error', 'Avukat atanırken bir hata oluştu.');
-                              }
-                            }}
-                          >
-                            Ata
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Other tabs placeholder */}
-            {activeTab !== 'overview' && activeTab !== 'cases' && activeTab !== 'documents' && activeTab !== 'lawyers' && (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
-                      <Sparkles className="w-8 h-8 text-purple-600" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Atama Nedeni</label>
+                        <textarea
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                          rows={3}
+                          placeholder="Atama nedenini girin..."
+                          value={assignmentReason}
+                          onChange={(e) => setAssignmentReason(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {tabs.find(t => t.id === activeTab)?.label}
-                    </h3>
-                    <p className="text-gray-500">Bu özellik yakında eklenecek</p>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowAssignLawyerDialog(false);
+                          setSelectedLawyerId('');
+                          setIsPrimaryLawyer(false);
+                          setAssignmentReason('');
+                        }}
+                      >
+                        İptal
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          if (!selectedLawyerId) {
+                            showAlert('error', 'Lütfen bir avukat seçin.');
+                            return;
+                          }
+
+                          try {
+                            await clientsApi.assignLawyer(params.id as string, {
+                              userId: selectedLawyerId,
+                              isPrimary: isPrimaryLawyer,
+                              reason: assignmentReason
+                            });
+                            fetchClientData();
+                            setShowAssignLawyerDialog(false);
+                            setSelectedLawyerId('');
+                            setIsPrimaryLawyer(false);
+                            setAssignmentReason('');
+                            showAlert('success', 'Avukat başarıyla atandı.');
+                          } catch (error) {
+                            showAlert('error', 'Avukat atanırken bir hata oluştu.');
+                          }
+                        }}
+                      >
+                        Ata
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Other tabs placeholder */}
+          {activeTab !== 'overview' && activeTab !== 'cases' && activeTab !== 'documents' && activeTab !== 'lawyers' && (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-purple-600" />
                   </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-      </div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {tabs.find(t => t.id === activeTab)?.label}
+                  </h3>
+                  <p className="text-gray-500">Bu özellik yakında eklenecek</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      
     </MainLayout>
   );
 }
