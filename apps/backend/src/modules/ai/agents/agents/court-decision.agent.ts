@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,44 +18,47 @@ export class CourtDecisionAgent extends BaseAgent {
   readonly confidence = 0.85;
   readonly riskScore = 0.2;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'CourtDecisionAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'CourtDecisionAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Court Decision Agent for LexMind AI, a legal practice management system.
-    Your task is to analyze court decisions and provide insights.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Court Decision Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin mahkeme kararlarını analiz etmek ve içgörüler sağlamak.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
-    const prompt = context.prompt || `Analyze the court decision: ${contextStr}`;
+    const prompt = context.prompt || `Mahkeme kararını analiz et: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "decisionSummary": "Summary of the court decision",
+  "decisionSummary": "Mahkeme kararının özeti",
   "keyHoldings": [
-    { "holding": "Key holding", "importance": "high|medium|low", "implication": "Implication" }
+    { "holding": "Ana karar", "importance": "high|medium|low", "implication": "Etki" }
   ],
   "precedentValue": {
     "isPrecedent": true,
     "scope": "narrow|broad",
-    "jurisdiction": "Jurisdiction",
-    "applicability": "Applicability"
+    "jurisdiction": "Yargı yetkisi",
+    "applicability": "Uygulanabilirlik"
   },
   "similarCases": [
-    { "caseName": "Case name", "similarity": "high|medium|low", "difference": "Key difference" }
+    { "caseName": "Dava adı", "similarity": "high|medium|low", "difference": "Temel fark" }
   ],
-  "legalPrinciples": ["Principle 1", "Principle 2"],
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "legalPrinciples": ["İlke 1", "İlke 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,42 +18,45 @@ export class VoiceAgent extends BaseAgent {
   readonly confidence = 0.85;
   readonly riskScore = 0.1;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'VoiceAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'VoiceAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Voice Agent for LexMind AI, a legal practice management system.
-    Your task is to process voice communications and transcriptions.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Voice Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin ses iletişimlerini ve transkripsiyonları işlemek.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
-    const prompt = context.prompt || `Process voice recording: ${contextStr}`;
+    const prompt = context.prompt || `Ses kaydını işle: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "transcription": "Full transcription",
-  "summary": "Summary of the voice recording",
+  "transcription": "Tam transkripsiyon",
+  "summary": "Ses kaydının özeti",
   "speakers": [
-    { "speaker": "Speaker 1", "segments": ["Segment 1", "Segment 2"] }
+    { "speaker": "Konuşmacı 1", "segments": ["Bölüm 1", "Bölüm 2"] }
   ],
   "actionItems": [
-    { "item": "Action item", "dueDate": "ISO date", "responsible": "Person" }
+    { "item": "Eylem öğesi", "dueDate": "ISO tarih", "responsible": "Kişi" }
   ],
-  "keyPoints": ["Key point 1", "Key point 2"],
-  "decisions": ["Decision 1", "Decision 2"],
+  "keyPoints": ["Ana nokta 1", "Ana nokta 2"],
+  "decisions": ["Karar 1", "Karar 2"],
   "followUpRequired": true,
   "confidence": 0.95,
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

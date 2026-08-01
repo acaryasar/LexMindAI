@@ -178,4 +178,36 @@ export const aiApi = {
     const response = await api.post('/ai/daily-briefing/refresh');
     return response.data;
   },
+
+  // Ollama
+  listOllamaModels: async () => {
+    const response = await api.get('/ai/ollama/models');
+    return response.data;
+  },
+
+  pullOllamaModel: async (model: string) => {
+    const response = await api.post('/ai/ollama/pull', { model });
+    return response.data;
+  },
+
+  checkOllamaHealth: async () => {
+    const response = await api.get('/ai/ollama/health');
+    return response.data;
+  },
+
+  // Providers
+  getProviders: async () => {
+    const response = await api.get('/ai/providers');
+    return response.data;
+  },
+
+  setDefaultProvider: async (provider: string) => {
+    const response = await api.post('/ai/provider/set-default', { provider });
+    return response.data;
+  },
+
+  demoTest: async (message: string, provider?: string) => {
+    const response = await api.post('/ai/demo/test', { message, provider });
+    return response.data;
+  },
 };

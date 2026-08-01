@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OpenAI } from 'openai';
+import { AIProviderFactory } from '../providers/provider-factory.service';
 import { 
   IAIAgent, 
   AgentExecutionContext, 
@@ -10,17 +10,15 @@ import {
 @Injectable()
 export abstract class BaseAgent implements IAIAgent {
   protected readonly logger: Logger;
-  protected openai: OpenAI;
+  protected aiProviderFactory: AIProviderFactory;
 
   constructor(
     protected configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
     agentName: string,
   ) {
     this.logger = new Logger(agentName);
-    const apiKey = this.configService.get<string>('OPENAI_API_KEY');
-    if (apiKey) {
-      this.openai = new OpenAI({ apiKey });
-    }
+    this.aiProviderFactory = aiProviderFactory;
   }
 
   abstract readonly agentType: string;
@@ -43,23 +41,25 @@ export abstract class BaseAgent implements IAIAgent {
       // Build prompt
       const fullPrompt = this.buildPrompt(context);
 
-      // Call LLM
-      const completion = await this.openai.chat.completions.create({
-        model: this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
-        messages: [
-          { role: 'system', content: this.getSystemPrompt() },
-          { role: 'user', content: fullPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-        response_format: { type: 'json_object' },
-      });
+      // Get provider from context or use default
+      const providerName = context.options?.provider || this.configService.get<string>('DEFAULT_AI_PROVIDER', 'ollama');
 
-      const responseText = completion.choices[0].message.content || '{}';
+      // Call LLM through provider factory
+      const messages = [
+        { role: 'system' as const, content: this.getSystemPrompt() + ' Her zaman Türkçe dilinde cevap vermelisin.' },
+        { role: 'user' as const, content: fullPrompt },
+      ];
+
+      const response = await this.aiProviderFactory.chat(messages, {
+        model: this.configService.get<string>('OLLAMA_MODEL') || 'mistral:latest',
+        temperature: 0.7,
+        maxTokens: 2000,
+      }, providerName);
+
       const executionTime = Date.now() - startTime;
 
       // Parse response
-      const result = this.parseResponse(responseText);
+      const result = this.parseResponse(response.content);
 
       return {
         data: result,
@@ -69,9 +69,9 @@ export abstract class BaseAgent implements IAIAgent {
         recommendations: result.recommendations || [],
         warnings: result.warnings || [],
         actions: result.actions || [],
-        tokensUsed: completion.usage?.total_tokens || 0,
-        model: completion.model,
-        provider: 'openai',
+        tokensUsed: response.usage?.totalTokens || 0,
+        model: response.model,
+        provider: providerName,
       };
     } catch (error) {
       this.logger.error(`Error executing ${this.agentType} agent:`, error);

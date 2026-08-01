@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,45 +18,48 @@ export class NotificationAgent extends BaseAgent {
   readonly confidence = 0.9;
   readonly riskScore = 0.1;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'NotificationAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'NotificationAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Notification Agent for LexMind AI, a legal practice management system.
-    Your task is to generate and manage notifications.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Notification Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin bildirimleri oluşturmak ve yönetmek.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
-    const prompt = context.prompt || `Generate notifications: ${contextStr}`;
+    const prompt = context.prompt || `Bildirimleri oluştur: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
   "notifications": [
     {
       "type": "deadline|hearing|task|document|system",
-      "title": "Notification title",
-      "message": "Notification message",
+      "title": "Bildirim başlığı",
+      "message": "Bildirim mesajı",
       "priority": "high|medium|low",
       "urgency": "immediate|today|this_week",
-      "action": "Suggested action",
+      "action": "Önerilen eylem",
       "requiresAction": true
     }
   ],
-  "summary": "Summary of notifications",
+  "summary": "Bildirimlerin özeti",
   "totalHighPriority": 0,
   "totalMediumPriority": 0,
   "totalLowPriority": 0,
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

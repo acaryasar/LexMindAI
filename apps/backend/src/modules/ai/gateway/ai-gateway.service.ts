@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { OpenAI } from 'openai';
 import { PrismaService } from '@database/prisma.service';
 import { EncryptionUtil } from '@common/encryption.util';
+import { AIProviderFactory } from '../providers/provider-factory.service';
 
 @Injectable()
 export class AIGatewayService {
@@ -12,6 +13,7 @@ export class AIGatewayService {
   constructor(
     private configService: ConfigService,
     private prisma: PrismaService,
+    private aiProviderFactory: AIProviderFactory,
   ) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (apiKey) {
@@ -32,8 +34,8 @@ export class AIGatewayService {
       // Get user-specific AI configuration
       aiConfig = await this.getUserAIConfig(userId);
 
-      // Initialize OpenAI with user's API key or fallback to default
-      const openai = this.getOpenAIClient(aiConfig);
+      // Determine provider to use
+      const providerName = aiConfig?.provider || this.configService.get<string>('DEFAULT_AI_PROVIDER', 'ollama');
 
       // Build system prompt
       const systemPrompt = await this.buildSystemPrompt(context);
@@ -41,21 +43,21 @@ export class AIGatewayService {
       // Get conversation history if conversationId provided
       const messages = await this.buildMessages(message, conversationId, systemPrompt);
 
-      const completion = await openai.chat.completions.create({
-        model: aiConfig?.model || this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
-        messages,
+      // Use AIProviderFactory for chat
+      const response = await this.aiProviderFactory.chat(messages, {
+        model: aiConfig?.model || this.configService.get<string>('OLLAMA_MODEL', 'mistral:latest'),
         temperature: (aiConfig?.settings as any)?.temperature || 0.7,
-        max_tokens: (aiConfig?.settings as any)?.maxTokens || 2000,
-      });
+        maxTokens: (aiConfig?.settings as any)?.maxTokens || 2000,
+      }, providerName);
 
       const responseTime = Date.now() - startTime;
 
       // Log usage
-      await this.logUsage('chat', completion.usage, responseTime, userId);
+      await this.logUsage('chat', response.usage, responseTime, userId);
 
       return {
-        response: completion.choices[0].message.content || '',
-        usage: completion.usage,
+        response: response.content,
+        usage: response.usage,
       };
     } catch (error) {
       this.logger.error('AI Chat error:', error);
@@ -91,7 +93,7 @@ export class AIGatewayService {
       // For now, we'll use a placeholder
       const documentContent = `Document: ${document.name}\nType: ${document.mimeType}\nSize: ${document.size}`;
 
-      const systemPrompt = `You are a legal document analysis assistant. Analyze the following document based on the requested analysis type: ${analysisType}.`;
+      const systemPrompt = `Sen bir hukuk belge analiz asistanısın. Aşağıdaki belgeyi istenen analiz türüne göre analiz et: ${analysisType}. Her zaman Türkçe dilinde cevap vermelisin.`;
 
       const completion = await openai.chat.completions.create({
         model: aiConfig?.model || this.configService.get<string>('OPENAI_MODEL') || 'gpt-4',
@@ -118,7 +120,7 @@ export class AIGatewayService {
       // Initialize OpenAI with user's API key or fallback to default
       const openai = this.getOpenAIClient(aiConfig);
 
-      const systemPrompt = `You are a legal writing assistant. Write a ${writingType} with the following subject: ${subject}. Use a ${tone || 'professional'} tone.`;
+      const systemPrompt = `Sen bir hukuk yazım asistanısın. Aşağıdaki konuyla ilgili bir ${writingType} yaz: ${subject}. ${tone || 'profesyonel'} bir ton kullan. Her zaman Türkçe dilinde cevap vermelisin.`;
 
       const userPrompt = context ? `Context: ${context}\n\nSubject: ${subject}` : `Subject: ${subject}`;
 
@@ -163,7 +165,7 @@ export class AIGatewayService {
         context = 'Relevant documents:\n' + documents.map((d) => `- ${d.name}`).join('\n');
       }
 
-      const systemPrompt = `You are a legal research assistant. Help with legal research based on the provided query and context.`;
+      const systemPrompt = `Sen bir hukuk araştırma asistanısın. Sağlanan sorgu ve bağlama dayanarak hukuk araştırmasında yardımcı ol. Her zaman Türkçe dilinde cevap vermelisin.`;
 
       const userPrompt = context ? `Context:\n${context}\n\nQuery: ${query}` : `Query: ${query}`;
 
@@ -185,7 +187,7 @@ export class AIGatewayService {
   }
 
   private async buildSystemPrompt(context?: any): Promise<string> {
-    let prompt = 'You are a helpful legal assistant for LexMind AI, a legal practice management system.';
+    let prompt = 'Sen LexMind AI, bir hukuk uygulama yönetim sistemi için yardımcı bir yapay zeka asistanısın. Her zaman Türkçe dilinde cevap vermelisin.';
 
     if (context) {
       if (context.caseId) {
@@ -194,7 +196,7 @@ export class AIGatewayService {
           select: { title: true, type: true, description: true },
         });
         if (caseData) {
-          prompt += `\nCurrent case: ${caseData.title} (${caseData.type})\nDescription: ${caseData.description || ''}`;
+          prompt += `\nMevcut dava: ${caseData.title} (${caseData.type})\nAçıklama: ${caseData.description || ''}`;
         }
       }
 
@@ -204,7 +206,7 @@ export class AIGatewayService {
           select: { firstName: true, lastName: true, notes: true },
         });
         if (clientData) {
-          prompt += `\nClient: ${clientData.firstName} ${clientData.lastName}\nNotes: ${clientData.notes || ''}`;
+          prompt += `\nMüvekkil: ${clientData.firstName} ${clientData.lastName}\nNotlar: ${clientData.notes || ''}`;
         }
       }
     }

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AIProvider, ChatMessage, ChatOptions, ChatResponse } from './ai-provider.interface';
 import { OpenAIProvider } from './openai.provider';
+import { OllamaProvider } from './ollama.provider';
 
 @Injectable()
 export class AIProviderFactory {
@@ -12,12 +13,14 @@ export class AIProviderFactory {
   constructor(
     private configService: ConfigService,
     private openaiProvider: OpenAIProvider,
+    private ollamaProvider: OllamaProvider,
   ) {
     this.registerProviders();
   }
 
   private registerProviders(): void {
     this.providers.set('openai', this.openaiProvider);
+    this.providers.set('ollama', this.ollamaProvider);
 
     const defaultProviderName = this.configService.get<string>('DEFAULT_AI_PROVIDER', 'openai');
     if (this.providers.has(defaultProviderName)) {

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,14 +18,17 @@ export class ClientAgent extends BaseAgent {
   readonly confidence = 0.85;
   readonly riskScore = 0.2;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'ClientAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'ClientAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Client Agent for LexMind AI, a legal practice management system.
-    Your task is to analyze client relationships and provide insights.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Client Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin müvekkil ilişkilerini analiz etmek ve içgörüler sağlamak.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {

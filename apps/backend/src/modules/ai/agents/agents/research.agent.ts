@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,44 +18,47 @@ export class ResearchAgent extends BaseAgent {
   readonly confidence = 0.8;
   readonly riskScore = 0.2;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'ResearchAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'ResearchAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Research Agent for LexMind AI, a legal practice management system.
-    Your task is to conduct legal research and provide case law insights.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Research Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin hukuk araştırmaları yapmak ve içtihat içgörüleri sağlamak.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
-    const prompt = context.prompt || `Research the following legal topic: ${contextStr}`;
+    const prompt = context.prompt || `Aşağıdaki hukuk konusunu araştırmak: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "researchSummary": "Summary of research findings",
+  "researchSummary": "Araştırma bulgularının özeti",
   "relevantCases": [
-    { "caseName": "Case name", "year": "Year", "court": "Court", "relevance": "high|medium|low", "keyHolding": "Key holding" }
+    { "caseName": "Dava adı", "year": "Yıl", "court": "Mahkeme", "relevance": "high|medium|low", "keyHolding": "Ana karar" }
   ],
   "relevantStatutes": [
-    { "statute": "Statute name", "article": "Article", "relevance": "high|medium|low", "keyPoint": "Key point" }
+    { "statute": "Kanun adı", "article": "Madde", "relevance": "high|medium|low", "keyPoint": "Ana nokta" }
   ],
   "legalArticles": [
-    { "title": "Article title", "author": "Author", "year": "Year", "relevance": "high|medium|low", "summary": "Summary" }
+    { "title": "Makale başlığı", "author": "Yazar", "year": "Yıl", "relevance": "high|medium|low", "summary": "Özet" }
   ],
   "legalConcepts": [
-    { "concept": "Concept name", "definition": "Definition", "application": "Application" }
+    { "concept": "Kavram adı", "definition": "Tanım", "application": "Uygulama" }
   ],
-  "researchSuggestions": ["Suggestion 1", "Suggestion 2"],
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "researchSuggestions": ["Öneri 1", "Öneri 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

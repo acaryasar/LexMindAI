@@ -14,6 +14,7 @@ import { AISkillsService } from './skills/skills.service';
 import { AIToolsService } from './tools/tools.service';
 import { AIProviderFactory } from './providers/provider-factory.service';
 import { OpenAIProvider } from './providers/openai.provider';
+import { OllamaProvider } from './providers/ollama.provider';
 import { DashboardAgent } from './agents/agents/dashboard.agent';
 import { CaseAgent } from './agents/agents/case.agent';
 import { ClientAgent } from './agents/agents/client.agent';
@@ -52,6 +53,7 @@ import { VoiceAgent } from './agents/agents/voice.agent';
     AIToolsService,
     AIProviderFactory,
     OpenAIProvider,
+    OllamaProvider,
     DashboardAgent,
     CaseAgent,
     ClientAgent,

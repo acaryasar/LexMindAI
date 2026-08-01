@@ -11,8 +11,11 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AIService } from '../services/ai.service';
+import { AIProviderFactory } from '../providers/provider-factory.service';
+import { OllamaProvider } from '../providers/ollama.provider';
 import { ChatDto } from '../dto/chat.dto';
 import { DocumentAnalysisDto } from '../dto/document-analysis.dto';
 import { LegalWritingDto } from '../dto/legal-writing.dto';
@@ -24,7 +27,12 @@ import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class AIController {
-  constructor(private readonly aiService: AIService) {}
+  constructor(
+    private readonly aiService: AIService,
+    private readonly aiProviderFactory: AIProviderFactory,
+    private readonly ollamaProvider: OllamaProvider,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('chat')
   @ApiOperation({ summary: 'AI Chat' })
@@ -117,5 +125,80 @@ export class AIController {
   @ApiResponse({ status: 200, description: 'Brifing yenilendi' })
   refreshDailyBriefing(@Request() req: any) {
     return this.aiService.refreshDailyBriefing(req.user.id);
+  }
+
+  @Get('ollama/models')
+  @ApiOperation({ summary: 'Ollama modellerini listele' })
+  @ApiResponse({ status: 200, description: 'Modeller listelendi' })
+  async listOllamaModels() {
+    return this.ollamaProvider.listModels();
+  }
+
+  @Post('ollama/pull')
+  @ApiOperation({ summary: 'Ollama model çek' })
+  @ApiResponse({ status: 200, description: 'Model çekildi' })
+  async pullOllamaModel(@Body() body: { model: string }) {
+    return this.ollamaProvider.pullModel(body.model);
+  }
+
+  @Get('ollama/health')
+  @ApiOperation({ summary: 'Ollama sağlığını kontrol et' })
+  @ApiResponse({ status: 200, description: 'Sağlık durumu' })
+  async checkOllamaHealth() {
+    return {
+      available: this.ollamaProvider.isAvailable(),
+      baseUrl: this.ollamaProvider['baseUrl'],
+    };
+  }
+
+  @Get('providers')
+  @ApiOperation({ summary: 'AI provider listesi' })
+  @ApiResponse({ status: 200, description: 'Provider listesi' })
+  getProviders() {
+    return {
+      available: this.aiProviderFactory.getAvailableProviders(),
+      default: this.aiProviderFactory['defaultProvider'],
+    };
+  }
+
+  @Post('provider/set-default')
+  @ApiOperation({ summary: 'Varsayılan AI provider ayarla' })
+  @ApiResponse({ status: 200, description: 'Provider ayarlandı' })
+  setDefaultProvider(@Body() body: { provider: string }) {
+    this.aiProviderFactory.setDefaultProvider(body.provider);
+    return { success: true, provider: body.provider };
+  }
+
+  @Post('demo/test')
+  @ApiOperation({ summary: 'Demo AI test' })
+  @ApiResponse({ status: 200, description: 'Test tamamlandı' })
+  async demoTest(@Body() body: { message: string; provider?: string }) {
+    const provider = body.provider || this.aiProviderFactory['defaultProvider'];
+    const messages = [
+      { role: 'system' as const, content: 'You are a helpful AI assistant for LexMind AI, a legal practice management system. Provide concise and helpful responses.' },
+      { role: 'user' as const, content: body.message },
+    ];
+
+    try {
+      const response = await this.aiProviderFactory.chat(messages, {
+        model: this.configService.get<string>('OLLAMA_MODEL') || 'llama3.2',
+        temperature: 0.7,
+        maxTokens: 500,
+      }, provider);
+
+      return {
+        success: true,
+        provider,
+        response: response.content,
+        model: response.model,
+        usage: response.usage,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        provider,
+        error: error.message,
+      };
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,48 +18,51 @@ export class OCRAgent extends BaseAgent {
   readonly confidence = 0.85;
   readonly riskScore = 0.1;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'OCRAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'OCRAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are an OCR Agent for LexMind AI, a legal practice management system.
-    Your task is to analyze document images and extract text.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir OCR Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin belge görüntülerini analiz etmek ve metin çıkarmak.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
-    const prompt = context.prompt || `Extract text from document image`;
+    const prompt = context.prompt || `Belge görüntüsünden metin çıkar`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "extractedText": "Full extracted text",
+  "extractedText": "Çıkarılan tam metin",
   "documentType": "contract|invoice|court_decision|letter|other",
   "confidence": 0.95,
   "structure": {
-    "headers": ["Header 1", "Header 2"],
-    "paragraphs": ["Paragraph 1", "Paragraph 2"],
+    "headers": ["Başlık 1", "Başlık 2"],
+    "paragraphs": ["Paragraf 1", "Paragraf 2"],
     "tables": [
       {
-        "headers": ["Col1", "Col2"],
-        "rows": [["Row1Col1", "Row1Col2"], ["Row2Col1", "Row2Col2"]]
+        "headers": ["Sütun1", "Sütun2"],
+        "rows": [["Satır1Sütun1", "Satır1Sütun2"], ["Satır2Sütun1", "Satır2Sütun2"]]
       }
     ]
   },
   "keyInformation": {
-    "dates": ["Date 1", "Date 2"],
-    "amounts": ["Amount 1", "Amount 2"],
-    "parties": ["Party 1", "Party 2"]
+    "dates": ["Tarih 1", "Tarih 2"],
+    "amounts": ["Tutar 1", "Tutar 2"],
+    "parties": ["Taraf 1", "Taraf 2"]
   },
   "quality": "high|medium|low",
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

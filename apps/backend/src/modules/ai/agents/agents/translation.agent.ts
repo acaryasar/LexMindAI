@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,43 +18,46 @@ export class TranslationAgent extends BaseAgent {
   readonly confidence = 0.9;
   readonly riskScore = 0.15;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'TranslationAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'TranslationAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Translation Agent for LexMind AI, a legal practice management system.
-    Your task is to translate legal documents and communications.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Translation Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin hukuk belgelerini ve iletişimlerini çevirmek.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const targetLanguage = context.input.targetLanguage || 'English';
     const sourceText = context.input.sourceText || '';
-    const prompt = context.prompt || `Translate to ${targetLanguage}`;
+    const prompt = context.prompt || `${targetLanguage} diline çevir`;
     
     return `${prompt}
 
-Source text: ${sourceText}
-Target language: ${targetLanguage}
+Kaynak metin: ${sourceText}
+Hedef dil: ${targetLanguage}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "translatedText": "Full translated text",
-  "sourceLanguage": "Detected source language",
+  "translatedText": "Tam çevrilmiş metin",
+  "sourceLanguage": "Tespit edilen kaynak dil",
   "targetLanguage": "${targetLanguage}",
   "confidence": 0.95,
   "terminologyNotes": [
-    { "term": "Legal term", "translation": "Translation", "context": "Context" }
+    { "term": "Hukuk terimi", "translation": "Çeviri", "context": "Bağlam" }
   ],
-  "culturalNotes": ["Cultural nuance 1", "Cultural nuance 2"],
+  "culturalNotes": ["Kültürel nüans 1", "Kültürel nüans 2"],
   "quality": "high|medium|low",
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

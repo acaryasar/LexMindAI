@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../providers/provider-factory.service';
 import { IAIAgent } from './interfaces/agent.interface';
 import { DashboardAgent } from './agents/dashboard.agent';
 import { CaseAgent } from './agents/case.agent';
@@ -27,6 +29,8 @@ export class AIAgentFactory {
   private agents = new Map<string, IAIAgent>();
 
   constructor(
+    private configService: ConfigService,
+    private aiProviderFactory: AIProviderFactory,
     private dashboardAgent: DashboardAgent,
     private caseAgent: CaseAgent,
     private clientAgent: ClientAgent,

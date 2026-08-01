@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -20,39 +21,42 @@ export class PetitionAgent extends BaseAgent {
   readonly confidence = 0.9;
   readonly riskScore = 0.4;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'PetitionAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'PetitionAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Petition Agent for LexMind AI, a legal practice management system.
-    Your task is to generate legal documents with proper legal language and formatting.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Petition Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin uygun hukuk dili ve formatıyla hukuk belgeleri oluşturmak.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
     const documentType = context.input.documentType || 'petition';
-    const prompt = context.prompt || `Generate a ${documentType} based on the following context: ${contextStr}`;
+    const prompt = context.prompt || `Aşağıdaki bağlama dayanarak bir ${documentType} oluştur: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
   "documentType": "${documentType}",
-  "title": "Document title",
-  "content": "Full document content with proper legal language and formatting",
+  "title": "Belge başlığı",
+  "content": "Uygun hukuk dili ve formatıyla tam belge içeriği",
   "sections": [
-    { "heading": "Section heading", "content": "Section content" }
+    { "heading": "Bölüm başlığı", "content": "Bölüm içeriği" }
   ],
-  "legalReferences": ["Reference 1", "Reference 2"],
-  "attachments": ["Attachment 1", "Attachment 2"],
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "legalReferences": ["Referans 1", "Referans 2"],
+  "attachments": ["Ek 1", "Ek 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": true }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": true }
   ]
 }`;
   }

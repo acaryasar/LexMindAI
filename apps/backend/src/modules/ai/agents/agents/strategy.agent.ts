@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,48 +18,51 @@ export class StrategyAgent extends BaseAgent {
   readonly confidence = 0.8;
   readonly riskScore = 0.3;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'StrategyAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'StrategyAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Strategy Agent for LexMind AI, a legal practice management system.
-    Your task is to develop and analyze legal strategies.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Strategy Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin hukuk stratejileri geliştirmek ve analiz etmek.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
-    const prompt = context.prompt || `Develop legal strategy: ${contextStr}`;
+    const prompt = context.prompt || `Hukuk stratejisi geliştir: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "strategyAnalysis": "Overall strategy analysis",
-  "strengths": ["Strength 1", "Strength 2"],
-  "weaknesses": ["Weakness 1", "Weakness 2"],
-  "opportunities": ["Opportunity 1", "Opportunity 2"],
-  "threats": ["Threat 1", "Threat 2"],
+  "strategyAnalysis": "Genel strateji analizi",
+  "strengths": ["Güçlü yön 1", "Güçlü yön 2"],
+  "weaknesses": ["Zayıf yön 1", "Zayıf yön 2"],
+  "opportunities": ["Fırsat 1", "Fırsat 2"],
+  "threats": ["Tehdit 1", "Tehdit 2"],
   "recommendedStrategy": {
-    "primaryApproach": "Primary approach description",
-    "backupPlan": "Backup plan description",
-    "keyArguments": ["Argument 1", "Argument 2"],
-    "evidenceFocus": ["Evidence 1", "Evidence 2"]
+    "primaryApproach": "Birincil yaklaşım açıklaması",
+    "backupPlan": "Yedek plan açıklaması",
+    "keyArguments": ["Argüman 1", "Argüman 2"],
+    "evidenceFocus": ["Delil 1", "Delil 2"]
   },
   "settlementAnalysis": {
     "recommended": true,
-    "estimatedValue": "Estimated value",
-    "probability": "Probability percentage",
-    "reasoning": "Reasoning"
+    "estimatedValue": "Tahmini değer",
+    "probability": "Olasılık yüzdesi",
+    "reasoning": "Gerekçe"
   },
-  "nextSteps": ["Step 1", "Step 2"],
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "nextSteps": ["Adım 1", "Adım 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": true }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": true }
   ]
 }`;
   }

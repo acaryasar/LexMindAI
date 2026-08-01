@@ -276,12 +276,13 @@ export class AIService {
     this.logger.log(`Refreshing daily briefing for user: ${userId}`);
 
     try {
-      // Use AIOrchestrator to generate briefing
+      // Use AIOrchestrator to generate briefing with cache disabled
       const briefing = await this.aiOrchestrator.orchestrate({
         agentType: 'dashboard',
         userId,
         input: { action: 'daily_briefing' },
         context: { userId },
+        options: { enableCache: false },
       });
 
       // Cache the briefing in AIMemory
@@ -313,7 +314,7 @@ export class AIService {
 
       this.logger.log(`Daily briefing refreshed and cached for user: ${userId}`);
       return {
-        briefing,
+        briefing: briefing.result || briefing,
         cached: false,
         timestamp: new Date(),
       };

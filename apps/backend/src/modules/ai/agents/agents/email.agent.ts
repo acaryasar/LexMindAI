@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,43 +18,46 @@ export class EmailAgent extends BaseAgent {
   readonly confidence = 0.9;
   readonly riskScore = 0.1;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'EmailAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'EmailAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are an Email Agent for LexMind AI, a legal practice management system.
-    Your task is to draft and manage email communications.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Email Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin e-posta iletişimlerini hazırlamak ve yönetmek.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
     const emailType = context.input.emailType || 'general';
-    const prompt = context.prompt || `Draft ${emailType} email: ${contextStr}`;
+    const prompt = context.prompt || `${emailType} e-postası taslağı: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "subject": "Email subject",
-  "body": "Email body content",
+  "subject": "E-posta konusu",
+  "body": "E-posta gövde içeriği",
   "tone": "formal|semi-formal|informal",
-  "recipient": "Recipient name",
-  "cc": ["CC recipient 1", "CC recipient 2"],
-  "attachments": ["Attachment 1", "Attachment 2"],
+  "recipient": "Alıcı adı",
+  "cc": ["CC alıcı 1", "CC alıcı 2"],
+  "attachments": ["Ek 1", "Ek 2"],
   "priority": "high|medium|low",
   "actionItems": [
-    { "item": "Action item", "dueDate": "ISO date", "responsible": "Person" }
+    { "item": "Eylem öğesi", "dueDate": "ISO tarih", "responsible": "Kişi" }
   ],
   "followUpNeeded": true,
-  "followUpDate": "ISO date",
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "followUpDate": "ISO tarih",
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

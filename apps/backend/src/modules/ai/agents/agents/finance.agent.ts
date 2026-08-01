@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,46 +18,49 @@ export class FinanceAgent extends BaseAgent {
   readonly confidence = 0.9;
   readonly riskScore = 0.15;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'FinanceAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'FinanceAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Finance Agent for LexMind AI, a legal practice management system.
-    Your task is to analyze financial data and provide insights.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Finance Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin finansal verileri analiz etmek ve içgörüler sağlamak.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
-    const prompt = context.prompt || `Analyze the financial data: ${contextStr}`;
+    const prompt = context.prompt || `Finansal verileri analiz et: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "financialSummary": "Summary of financial status",
+  "financialSummary": "Finansal durum özeti",
   "overdueInvoices": [
-    { "invoiceNumber": "Invoice number", "client": "Client name", "amount": "Amount", "daysOverdue": "Days", "action": "Suggested action" }
+    { "invoiceNumber": "Fatura numarası", "client": "Müvekkil adı", "amount": "Tutar", "daysOverdue": "Gün", "action": "Önerilen eylem" }
   ],
   "revenueForecast": {
-    "currentMonth": "Amount",
-    "nextMonth": "Amount",
-    "quarter": "Amount",
+    "currentMonth": "Tutar",
+    "nextMonth": "Tutar",
+    "quarter": "Tutar",
     "trend": "increasing|stable|decreasing"
   },
   "cashFlowAnalysis": {
     "status": "healthy|warning|critical",
-    "factors": ["Factor 1", "Factor 2"],
-    "recommendations": ["Recommendation 1", "Recommendation 2"]
+    "factors": ["Faktör 1", "Faktör 2"],
+    "recommendations": ["Öneri 1", "Öneri 2"]
   },
-  "billingSuggestions": ["Suggestion 1", "Suggestion 2"],
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "billingSuggestions": ["Öneri 1", "Öneri 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

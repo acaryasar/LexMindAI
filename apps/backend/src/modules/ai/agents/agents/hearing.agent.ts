@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -19,51 +20,54 @@ export class HearingAgent extends BaseAgent {
   readonly confidence = 0.85;
   readonly riskScore = 0.25;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'HearingAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'HearingAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Hearing Agent for LexMind AI, a legal practice management system.
-    Your task is to prepare for court hearings and generate preparation materials.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Hearing Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin mahkeme duruşmalarına hazırlanmak ve hazırlık materyalleri oluşturmak.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
-    const prompt = context.prompt || `Prepare for the following hearing: ${contextStr}`;
+    const prompt = context.prompt || `Aşağıdaki duruşmaya hazırlan: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
   "preparationChecklist": [
-    { "item": "Checklist item", "completed": false, "priority": "high|medium|low" }
+    { "item": "Kontrol listesi öğesi", "completed": false, "priority": "high|medium|low" }
   ],
   "judgeSummary": {
-    "name": "Judge name",
-    "background": "Judge background",
-    "preferences": ["Preference 1", "Preference 2"]
+    "name": "Hakim adı",
+    "background": "Hakim geçmişi",
+    "preferences": ["Tercih 1", "Tercih 2"]
   },
   "caseTimeline": [
-    { "date": "ISO date", "event": "Event description", "significance": "high|medium|low" }
+    { "date": "ISO tarih", "event": "Etkinlik açıklaması", "significance": "high|medium|low" }
   ],
   "evidenceSummary": [
-    { "evidence": "Evidence description", "relevance": "high|medium|low", "notes": "Notes" }
+    { "evidence": "Delil açıklaması", "relevance": "high|medium|low", "notes": "Notlar" }
   ],
   "potentialQuestions": [
-    { "question": "Question", "category": "category", "suggestedAnswer": "Suggested answer" }
+    { "question": "Soru", "category": "kategori", "suggestedAnswer": "Önerilen cevap" }
   ],
   "counterArguments": [
-    { "argument": "Counter argument", "strength": "strong|medium|weak", "rebuttal": "Rebuttal strategy" }
+    { "argument": "Karşı argüman", "strength": "strong|medium|weak", "rebuttal": "Çürütmeye stratejisi" }
   ],
-  "preparationNotes": "Additional preparation notes",
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "preparationNotes": "Ek hazırlık notları",
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

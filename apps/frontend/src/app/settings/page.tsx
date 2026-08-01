@@ -5,8 +5,9 @@ import { MainLayout } from '@/components/layout/main-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { User, Bell, Shield, Database, Palette, Globe, Cpu, CheckCircle, AlertCircle, Info } from 'lucide-react';
+import { User, Bell, Shield, Database, Palette, Globe, Cpu, CheckCircle, AlertCircle, Info, Download, RefreshCw } from 'lucide-react';
 import axios from 'axios';
+import { aiApi } from '@/lib/api/ai';
 
 export default function SettingsPage() {
   const [aiConfig, setAiConfig] = useState({
@@ -29,8 +30,22 @@ export default function SettingsPage() {
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordResult, setPasswordResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  // Ollama state
+  const [ollamaConfig, setOllamaConfig] = useState({
+    baseUrl: 'http://localhost:11434',
+    model: 'llama3.2',
+  });
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [ollamaHealth, setOllamaHealth] = useState<{ available: boolean; baseUrl: string } | null>(null);
+  const [ollamaLoading, setOllamaLoading] = useState(false);
+  const [ollamaPullModel, setOllamaPullModel] = useState('');
+  const [ollamaPulling, setOllamaPulling] = useState(false);
+  const [providers, setProviders] = useState<{ available: string[]; default: string } | null>(null);
+
   useEffect(() => {
     fetchAIConfig();
+    fetchOllamaHealth();
+    fetchProviders();
   }, []);
 
   useEffect(() => {
@@ -162,6 +177,88 @@ export default function SettingsPage() {
       });
     } finally {
       setChangingPassword(false);
+    }
+  };
+
+  const fetchOllamaHealth = async () => {
+    try {
+      const health = await aiApi.checkOllamaHealth();
+      setOllamaHealth(health);
+      if (health.available) {
+        fetchOllamaModels();
+      }
+    } catch (error) {
+      console.error('Error checking Ollama health:', error);
+      setOllamaHealth({ available: false, baseUrl: ollamaConfig.baseUrl });
+    }
+  };
+
+  const fetchOllamaModels = async () => {
+    try {
+      setOllamaLoading(true);
+      const models = await aiApi.listOllamaModels();
+      setOllamaModels(models);
+    } catch (error) {
+      console.error('Error fetching Ollama models:', error);
+    } finally {
+      setOllamaLoading(false);
+    }
+  };
+
+  const handlePullOllamaModel = async () => {
+    if (!ollamaPullModel) return;
+    try {
+      setOllamaPulling(true);
+      await aiApi.pullOllamaModel(ollamaPullModel);
+      setTestResult({ success: true, message: `Model ${ollamaPullModel} başarıyla çekildi` });
+      fetchOllamaModels();
+      setOllamaPullModel('');
+    } catch (error: any) {
+      console.error('Error pulling Ollama model:', error);
+      setTestResult({ success: false, message: error.message || 'Model çekilemedi' });
+    } finally {
+      setOllamaPulling(false);
+    }
+  };
+
+  const fetchProviders = async () => {
+    try {
+      const providersData = await aiApi.getProviders();
+      setProviders(providersData);
+    } catch (error) {
+      console.error('Error fetching providers:', error);
+    }
+  };
+
+  const handleSetDefaultProvider = async (provider: string) => {
+    try {
+      await aiApi.setDefaultProvider(provider);
+      setTestResult({ success: true, message: `Varsayılan provider ${provider} olarak ayarlandı` });
+      fetchProviders();
+    } catch (error: any) {
+      console.error('Error setting default provider:', error);
+      setTestResult({ success: false, message: error.message || 'Provider ayarlanamadı' });
+    }
+  };
+
+  // Demo test state
+  const [demoMessage, setDemoMessage] = useState('Merhaba, bugün nasıl yardımcı olabilirim?');
+  const [demoProvider, setDemoProvider] = useState('ollama');
+  const [demoTesting, setDemoTesting] = useState(false);
+  const [demoResult, setDemoResult] = useState<any>(null);
+
+  const handleDemoTest = async () => {
+    if (!demoMessage) return;
+    try {
+      setDemoTesting(true);
+      setDemoResult(null);
+      const result = await aiApi.demoTest(demoMessage, demoProvider);
+      setDemoResult(result);
+    } catch (error: any) {
+      console.error('Demo test error:', error);
+      setDemoResult({ success: false, error: error.message });
+    } finally {
+      setDemoTesting(false);
     }
   };
 
@@ -339,6 +436,7 @@ export default function SettingsPage() {
                     <option value="anthropic">Anthropic</option>
                     <option value="openrouter">OpenRouter</option>
                     <option value="google">Google AI</option>
+                    <option value="ollama">Ollama (Local)</option>
                   </select>
                   {activeTooltip === 'provider' && (
                     <div 
@@ -460,6 +558,191 @@ export default function SettingsPage() {
                   </Button>
                 </div>
               </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Ollama Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Cpu className="w-5 h-5" />
+              <span>Ollama (Local AI)</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-md bg-gray-50 dark:bg-gray-800">
+              <div>
+                <p className="font-medium">Ollama Bağlantı Durumu</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {ollamaHealth?.available ? (
+                    <span className="flex items-center text-green-600">
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Bağlandı ({ollamaHealth.baseUrl})
+                    </span>
+                  ) : (
+                    <span className="flex items-center text-red-600">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      Bağlantı Yok
+                    </span>
+                  )}
+                </p>
+              </div>
+              <Button onClick={fetchOllamaHealth} variant="outline" size="sm">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Kontrol Et
+              </Button>
+            </div>
+
+            {ollamaHealth?.available && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Kullanılabilir Modeller</label>
+                  {ollamaLoading ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Yükleniyor...</p>
+                  ) : ollamaModels.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {ollamaModels.map((model) => (
+                        <span key={model} className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full text-sm">
+                          {model}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Henüz model yüklenmemiş</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Model Çek</label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Model adı (örn: llama3.2, mistral)"
+                      value={ollamaPullModel}
+                      onChange={(e) => setOllamaPullModel(e.target.value)}
+                    />
+                    <Button onClick={handlePullOllamaModel} disabled={ollamaPulling || !ollamaPullModel}>
+                      <Download className="w-4 h-4 mr-2" />
+                      {ollamaPulling ? 'Çekiliyor...' : 'Çek'}
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Ollama Base URL</label>
+              <Input
+                value={ollamaConfig.baseUrl}
+                onChange={(e) => setOllamaConfig({ ...ollamaConfig, baseUrl: e.target.value })}
+                disabled
+              />
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Bu ayar backend .env dosyasından yapılandırılır
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Provider Selection */}
+        {providers && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Cpu className="w-5 h-5" />
+                <span>AI Provider Seçimi</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Kullanılabilir Provider'lar</label>
+                <div className="flex flex-wrap gap-2">
+                  {providers.available.map((provider) => (
+                    <Button
+                      key={provider}
+                      variant={providers.default === provider ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleSetDefaultProvider(provider)}
+                    >
+                      {provider}
+                      {providers.default === provider && (
+                        <CheckCircle className="w-4 h-4 ml-2" />
+                      )}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Varsayılan provider: <span className="font-semibold">{providers.default}</span>
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Demo AI Test */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Cpu className="w-5 h-5" />
+              <span>AI Demo Test</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">AI Provider</label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={demoProvider}
+                onChange={(e) => setDemoProvider(e.target.value)}
+              >
+                <option value="ollama">Ollama (Local)</option>
+                <option value="openai">OpenAI</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Test Mesajı</label>
+              <Input
+                value={demoMessage}
+                onChange={(e) => setDemoMessage(e.target.value)}
+                placeholder="Test mesajınızı girin..."
+              />
+            </div>
+            <Button onClick={handleDemoTest} disabled={demoTesting || !demoMessage}>
+              {demoTesting ? 'Test Ediliyor...' : 'Test Et'}
+            </Button>
+            {demoResult && (
+              <div className={`p-4 rounded-md ${
+                demoResult.success ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'
+              }`}>
+                <div className="flex items-start space-x-2">
+                  {demoResult.success ? (
+                    <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-600" />
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold mb-2">
+                      {demoResult.success ? 'Test Başarılı' : 'Test Başarısız'}
+                    </p>
+                    {demoResult.success && (
+                      <div className="space-y-2 text-sm">
+                        <p><strong>Provider:</strong> {demoResult.provider}</p>
+                        <p><strong>Model:</strong> {demoResult.model}</p>
+                        <p><strong>Response:</strong></p>
+                        <p className="p-2 bg-white dark:bg-gray-800 rounded text-gray-700 dark:text-gray-300">
+                          {demoResult.response}
+                        </p>
+                        {demoResult.usage && (
+                          <p><strong>Tokens:</strong> {demoResult.usage.totalTokens}</p>
+                        )}
+                      </div>
+                    )}
+                    {!demoResult.success && (
+                      <p className="text-sm text-red-600">{demoResult.error}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>

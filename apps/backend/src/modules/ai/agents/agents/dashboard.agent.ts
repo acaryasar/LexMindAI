@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -19,43 +20,46 @@ export class DashboardAgent extends BaseAgent {
   readonly confidence = 0.85;
   readonly riskScore = 0.1;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'DashboardAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'DashboardAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Dashboard Agent for LexMind AI, a legal practice management system. 
-    Your task is to provide comprehensive daily briefings and insights for lawyers.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Dashboard Agent'sın, bir hukuk uygulama yönetim sistemi. 
+    Görevin avukatlar için kapsamlı günlük brifingler ve içgörüler sağlamak.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
-    const prompt = context.prompt || `Generate a daily briefing based on the following context: ${contextStr}`;
+    const prompt = context.prompt || `Aşağıdaki bağlama dayanarak günlük bir brifing oluştur: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "morningBriefing": "Summary of the day",
-  "dailySummary": "Summary of activities",
+  "morningBriefing": "Günün özeti",
+  "dailySummary": "Faaliyetlerin özeti",
   "priorityList": [
-    { "task": "Task description", "urgency": "high|medium|low", "deadline": "ISO date" }
+    { "task": "Görev açıklaması", "urgency": "high|medium|low", "deadline": "ISO tarih" }
   ],
   "riskAnalysis": [
-    { "risk": "Risk description", "impact": "high|medium|low", "mitigation": "Mitigation strategy" }
+    { "risk": "Risk açıklaması", "impact": "high|medium|low", "mitigation": "Azaltma stratejisi" }
   ],
-  "timeSavingSuggestions": ["Suggestion 1", "Suggestion 2"],
-  "aiInsights": ["Insight 1", "Insight 2"],
+  "timeSavingSuggestions": ["Öneri 1", "Öneri 2"],
+  "aiInsights": ["İçgörü 1", "İçgörü 2"],
   "notifications": [
-    { "type": "deadline|hearing|task", "message": "Notification message", "action": "Suggested action" }
+    { "type": "deadline|hearing|task", "message": "Bildirim mesajı", "action": "Önerilen eylem" }
   ],
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

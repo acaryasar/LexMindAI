@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,41 +18,44 @@ export class TaskAgent extends BaseAgent {
   readonly confidence = 0.85;
   readonly riskScore = 0.1;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'TaskAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'TaskAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Task Agent for LexMind AI, a legal practice management system.
-    Your task is to manage tasks and provide productivity insights.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Task Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin görevleri yönetmek ve verimlilik içgörüleri sağlamak.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
-    const prompt = context.prompt || `Analyze the tasks: ${contextStr}`;
+    const prompt = context.prompt || `Görevleri analiz et: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "taskAnalysis": "Overall task analysis",
+  "taskAnalysis": "Genel görev analizi",
   "prioritizedTasks": [
-    { "taskId": "task_id", "title": "Task title", "priority": "high|medium|low", "estimatedEffort": "hours", "suggestedOrder": 1 }
+    { "taskId": "task_id", "title": "Görev başlığı", "priority": "high|medium|low", "estimatedEffort": "saat", "suggestedOrder": 1 }
   ],
   "bottlenecks": [
-    { "bottleneck": "Bottleneck description", "impact": "high|medium|low", "solution": "Solution suggestion" }
+    { "bottleneck": "Darboğaz açıklaması", "impact": "high|medium|low", "solution": "Çözüm önerisi" }
   ],
   "breakdownSuggestions": [
-    { "task": "Task name", "subtasks": ["Subtask 1", "Subtask 2"], "estimatedTime": "hours" }
+    { "task": "Görev adı", "subtasks": ["Alt görev 1", "Alt görev 2"], "estimatedTime": "saat" }
   ],
-  "productivityTips": ["Tip 1", "Tip 2"],
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "productivityTips": ["İpucu 1", "İpucu 2"],
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }

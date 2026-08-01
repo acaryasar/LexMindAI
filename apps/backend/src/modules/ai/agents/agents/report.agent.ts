@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AIProviderFactory } from '../../providers/provider-factory.service';
 import { BaseAgent } from '../base-agent.service';
 import { AgentExecutionContext, AgentExecutionResult } from '../interfaces/agent.interface';
 
@@ -17,52 +18,55 @@ export class ReportAgent extends BaseAgent {
   readonly confidence = 0.9;
   readonly riskScore = 0.1;
 
-  constructor(configService: ConfigService) {
-    super(configService, 'ReportAgent');
+  constructor(
+    configService: ConfigService,
+    aiProviderFactory: AIProviderFactory,
+  ) {
+    super(configService, aiProviderFactory, 'ReportAgent');
   }
 
   protected getSystemPrompt(): string {
-    return `You are a Report Agent for LexMind AI, a legal practice management system.
-    Your task is to generate comprehensive reports.
-    Always return your response in valid JSON format.`;
+    return `Sen LexMind AI için bir Report Agent'sın, bir hukuk uygulama yönetim sistemi.
+    Görevin kapsamlı raporlar oluşturmak.
+    Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
 
   protected buildPrompt(context: AgentExecutionContext): string {
     const contextStr = this.formatContext(context.context);
     const reportType = context.input.reportType || 'general';
-    const prompt = context.prompt || `Generate ${reportType} report: ${contextStr}`;
+    const prompt = context.prompt || `${reportType} raporu oluştur: ${contextStr}`;
     
     return `${prompt}
 
-Please provide the following in JSON format:
+Lütfen aşağıdaki bilgileri JSON formatında sağla:
 {
-  "reportTitle": "Report title",
+  "reportTitle": "Rapor başlığı",
   "reportType": "${reportType}",
-  "summary": "Executive summary",
+  "summary": "Yönetici özeti",
   "sections": [
     {
-      "title": "Section title",
-      "content": "Section content",
+      "title": "Bölüm başlığı",
+      "content": "Bölüm içeriği",
       "data": {
         "key": "value"
       }
     }
   ],
-  "keyFindings": ["Finding 1", "Finding 2"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
+  "keyFindings": ["Bulgu 1", "Bulgu 2"],
+  "recommendations": ["Öneri 1", "Öneri 2"],
   "charts": [
     {
       "type": "bar|line|pie",
-      "title": "Chart title",
+      "title": "Grafik başlığı",
       "data": { "labels": [], "datasets": [] }
     }
   ],
-  "generatedAt": "ISO date",
-  "reasons": ["Reason 1", "Reason 2"],
-  "sources": ["Source 1", "Source 2"],
-  "warnings": ["Warning 1", "Warning 2"],
+  "generatedAt": "ISO tarih",
+  "reasons": ["Neden 1", "Neden 2"],
+  "sources": ["Kaynak 1", "Kaynak 2"],
+  "warnings": ["Uyarı 1", "Uyarı 2"],
   "actions": [
-    { "type": "action_type", "label": "Action label", "description": "Action description", "requiresApproval": false }
+    { "type": "action_type", "label": "Eylem etiketi", "description": "Eylem açıklaması", "requiresApproval": false }
   ]
 }`;
   }
