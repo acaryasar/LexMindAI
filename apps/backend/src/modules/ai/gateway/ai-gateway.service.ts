@@ -4,16 +4,21 @@ import { OpenAI } from 'openai';
 import { PrismaService } from '@database/prisma.service';
 import { EncryptionUtil } from '@common/encryption.util';
 import { AIProviderFactory } from '../providers/provider-factory.service';
+import { AIContextService } from '../services/ai-context.service';
+import { RolePromptService } from '../services/role-prompt.service';
+import { AI_TOOLS } from '../tools/ai-tools-definitions';
 
 @Injectable()
 export class AIGatewayService {
   private readonly logger = new Logger(AIGatewayService.name);
-  private openai: OpenAI;
+  private openai: OpenAI | null = null;
 
   constructor(
     private configService: ConfigService,
     private prisma: PrismaService,
     private aiProviderFactory: AIProviderFactory,
+    private aiContextService: AIContextService,
+    private rolePromptService: RolePromptService,
   ) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (apiKey) {
@@ -30,6 +35,7 @@ export class AIGatewayService {
     let aiConfig = null;
     try {
       const startTime = Date.now();
+      this.logger.log(`[AIGateway] Chat called - userId: ${userId}, message: "${message.substring(0, 50)}..."`);
 
       // Get user-specific AI configuration
       aiConfig = await this.getUserAIConfig(userId);
@@ -37,11 +43,46 @@ export class AIGatewayService {
       // Determine provider to use
       const providerName = aiConfig?.provider || this.configService.get<string>('DEFAULT_AI_PROVIDER', 'ollama');
 
-      // Build system prompt
-      const systemPrompt = await this.buildSystemPrompt(context);
+      // Build system prompt with user context
+      let systemPrompt = await this.buildSystemPrompt(context, userId);
+      this.logger.log(`[AIGateway] System prompt built, length: ${systemPrompt.length}`);
+
+      // Check if message requires tool execution
+      const toolResult = await this.executeToolIfNeeded(message, userId || '', conversationId);
+      this.logger.log(`[AIGateway] Tool result: ${JSON.stringify(toolResult)}`);
+      
+      if (toolResult) {
+        // Tool sonucunu daha anlaşılır formatta ekle
+        let toolResultText = '';
+        if (toolResult.message) {
+          toolResultText = toolResult.message;
+        } else if (toolResult.count !== undefined) {
+          toolResultText = `Müvekkil Sayısı: ${toolResult.count}`;
+        } else if (toolResult.clientCount !== undefined) {
+          toolResultText = `Müvekkil Sayısı: ${toolResult.clientCount}`;
+          if (toolResult.caseCount !== undefined) {
+            toolResultText += `\nDava Sayısı: ${toolResult.caseCount}`;
+          }
+          if (toolResult.activeCaseCount !== undefined) {
+            toolResultText += `\nAktif Dava Sayısı: ${toolResult.activeCaseCount}`;
+          }
+        } else if (toolResult.tasks !== undefined) {
+          toolResultText = `Görev Sayısı: ${toolResult.count}`;
+        }
+        
+        if (toolResultText) {
+          systemPrompt += `\n\nSistem Bilgisi:\n${toolResultText}`;
+          this.logger.log(`[AIGateway] Tool result added to system prompt: ${toolResultText}`);
+        } else {
+          systemPrompt += `\n\nEk Bilgiler:\n${JSON.stringify(toolResult, null, 2)}`;
+        }
+      } else {
+        this.logger.log(`[AIGateway] No tool result for message`);
+      }
 
       // Get conversation history if conversationId provided
       const messages = await this.buildMessages(message, conversationId, systemPrompt);
+      this.logger.log(`[AIGateway] Messages built, count: ${messages.length}`);
 
       // Use AIProviderFactory for chat
       const response = await this.aiProviderFactory.chat(messages, {
@@ -51,6 +92,7 @@ export class AIGatewayService {
       }, providerName);
 
       const responseTime = Date.now() - startTime;
+      this.logger.log(`[AIGateway] AI response received, length: ${response.content?.length || 0}`);
 
       // Log usage
       await this.logUsage('chat', response.usage, responseTime, userId);
@@ -59,7 +101,7 @@ export class AIGatewayService {
         response: response.content,
         usage: response.usage,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('AI Chat error:', error);
       this.logger.error('Error details:', {
         message: error.message,
@@ -70,6 +112,118 @@ export class AIGatewayService {
         provider: aiConfig?.provider,
       });
       throw error;
+    }
+  }
+
+  private async executeToolIfNeeded(message: string, userId: string, conversationId?: string): Promise<any> {
+    if (!userId) {
+      this.logger.warn('No userId provided for tool execution');
+      return null;
+    }
+
+    const lowerMessage = message.toLowerCase();
+    this.logger.log(`Checking tool execution for message: "${message}" (userId: ${userId})`);
+
+    // Önce conversation history'den isim çıkarma (mesajda isim belirtilmemişse)
+    let lawyerNameFromHistory = null;
+    if (conversationId && (lowerMessage.includes('müvekkil') || lowerMessage.includes('dava'))) {
+      const messages = await this.prisma.aIMessage.findMany({
+        where: { 
+          conversationId,
+          role: 'user', // Sadece kullanıcı mesajlarından isim çıkarma
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      });
+      
+      // Son kullanıcı mesajlarından isim çıkarma
+      for (const msg of messages) {
+        const nameMatch = msg.content.match(/(?:avukat\s+)?([A-ZÇĞİÖŞÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜ][a-zçğıöşü]+)?)/);
+        if (nameMatch && nameMatch[1] && nameMatch[1].length > 2) {
+          const potentialName = nameMatch[1];
+          // Admin, User, System gibi kelimeleri isim olarak kabul etme
+          const excludedWords = ['Admin', 'User', 'System', 'LexMind', 'AI', 'Assistant'];
+          if (!excludedWords.some(word => potentialName.includes(word))) {
+            lawyerNameFromHistory = potentialName;
+            this.logger.log(`Found lawyer name from user history: ${lawyerNameFromHistory}`);
+            break;
+          }
+        }
+      }
+    }
+
+    // İsim bazlı avukat sorgusu (örn: "Avukat Yaşar Acar'ın kaç müvekkili var?")
+    const lawyerNameMatch = lowerMessage.match(/(?:avukat\s+)?([a-zçğıöşü\s]{3,})(?:'?ın|'?in)?\s*(?:kaç|müvekkil|dava)/i);
+    if (lawyerNameMatch && lawyerNameMatch[1]) {
+      const lawyerName = lawyerNameMatch[1].trim();
+      // "kaç", "ne", "kim" gibi kelimeleri isim olarak kabul etme
+      if (!['kaç', 'ne', 'kim', 'hangi', 'nasıl', 'neden'].includes(lawyerName.toLowerCase())) {
+        this.logger.log(`Executing get_lawyer_stats_by_name tool for: ${lawyerName}`);
+        return await this.executeTool('get_lawyer_stats_by_name', { lawyerName }, userId);
+      }
+    }
+
+    // Conversation history'den isim bulunduysa ve mesajda müvekkil/dava sorusu varsa
+    if (lawyerNameFromHistory && (lowerMessage.includes('müvekkil') || lowerMessage.includes('dava'))) {
+      this.logger.log(`Using lawyer name from history: ${lawyerNameFromHistory}`);
+      return await this.executeTool('get_lawyer_stats_by_name', { lawyerName: lawyerNameFromHistory }, userId);
+    }
+
+    // "kaç aktif ve toplam davası var?" gibi sorular için
+    if ((lowerMessage.includes('dava') && (lowerMessage.includes('kaç') || lowerMessage.includes('sayı'))) || 
+        lowerMessage.includes('aktif') || lowerMessage.includes('toplam')) {
+      
+      if (lawyerNameFromHistory) {
+        this.logger.log(`Using lawyer name from history for stats: ${lawyerNameFromHistory}`);
+        return await this.executeTool('get_lawyer_stats_by_name', { lawyerName: lawyerNameFromHistory }, userId);
+      } else {
+        this.logger.log('Executing get_lawyer_stats tool for current user');
+        return await this.executeTool('get_lawyer_stats', {}, userId);
+      }
+    }
+
+    // Simple keyword-based tool detection
+    if (lowerMessage.includes('müvekkil') && (lowerMessage.includes('kaç') || lowerMessage.includes('sayı') || lowerMessage.includes('adet'))) {
+      if (lawyerNameFromHistory) {
+        this.logger.log(`Using lawyer name from history for client count: ${lawyerNameFromHistory}`);
+        return await this.executeTool('get_lawyer_stats_by_name', { lawyerName: lawyerNameFromHistory }, userId);
+      } else {
+        this.logger.log('Executing get_client_count tool');
+        return await this.executeTool('get_client_count', {}, userId);
+      }
+    }
+    if (lowerMessage.includes('istatistik') || lowerMessage.includes('kaç müvekkil') || lowerMessage.includes('kaç dava')) {
+      this.logger.log('Executing get_lawyer_stats tool');
+      return await this.executeTool('get_lawyer_stats', {}, userId);
+    }
+    if (lowerMessage.includes('son teslim') || lowerMessage.includes('deadline') || lowerMessage.includes('görev')) {
+      this.logger.log('Executing get_upcoming_deadlines tool');
+      return await this.executeTool('get_upcoming_deadlines', {}, userId);
+    }
+    if (lowerMessage.includes('bugün') && lowerMessage.includes('görev')) {
+      this.logger.log('Executing get_today_tasks tool');
+      return await this.executeTool('get_today_tasks', {}, userId);
+    }
+
+    this.logger.log('No tool matched for message');
+    return null;
+  }
+
+  private async executeTool(toolName: string, params: any, userId: string): Promise<any> {
+    const tool = AI_TOOLS.find(t => t.name === toolName);
+    if (!tool) {
+      this.logger.warn(`Tool not found: ${toolName}`);
+      return null;
+    }
+
+    try {
+      this.logger.log(`Executing tool ${toolName} for userId: ${userId}`);
+      const result = await tool.handler(params, userId, this.prisma);
+      this.logger.log(`Tool ${toolName} executed successfully:`, result);
+      return result;
+    } catch (error: any) {
+      this.logger.error(`Tool execution error (${toolName}):`, error);
+      return null;
     }
   }
 
@@ -186,8 +340,46 @@ export class AIGatewayService {
     }
   }
 
-  private async buildSystemPrompt(context?: any): Promise<string> {
+  private async buildSystemPrompt(context?: any, userId?: string): Promise<string> {
     let prompt = 'Sen LexMind AI, bir hukuk uygulama yönetim sistemi için yardımcı bir yapay zeka asistanısın. Her zaman Türkçe dilinde cevap vermelisin.';
+
+    // Add role-specific prompt if userId is provided
+    if (userId) {
+      try {
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+          include: {
+            roles: {
+              include: {
+                role: true,
+              },
+            },
+          },
+        });
+
+        if (user && user.roles && user.roles.length > 0) {
+          const primaryRoleName = user.roles[0].role.name; // Rol adını al
+          const rolePrompt = this.rolePromptService.getRolePrompt(primaryRoleName);
+          if (rolePrompt) {
+            prompt = rolePrompt;
+          }
+        }
+      } catch (error) {
+        this.logger.warn('Failed to get user role:', error);
+      }
+    }
+
+    // Add user profile context if userId is provided
+    if (userId) {
+      try {
+        const userContext = await this.aiContextService.getContextSummary(userId);
+        if (userContext) {
+          prompt += `\n\n${userContext}`;
+        }
+      } catch (error) {
+        this.logger.warn('Failed to get user context:', error);
+      }
+    }
 
     if (context) {
       if (context.caseId) {

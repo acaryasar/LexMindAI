@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { AIController } from './controllers/ai.controller';
 import { AIService } from './services/ai.service';
 import { AIGatewayService } from './gateway/ai-gateway.service';
+import { AIContextService } from './services/ai-context.service';
+import { RolePromptService } from './services/role-prompt.service';
 import { DatabaseModule } from '@database/database.module';
 import { AIOrchestrator } from './orchestrator/ai-orchestrator.service';
 import { AIContextBuilder } from './context-builder/context-builder.service';
@@ -42,6 +44,8 @@ import { VoiceAgent } from './agents/agents/voice.agent';
   providers: [
     AIService,
     AIGatewayService,
+    AIContextService,
+    RolePromptService,
     AIOrchestrator,
     AIContextBuilder,
     AIMemoryService,

@@ -1,16 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { MainLayout } from '@/components/layout/main-layout';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Plus, MessageSquare, FileText, Brain } from 'lucide-react';
+import { Brain, Send, Plus, Trash2, MoreVertical, FileText } from 'lucide-react';
 import api from '@/lib/api';
+import { useAuthStore } from '@/stores/auth.store';
+import { MainLayout } from '@/components/layout/main-layout';
 
 export default function AIWorkspacePage() {
   const searchParams = useSearchParams();
+  const { user } = useAuthStore();
   const conversationId = searchParams.get('conversationId');
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<any[]>([]);
@@ -60,6 +62,9 @@ export default function AIWorkspacePage() {
 
   const handleSend = async () => {
     if (!message.trim()) return;
+
+    console.log('Current user:', user);
+    console.log('User ID:', user?.id);
 
     const newMessage = {
       id: messages.length + 1,
@@ -135,7 +140,7 @@ export default function AIWorkspacePage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Sohbet Geçmişi</CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto space-y-2">
+            <CardContent className="flex-1 overflow-y-auto space-y-2 p-3">
               {conversations.map((conv) => (
                 <div
                   key={conv.id}

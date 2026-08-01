@@ -18,6 +18,8 @@ export class AIService {
   ) {}
 
   async chat(chatDto: ChatDto, userId: string) {
+    this.logger.log(`Chat request received - userId: ${userId}, message: "${chatDto.message.substring(0, 50)}..."`);
+
     let conversationId = chatDto.conversationId;
 
     // Create new conversation if not provided
@@ -31,6 +33,7 @@ export class AIService {
         },
       });
       conversationId = conversation.id;
+      this.logger.log(`Created new conversation: ${conversationId}`);
     }
 
     // Build context
@@ -39,11 +42,14 @@ export class AIService {
     if (chatDto.clientId) context.clientId = chatDto.clientId;
     if (chatDto.documentIds) context.documentIds = chatDto.documentIds;
 
+    this.logger.log(`Calling aiGateway.chat with userId: ${userId}, conversationId: ${conversationId}`);
+
     // Get AI response
     const { response, usage } = await this.aiGateway.chat(
       chatDto.message,
       conversationId,
       context,
+      userId,
     );
 
     // Save user message
