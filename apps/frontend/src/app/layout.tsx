@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AlertProvider } from '@/components/ui/alert-dialog';
+import { I18nProvider } from '@/i18n/provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -18,9 +19,11 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body className={inter.className}>
-        <AlertProvider>
-          {children}
-        </AlertProvider>
+        <I18nProvider>
+          <AlertProvider>
+            {children}
+          </AlertProvider>
+        </I18nProvider>
       </body>
     </html>
   );

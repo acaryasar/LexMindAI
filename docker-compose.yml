@@ -28,7 +28,7 @@ services:
     image: redis:7-alpine
     container_name: lexmind-redis
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-your-redis-password-here}
+    command: redis-server
     ports:
       - "6379:6379"
     volumes:
@@ -36,7 +36,7 @@ services:
     networks:
       - lexmind-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-your-redis-password-here}", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -76,7 +76,6 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-your-strong-password-here}@postgres:5432/${POSTGRES_DB:-lexmind_ai}?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-your-redis-password-here}
       JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-generate-with-openssl-rand-base64-32}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-refresh-secret-generate-with-openssl-rand-base64-32}
       S3_ENDPOINT: http://minio:9000

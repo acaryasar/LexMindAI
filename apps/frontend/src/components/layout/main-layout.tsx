@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useMemo } from 'react';
 import { Sidebar } from './sidebar';
-import { Header } from './header';
+import { Topbar } from './topbar';
 import { AICopilotPanel } from '@/components/ai-copilot/ai-copilot-panel';
 import { PetitionAIPanel } from '@/components/ai-copilot/petition-ai-panel';
 import { useAuthStore } from '@/stores/auth.store';
@@ -15,6 +15,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, showAIPanel = false }: MainLayoutProps) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -90,11 +91,13 @@ export function MainLayout({ children, showAIPanel = false }: MainLayoutProps) {
     return null;
   }
 
+  const userRole = user?.roles?.[0];
+
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar />
+      <Sidebar role={userRole} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
+        <Topbar />
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>

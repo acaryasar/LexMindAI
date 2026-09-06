@@ -1,175 +1,178 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useState } from 'react';
 import {
   LayoutDashboard,
   Users,
-  FileText,
   Scale,
-  FolderOpen,
-  Brain,
   Calendar,
+  FolderOpen,
+  Search,
+  ScrollText,
+  BarChart3,
+  Brain,
   DollarSign,
   Settings,
   ChevronDown,
   ChevronRight,
-  Search,
-  ScrollText,
-  BarChart3,
 } from 'lucide-react';
 
-const navigation = [
+interface NavItem {
+  label: string;
+  href?: string;
+  icon: any;
+  exact?: boolean;
+  roles?: string[];
+  children?: NavItem[];
+}
+
+const items: NavItem[] = [
+  { label: 'dashboard', href: '/dashboard', icon: LayoutDashboard, exact: true },
+  { label: 'clients', href: '/clients', icon: Users },
+  { label: 'cases', href: '/cases', icon: Scale },
+  { label: 'hearings', href: '/hearings', icon: Calendar },
+  { label: 'documents', href: '/documents', icon: FolderOpen },
+  { label: 'precedentSearch', href: '/precedent-search', icon: Search },
+  { label: 'petitions', href: '/petitions', icon: ScrollText },
   {
-    name: 'Ana Sayfa',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    name: 'Müvekkiller',
-    href: '/clients',
-    icon: Users,
-  },
-  {
-    name: 'Davalar',
-    href: '/cases',
-    icon: Scale,
-  },
-  {
-    name: 'Duruşmalar',
-    href: '/hearings',
-    icon: Calendar,
-  },
-  {
-    name: 'Belgeler',
-    href: '/documents',
-    icon: FolderOpen,
-  },
-  {
-    name: 'İçtihat Arama',
-    href: '/precedent-search',
-    icon: Search,
-  },
-  {
-    name: 'Dilekçeler',
-    href: '/petitions',
-    icon: ScrollText,
-  },
-  {
-    name: 'Raporlar',
-    href: '/reports',
+    label: 'reports',
     icon: BarChart3,
     children: [
-      { name: 'Duruşma Takvimi', href: '/reports/hearing-schedule' },
-      { name: 'AI Analiz', href: '/reports/ai-analysis' },
-      { name: 'Dava Durumu', href: '/reports/case-status' },
-      { name: 'Müvekkil', href: '/reports/client' },
-      { name: 'Finansal', href: '/reports/finance' },
-      { name: 'Görev', href: '/reports/task' },
-      { name: 'Aktivite', href: '/reports/activity' },
-      { name: 'Performans', href: '/reports/performance' },
+      { label: 'hearingSchedule', href: '/reports/hearing-schedule', icon: BarChart3 },
+      { label: 'aiAnalysis', href: '/reports/ai-analysis', icon: BarChart3 },
+      { label: 'caseStatus', href: '/reports/case-status', icon: BarChart3 },
+      { label: 'client', href: '/reports/client', icon: BarChart3 },
+      { label: 'finance', href: '/reports/finance', icon: BarChart3 },
+      { label: 'task', href: '/reports/task', icon: BarChart3 },
+      { label: 'activity', href: '/reports/activity', icon: BarChart3 },
+      { label: 'performance', href: '/reports/performance', icon: BarChart3 },
     ],
   },
   {
-    name: 'AI Asistan',
-    href: '/ai-workspace',
+    label: 'ai',
     icon: Brain,
     children: [
-      { name: 'Yeni Sohbet', href: '/ai-workspace' },
-      { name: 'Sohbet Geçmişi', href: '/ai/conversations' },
-      { name: 'Prompt Kütüphanesi', href: '/ai/prompts' },
+      { label: 'newChat', href: '/ai-workspace', icon: Brain },
+      { label: 'chatHistory', href: '/ai/conversations', icon: Brain },
+      { label: 'promptLibrary', href: '/ai/prompts', icon: Brain },
     ],
   },
+  { label: 'calendar', href: '/calendar', icon: Calendar },
   {
-    name: 'Takvim',
-    href: '/calendar',
-    icon: Calendar,
-  },
-  {
-    name: 'Finans',
-    href: '/finance',
+    label: 'financeMenu',
     icon: DollarSign,
     children: [
-      { name: 'Faturalar', href: '/finance/invoices' },
-      { name: 'Ödemeler', href: '/finance/payments' },
-      { name: 'Raporlar', href: '/finance/reports' },
+      { label: 'invoices', href: '/finance/invoices', icon: DollarSign },
+      { label: 'payments', href: '/finance/payments', icon: DollarSign },
+      { label: 'financeReports', href: '/finance/reports', icon: BarChart3 },
     ],
   },
-  {
-    name: 'Kullanıcılar',
-    href: '/users',
-    icon: Users,
-  },
-  {
-    name: 'Ayarlar',
-    href: '/settings',
-    icon: Settings,
-  },
+  { label: 'users', href: '/users', icon: Users },
+  { label: 'settings', href: '/settings', icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ role }: { role?: string }) {
   const pathname = usePathname();
-  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const t = useTranslations('sidebar');
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({ ai: true, reports: true, financeMenu: true });
 
-  const toggleMenu = (menuName: string) => {
-    setOpenMenus((prev) => ({
-      ...prev,
-      [menuName]: !prev[menuName],
-    }));
+  const userRole = role;
+
+  const isActive = (href: string, exact?: boolean) => {
+    if (exact) return pathname === href;
+    return pathname === href || pathname.startsWith(href + '/');
+  };
+
+  const isMenuActive = (item: NavItem) => {
+    if (item.children) {
+      return item.children.some(child => child.href && isActive(child.href, child.exact));
+    }
+    return item.href && isActive(item.href, item.exact);
+  };
+
+  const toggleMenu = (label: string) => {
+    setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
   };
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+    <div className="flex h-full w-64 flex-col bg-slate-900 border-r border-slate-800">
       {/* Logo */}
-      <div className="flex h-16 items-center px-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex h-16 items-center px-6 border-b border-slate-800">
         <Link href="/dashboard" className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
             <Scale className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-bold text-gray-900 dark:text-white">
+          <span className="text-xl font-bold text-white">
             LexMind AI
           </span>
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          const Icon = item.icon;
+      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+        {items.map((item) => {
+          // Role check
+          if (item.roles && userRole && !item.roles.includes(userRole)) {
+            return null;
+          }
 
-          if (item.children) {
-            const isOpen = openMenus[item.name] || false;
+          const Icon = item.icon;
+          const hasChildren = item.children && item.children.length > 0;
+          const active = hasChildren ? isMenuActive(item) : (item.href && isActive(item.href, item.exact));
+          const isOpen = openMenus[item.label];
+
+          if (hasChildren) {
             return (
-              <div key={item.name} className="space-y-1">
+              <div key={item.label} className="space-y-1">
                 <button
-                  onClick={() => toggleMenu(item.name)}
-                  className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  onClick={() => toggleMenu(item.label)}
+                  className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 w-full ${
+                    active
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <Icon className="w-5 h-5" />
-                    <span>{item.name}</span>
-                  </div>
-                  {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  <Icon size={16} className="shrink-0" />
+                  <span className="truncate flex-1 text-left">{t(item.label)}</span>
+                  {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                 </button>
-                {isOpen && (
-                  <div className="pl-9 space-y-1">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.name}
-                        href={child.href}
-                        className={cn(
-                          'flex items-center px-3 py-2 text-sm font-medium rounded-md',
-                          pathname === child.href
-                            ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                        )}
-                      >
-                        {child.name}
-                      </Link>
-                    ))}
+                {isOpen && item.children && (
+                  <div className="pl-6 space-y-1">
+                    {item.children.map((child) => {
+                      if (child.roles && userRole && !child.roles.includes(userRole)) {
+                        return null;
+                      }
+
+                      const ChildIcon = child.icon;
+                      const childActive = child.href && isActive(child.href, child.exact);
+
+                      return (
+                        <TooltipProvider key={child.href}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Link
+                                href={child.href!}
+                                className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all duration-200 ${
+                                  childActive
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                }`}
+                              >
+                                <ChildIcon size={14} className="shrink-0" />
+                                <span className="truncate">{t(child.label)}</span>
+                              </Link>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="max-w-[220px] bg-slate-900 text-white">
+                              <p>{t(`${child.label}Description`)}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -177,28 +180,35 @@ export function Sidebar() {
           }
 
           return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                'flex items-center space-x-3 px-3 py-2 text-sm font-medium rounded-md',
-                isActive
-                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-              )}
-            >
-              <Icon className="w-5 h-5" />
-              <span>{item.name}</span>
-            </Link>
+            <TooltipProvider key={item.href}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={item.href!}
+                    className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 ${
+                      active
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <Icon size={16} className="shrink-0" />
+                    <span className="truncate">{t(item.label)}</span>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-[220px] bg-slate-900 text-white">
+                  <p>{t(`${item.label}Description`)}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           );
         })}
       </nav>
 
       {/* User Info */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+      <div className="border-t border-slate-800 p-4">
         <div className="flex justify-center">
           <div className="text-center">
-            <p className="text-sm font-medium">
+            <p className="text-sm font-medium text-white">
               Acar Software
             </p>
             <p className="text-xs text-slate-400">
