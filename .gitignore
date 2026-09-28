@@ -50,3 +50,6 @@ Thumbs.db
 # Logs
 logs
 *.log
+
+# Prisma+Turso yardimci script'inin gecici golge veritabani
+apps/backend/prisma/_shadow.db*
