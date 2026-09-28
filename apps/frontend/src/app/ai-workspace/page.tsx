@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
 import { MainLayout } from '@/components/layout/main-layout';
 
-export default function AIWorkspacePage() {
+function AIWorkspaceContent() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const conversationId = searchParams.get('conversationId');
@@ -278,5 +278,13 @@ export default function AIWorkspacePage() {
         </div>
       </div>
     </MainLayout>
+  );
+}
+
+export default function AIWorkspacePage() {
+  return (
+    <Suspense fallback={null}>
+      <AIWorkspaceContent />
+    </Suspense>
   );
 }
