@@ -22,6 +22,15 @@ const fs = require('fs');
 const os = require('os');
 
 const backendDir = path.join(__dirname, '..');
+
+// Bu script duz `node` ile calistigi icin (prisma CLI/@prisma/client'in
+// kendi otomatik .env yuklemesi burada devreye girmiyor), DATABASE_URL /
+// TURSO_AUTH_TOKEN'i apps/backend/.env dosyasindan kendimiz yukluyoruz.
+try {
+  require('dotenv').config({ path: path.join(backendDir, '.env') });
+} catch (err) {
+  console.warn('[push-schema-to-turso] "dotenv" paketi yuklenemedi, ortam degiskenlerinin zaten set edilmis olmasi gerekiyor.');
+}
 const schemaPath = path.join(backendDir, 'prisma', 'schema.prisma');
 
 // Windows'ta "file:" URL'i icinde ters slash sorun yaratabildigi ve OneDrive
