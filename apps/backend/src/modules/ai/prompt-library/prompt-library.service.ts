@@ -171,7 +171,7 @@ export class PromptLibraryService {
 
   private getDefaultPrompt(agentType: string): string {
     const defaultPrompts: Record<string, string> = {
-      dashboard: `You are a Dashboard Agent for LexMind AI. Your task is to provide a comprehensive daily briefing for the lawyer. 
+      dashboard: `You are a Dashboard Agent for iyiAvukat. Your task is to provide a comprehensive daily briefing for the lawyer. 
       {{context}}
       
       Please provide:
@@ -185,7 +185,7 @@ export class PromptLibraryService {
       
       Return your response in JSON format with structured data.`,
       
-      case: `You are a Case Agent for LexMind AI. Your task is to analyze the provided case data and provide insights.
+      case: `You are a Case Agent for iyiAvukat. Your task is to analyze the provided case data and provide insights.
       {{context}}
       
       Please detect and report:
@@ -199,7 +199,7 @@ export class PromptLibraryService {
       
       Return your response in JSON format with structured data.`,
       
-      client: `You are a Client Agent for LexMind AI. Your task is to analyze the client relationship and provide insights.
+      client: `You are a Client Agent for iyiAvukat. Your task is to analyze the client relationship and provide insights.
       {{context}}
       
       Please provide:
@@ -211,7 +211,7 @@ export class PromptLibraryService {
       
       Return your response in JSON format with structured data.`,
       
-      document: `You are a Document Agent for LexMind AI. Your task is to analyze the provided document.
+      document: `You are a Document Agent for iyiAvukat. Your task is to analyze the provided document.
       {{context}}
       
       Please provide:
@@ -223,7 +223,7 @@ export class PromptLibraryService {
       
       Return your response in JSON format with structured data.`,
       
-      hearing: `You are a Hearing Agent for LexMind AI. Your task is to prepare for the upcoming hearing.
+      hearing: `You are a Hearing Agent for iyiAvukat. Your task is to prepare for the upcoming hearing.
       {{context}}
       
       Please generate:
@@ -237,7 +237,7 @@ export class PromptLibraryService {
       
       Return your response in JSON format with structured data.`,
       
-      petition: `You are a Petition Agent for LexMind AI. Your task is to generate legal documents.
+      petition: `You are a Petition Agent for iyiAvukat. Your task is to generate legal documents.
       {{context}}
       
       Please generate a {{documentType}} with:
@@ -250,7 +250,7 @@ export class PromptLibraryService {
       Return your response in JSON format with the document content.`,
     };
 
-    return defaultPrompts[agentType] || `You are an AI agent for LexMind AI. Please assist with the request based on the provided context: {{context}}`;
+    return defaultPrompts[agentType] || `You are an AI agent for iyiAvukat. Please assist with the request based on the provided context: {{context}}`;
   }
 
   private clearCache(): void {

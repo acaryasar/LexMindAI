@@ -29,7 +29,7 @@ export class CaseAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Case Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Case Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin hukuk davalarını analiz etmek ve stratejik içgörüler sağlamak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

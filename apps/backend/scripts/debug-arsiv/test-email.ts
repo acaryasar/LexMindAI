@@ -1,13 +1,16 @@
 import * as nodemailer from 'nodemailer';
 
-// Email configuration from .env.development
+// Email configuration - .env.development'tan okunur (gercek sirlari asla kod icine yazmayin)
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.development' });
+
 const emailConfig = {
-  host: 'smtp.gmail.com',
-  port: 587,
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: Number(process.env.EMAIL_PORT) || 587,
   secure: false,
   auth: {
-    user: 'lexmindai.destek@gmail.com',
-    pass: 'hdwk xkwo vcdn lamu',
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
   },
 };
 
@@ -40,11 +43,11 @@ async function sendRegistrationEmail() {
     <body>
       <div class="container">
         <div class="header">
-          <h1>LexMind AI</h1>
+          <h1>iyiAvukat</h1>
         </div>
         <div class="content">
           <h2>Hoş Geldiniz ${firstName} ${lastName},</h2>
-          <p>LexMind AI sistemine kaydınız başarıyla oluşturuldu. Sisteme giriş yapmak için aşağıdaki adımları izleyiniz:</p>
+          <p>iyiAvukat sistemine kaydınız başarıyla oluşturuldu. Sisteme giriş yapmak için aşağıdaki adımları izleyiniz:</p>
           
           <div class="steps">
             <div class="step">
@@ -73,7 +76,7 @@ async function sendRegistrationEmail() {
         </div>
         <div class="footer">
           <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
-          <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+          <p>&copy; ${new Date().getFullYear()} iyiAvukat. Tüm hakları saklıdır.</p>
         </div>
       </div>
     </body>
@@ -84,9 +87,9 @@ async function sendRegistrationEmail() {
     console.log('Kayıt e-postası gönderiliyor...');
     
     await transporter.sendMail({
-      from: '"LexMind AI" <lexmindai.destek@gmail.com>',
+      from: '"iyiAvukat" <lexmindai.destek@gmail.com>',
       to,
-      subject: 'LexMind AI Hesabınız Oluşturuldu',
+      subject: 'iyiAvukat Hesabınız Oluşturuldu',
       html,
     });
 

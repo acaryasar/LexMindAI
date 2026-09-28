@@ -175,7 +175,7 @@ export class AIController {
   async demoTest(@Body() body: { message: string; provider?: string }) {
     const provider = body.provider || this.aiProviderFactory['defaultProvider'];
     const messages = [
-      { role: 'system' as const, content: 'You are a helpful AI assistant for LexMind AI, a legal practice management system. Provide concise and helpful responses.' },
+      { role: 'system' as const, content: 'You are a helpful AI assistant for iyiAvukat, a legal practice management system. Provide concise and helpful responses.' },
       { role: 'user' as const, content: body.message },
     ];
 

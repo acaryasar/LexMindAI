@@ -1,6 +1,6 @@
 # MFA (Multi-Factor Authentication) Implementation Guide
 
-Bu rehber LexMind AI için MFA implementasyonunu adım adım açıklar.
+Bu rehber iyiAvukat için MFA implementasyonunu adım adım açıklar.
 
 ## MFA Seçenekleri
 
@@ -81,8 +81,8 @@ export class MfaService {
   // TOTP secret oluştur
   generateSecret(email: string) {
     return speakeasy.generateSecret({
-      name: 'LexMind AI',
-      issuer: 'LexMind AI',
+      name: 'iyiAvukat',
+      issuer: 'iyiAvukat',
       length: 32,
       secret: speakeasy.generateSecret({ length: 32 }).base32,
     });
@@ -93,7 +93,7 @@ export class MfaService {
     return speakeasy.otpauth.URL({
       secret: secret,
       label: email,
-      issuer: 'LexMind AI',
+      issuer: 'iyiAvukat',
       encoding: 'base32',
     });
   }
@@ -618,7 +618,7 @@ npm install twilio
 async sendSmsMfaCode(phoneNumber: string, code: string) {
   const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
   await client.messages.create({
-    body: `Your LexMind AI verification code is: ${code}`,
+    body: `Your iyiAvukat verification code is: ${code}`,
     from: process.env.TWILIO_PHONE_NUMBER,
     to: phoneNumber,
   });

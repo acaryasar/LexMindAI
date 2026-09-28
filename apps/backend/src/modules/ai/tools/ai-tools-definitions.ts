@@ -77,23 +77,19 @@ export const AI_TOOLS: AITool[] = [
             {
               firstName: {
                 contains: lawyerName.split(' ')[0],
-                mode: 'insensitive',
               },
               lastName: {
                 contains: lawyerName.split(' ')[1] || '',
-                mode: 'insensitive',
               },
             },
             {
               firstName: {
                 contains: lawyerName,
-                mode: 'insensitive',
               },
             },
             {
               lastName: {
                 contains: lawyerName,
-                mode: 'insensitive',
               },
             },
           ],
@@ -164,23 +160,19 @@ export const AI_TOOLS: AITool[] = [
             {
               firstName: {
                 contains: lawyerName.split(' ')[0],
-                mode: 'insensitive',
               },
               lastName: {
                 contains: lawyerName.split(' ')[1] || '',
-                mode: 'insensitive',
               },
             },
             {
               firstName: {
                 contains: lawyerName,
-                mode: 'insensitive',
               },
             },
             {
               lastName: {
                 contains: lawyerName,
-                mode: 'insensitive',
               },
             },
           ],
@@ -384,9 +376,9 @@ export const AI_TOOLS: AITool[] = [
           userId,
           client: {
             OR: [
-              { firstName: { contains: params.query, mode: 'insensitive' } },
-              { lastName: { contains: params.query, mode: 'insensitive' } },
-              { email: { contains: params.query, mode: 'insensitive' } },
+              { firstName: { contains: params.query } },
+              { lastName: { contains: params.query } },
+              { email: { contains: params.query } },
             ],
           },
         },
@@ -427,8 +419,8 @@ export const AI_TOOLS: AITool[] = [
           userId,
           case: {
             OR: [
-              { title: { contains: params.query, mode: 'insensitive' } },
-              { description: { contains: params.query, mode: 'insensitive' } },
+              { title: { contains: params.query } },
+              { description: { contains: params.query } },
             ],
           },
         },

@@ -33,9 +33,9 @@ export class AIToolsService {
       const cases = await this.prisma.case.findMany({
         where: {
           OR: [
-            { caseNumber: { contains: query, mode: 'insensitive' } },
-            { title: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
+            { caseNumber: { contains: query } },
+            { title: { contains: query } },
+            { description: { contains: query } },
           ],
           ...(filters?.status && { status: filters.status }),
           ...(filters?.type && { type: filters.type }),
@@ -74,9 +74,9 @@ export class AIToolsService {
       const documents = await this.prisma.document.findMany({
         where: {
           OR: [
-            { name: { contains: query, mode: 'insensitive' } },
-            { fileName: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
+            { name: { contains: query } },
+            { fileName: { contains: query } },
+            { description: { contains: query } },
           ],
           ...(filters?.category && { category: filters.category }),
         },

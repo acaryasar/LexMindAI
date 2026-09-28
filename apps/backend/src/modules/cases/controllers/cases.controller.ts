@@ -20,6 +20,8 @@ import { CreateCaseNoteDto } from '../dto/create-case-note.dto';
 import { CreateCaseHearingDto } from '../dto/create-case-hearing.dto';
 import { AssignCaseLawyerDto } from '../dto/assign-lawyer.dto';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@modules/auth/guards/roles.guard';
+import { SetMetadata } from '@nestjs/common';
 
 @ApiTags('Cases')
 @Controller('cases')
@@ -72,6 +74,8 @@ export class CasesController {
     return this.casesService.update(id, updateCaseDto, req.user.id, req.user.role);
   }
 
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER'])
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Dava sil' })
@@ -122,6 +126,8 @@ export class CasesController {
     return this.casesService.assignLawyer(id, assignLawyerDto, req.user.id);
   }
 
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER'])
   @Delete(':id/lawyers/:lawyerId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Davadan avukat kaldır' })

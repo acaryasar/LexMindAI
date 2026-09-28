@@ -26,7 +26,7 @@ export class StrategyAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Strategy Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Strategy Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin hukuk stratejileri geliştirmek ve analiz etmek.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

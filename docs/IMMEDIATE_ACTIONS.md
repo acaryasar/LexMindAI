@@ -72,7 +72,7 @@ Create `.env` file in root directory for Docker Compose:
 # Database
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=<generated-database-password>
-POSTGRES_DB=lexmind_ai
+POSTGRES_DB=iyiavukat
 
 # Redis
 REDIS_PASSWORD=<generated-redis-password>

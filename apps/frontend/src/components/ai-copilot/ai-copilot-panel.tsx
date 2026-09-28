@@ -54,7 +54,7 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
   const [loading, setLoading] = useState(true);
   const [explainWhy, setExplainWhy] = useState<string | null>(null);
   const [expandedRec, setExpandedRec] = useState<string | null>(null);
-  const [panelTitle, setPanelTitle] = useState('LexMind AI');
+  const [panelTitle, setPanelTitle] = useState('iyiAvukat');
   const [panelSubtitle, setPanelSubtitle] = useState('Yasal AI Asistanınız');
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [currentSummary, setCurrentSummary] = useState<string>('');
@@ -82,7 +82,7 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
       const mockRecommendations = generateMockRecommendations(50);
       
       let mockDailyPlan: DailyPlan | null = null;
-      let panelTitle = 'LexMind AI';
+      let panelTitle = 'iyiAvukat';
       let panelSubtitle = 'Yasal AI Asistanınız';
 
       if (context === 'dashboard') {
@@ -98,7 +98,7 @@ export function AICopilotPanel({ context = 'dashboard', entityId }: AICopilotPan
           },
           productivityScore: getRandomNumber(65, 95),
         };
-        setPanelTitle('LexMind AI');
+        setPanelTitle('iyiAvukat');
         setPanelSubtitle('Yasal AI Asistanınız');
       } else if (context === 'client') {
         setPanelTitle('Müvekkil AI');

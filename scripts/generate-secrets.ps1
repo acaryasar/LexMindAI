@@ -1,7 +1,7 @@
-# LexMind AI - Generate Strong Secrets (PowerShell)
+# iyiAvukat - Generate Strong Secrets (PowerShell)
 # This script generates cryptographically secure secrets for environment variables
 
-Write-Host "Generating strong secrets for LexMind AI..."
+Write-Host "Generating strong secrets for iyiAvukat..."
 Write-Host ""
 
 # Function to generate secret

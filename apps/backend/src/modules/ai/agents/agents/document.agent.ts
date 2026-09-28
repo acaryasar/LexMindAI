@@ -26,7 +26,7 @@ export class DocumentAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Document Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Document Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin hukuk belgelerini analiz etmek ve önemli bilgileri çıkarmak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

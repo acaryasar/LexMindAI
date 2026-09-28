@@ -12,11 +12,13 @@ export class RecommendationsService {
   // ==================== RECOMMENDATIONS ====================
 
   async createRecommendation(userId: string, dto: CreateRecommendationDto) {
-    const { actions, workflowId, ...recommendationData } = dto;
+    const { actions, workflowId, context, ...recommendationData } = dto;
 
     const recommendation = await this.prisma.aIRecommendation.create({
       data: {
         ...recommendationData,
+        // SQLite/Turso Json tipini desteklemiyor; JSON metin olarak saklanir
+        context: context !== undefined ? JSON.stringify(context) : undefined,
         userId,
         actions: actions
           ? {
@@ -201,7 +203,8 @@ export class RecommendationsService {
         name: dto.name,
         description: dto.description,
         type: dto.type,
-        steps: dto.steps as any,
+        // SQLite/Turso Json tipini desteklemiyor; JSON metin olarak saklanir
+        steps: JSON.stringify(dto.steps),
         status: dto.status || 'active',
         createdBy,
       },
@@ -268,7 +271,7 @@ export class RecommendationsService {
         status: 'running',
         currentStep: 0,
         progress: 0,
-        results: dto.context as any,
+        results: dto.context !== undefined ? JSON.stringify(dto.context) : undefined,
       },
     });
 
@@ -281,7 +284,7 @@ export class RecommendationsService {
   }
 
   private async executeWorkflowSteps(executionId: string, workflow: any, context: any) {
-    const steps = workflow.steps as CreateWorkflowStepDto[];
+    const steps = JSON.parse(workflow.steps) as CreateWorkflowStepDto[];
     const totalSteps = steps.length;
     const results: any[] = [];
 
@@ -328,7 +331,7 @@ export class RecommendationsService {
       data: {
         status: 'completed',
         completedAt: new Date(),
-        results: results as any,
+        results: JSON.stringify(results),
       },
     });
   }

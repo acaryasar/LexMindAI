@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# LexMind AI - Generate Strong Secrets
+# iyiAvukat - Generate Strong Secrets
 # This script generates cryptographically secure secrets for environment variables
 
-echo "Generating strong secrets for LexMind AI..."
+echo "Generating strong secrets for iyiAvukat..."
 echo ""
 
 # Function to generate secret

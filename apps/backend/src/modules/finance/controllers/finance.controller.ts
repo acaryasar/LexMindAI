@@ -20,6 +20,8 @@ import { CreatePaymentDto } from '../dto/create-payment.dto';
 import { CreateExpenseDto } from '../dto/create-expense.dto';
 import { CreateTimeEntryDto } from '../dto/create-time-entry.dto';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@modules/auth/guards/roles.guard';
+import { SetMetadata } from '@nestjs/common';
 
 @ApiTags('Finance')
 @Controller('finance')
@@ -29,6 +31,8 @@ export class FinanceController {
   constructor(private readonly financeService: FinanceService) {}
 
   // Invoices
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER', 'ACCOUNTANT'])
   @Post('invoices')
   @ApiOperation({ summary: 'Yeni fatura oluştur' })
   @ApiResponse({ status: 201, description: 'Fatura başarıyla oluşturuldu' })
@@ -36,6 +40,8 @@ export class FinanceController {
     return this.financeService.createInvoice(createInvoiceDto, req.user.id);
   }
 
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER', 'ACCOUNTANT'])
   @Get('invoices')
   @ApiOperation({ summary: 'Fatura listesi' })
   @ApiResponse({ status: 200, description: 'Fatura listesi getirildi' })
@@ -51,6 +57,8 @@ export class FinanceController {
     );
   }
 
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER', 'ACCOUNTANT'])
   @Get('invoices/:id')
   @ApiOperation({ summary: 'Fatura detayı' })
   @ApiResponse({ status: 200, description: 'Fatura detayı getirildi' })
@@ -59,6 +67,8 @@ export class FinanceController {
     return this.financeService.getInvoice(id, req.user.id, req.user.role);
   }
 
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER', 'ACCOUNTANT'])
   @Patch('invoices/:id')
   @ApiOperation({ summary: 'Fatura güncelle' })
   @ApiResponse({ status: 200, description: 'Fatura başarıyla güncellendi' })
@@ -67,6 +77,8 @@ export class FinanceController {
   }
 
   // Payments
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER', 'ACCOUNTANT'])
   @Post('invoices/:id/payments')
   @ApiOperation({ summary: 'Ödeme ekle' })
   @ApiResponse({ status: 201, description: 'Ödeme başarıyla eklendi' })
@@ -75,6 +87,8 @@ export class FinanceController {
   }
 
   // Expenses
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER', 'ACCOUNTANT'])
   @Post('expenses')
   @ApiOperation({ summary: 'Yeni gider oluştur' })
   @ApiResponse({ status: 201, description: 'Gider başarıyla oluşturuldu' })
@@ -82,6 +96,8 @@ export class FinanceController {
     return this.financeService.createExpense(createExpenseDto, req.user.id);
   }
 
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER', 'ACCOUNTANT'])
   @Get('expenses')
   @ApiOperation({ summary: 'Gider listesi' })
   @ApiResponse({ status: 200, description: 'Gider listesi getirildi' })
@@ -105,6 +121,8 @@ export class FinanceController {
     return this.financeService.createTimeEntry(createTimeEntryDto, req.user.id);
   }
 
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER', 'ACCOUNTANT'])
   @Get('time-entries')
   @ApiOperation({ summary: 'Zaman kayıtları listesi' })
   @ApiResponse({ status: 200, description: 'Zaman kayıtları getirildi' })
@@ -121,6 +139,8 @@ export class FinanceController {
   }
 
   // Reports
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', ['ADMIN', 'MANAGING_PARTNER', 'PARTNER', 'ACCOUNTANT'])
   @Get('reports/summary')
   @ApiOperation({ summary: 'Finansal özet raporu' })
   @ApiResponse({ status: 200, description: 'Özet raporu getirildi' })

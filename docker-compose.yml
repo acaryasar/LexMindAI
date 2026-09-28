@@ -1,32 +1,8 @@
-version: '3.8'
-
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: lexmind-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: lexmind_ai
-      POSTGRES_HOST_AUTH_METHOD: trust
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - lexmind-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Redis
   redis:
     image: redis:7-alpine
-    container_name: lexmind-redis
+    container_name: iyiavukat-redis
     restart: unless-stopped
     command: redis-server
     ports:
@@ -34,7 +10,7 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - lexmind-network
+      - iyiavukat-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -44,7 +20,7 @@ services:
   # MinIO (S3 Compatible Storage)
   minio:
     image: minio/minio:latest
-    container_name: lexmind-minio
+    container_name: iyiavukat-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -56,7 +32,7 @@ services:
     volumes:
       - minio_data:/data
     networks:
-      - lexmind-network
+      - iyiavukat-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
@@ -68,32 +44,31 @@ services:
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
-    container_name: lexmind-backend
+    container_name: iyiavukat-backend
     restart: unless-stopped
     environment:
       NODE_ENV: development
       PORT: 3001
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-your-strong-password-here}@postgres:5432/${POSTGRES_DB:-lexmind_ai}?schema=public
+      DATABASE_URL: ${DATABASE_URL:-libsql://your-db-your-org.aws-eu-west-1.turso.io}
+      TURSO_AUTH_TOKEN: ${TURSO_AUTH_TOKEN:?TURSO_AUTH_TOKEN gerekli - .env dosyanizda tanimlayin}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:-your-jwt-secret-generate-with-openssl-rand-base64-32}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-refresh-secret-generate-with-openssl-rand-base64-32}
       S3_ENDPOINT: http://minio:9000
-      S3_BUCKET: lexmind-ai
+      S3_BUCKET: iyiavukat
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-your-strong-password-here}
       CORS_ORIGIN: http://localhost:3000
     ports:
       - "3001:3001"
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
       minio:
         condition: service_healthy
     networks:
-      - lexmind-network
+      - iyiavukat-network
     volumes:
       - ./apps/backend:/app
       - /app/node_modules
@@ -104,31 +79,29 @@ services:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
-    container_name: lexmind-frontend
+    container_name: iyiavukat-frontend
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3001
-      NEXT_PUBLIC_APP_NAME: LexMind AI
+      NEXT_PUBLIC_APP_NAME: iyiAvukat
       NEXT_PUBLIC_APP_VERSION: 1.0.0
     ports:
       - "3000:3000"
     depends_on:
       - backend
     networks:
-      - lexmind-network
+      - iyiavukat-network
     volumes:
       - ./apps/frontend:/app
       - /app/node_modules
       - /app/.next
 
 volumes:
-  postgres_data:
-    driver: local
   redis_data:
     driver: local
   minio_data:
     driver: local
 
 networks:
-  lexmind-network:
+  iyiavukat-network:
     driver: bridge

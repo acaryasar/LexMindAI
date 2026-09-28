@@ -142,7 +142,7 @@ export class AIGatewayService {
         if (nameMatch && nameMatch[1] && nameMatch[1].length > 2) {
           const potentialName = nameMatch[1];
           // Admin, User, System gibi kelimeleri isim olarak kabul etme
-          const excludedWords = ['Admin', 'User', 'System', 'LexMind', 'AI', 'Assistant'];
+          const excludedWords = ['Admin', 'User', 'System', 'iyiAvukat', 'AI', 'Assistant'];
           if (!excludedWords.some(word => potentialName.includes(word))) {
             lawyerNameFromHistory = potentialName;
             this.logger.log(`Found lawyer name from user history: ${lawyerNameFromHistory}`);
@@ -341,7 +341,7 @@ export class AIGatewayService {
   }
 
   private async buildSystemPrompt(context?: any, userId?: string): Promise<string> {
-    let prompt = 'Sen LexMind AI, bir hukuk uygulama yönetim sistemi için yardımcı bir yapay zeka asistanısın. Her zaman Türkçe dilinde cevap vermelisin.';
+    let prompt = 'Sen iyiAvukat, bir hukuk uygulama yönetim sistemi için yardımcı bir yapay zeka asistanısın. Her zaman Türkçe dilinde cevap vermelisin.';
 
     // Add role-specific prompt if userId is provided
     if (userId) {
@@ -487,7 +487,7 @@ export class AIGatewayService {
         provider: user.aiProvider,
         apiKey: decryptedApiKey,
         model: user.aiModel,
-        settings: user.aiSettings,
+        settings: user.aiSettings ? JSON.parse(user.aiSettings) : null,
       };
     } catch (error) {
       this.logger.error('Failed to get user AI config:', error);

@@ -34,15 +34,17 @@ export class CalendarService {
     const participantsToCreate = participantIds && participantIds.length > 0
       ? participantIds
       : [userId];
+    // Aynı kullanıcı birden fazla kez gönderilmişse tekilleştir
+    // (SQLite/Turso createMany'de skipDuplicates desteklemiyor)
+    const uniqueParticipantIds = [...new Set(participantsToCreate)];
 
     await this.prisma.calendarEventParticipant.createMany({
-      data: participantsToCreate.map((participantId) => ({
+      data: uniqueParticipantIds.map((participantId) => ({
         eventId: event.id,
         userId: participantId,
         status: 'ACCEPTED',
         responseAt: new Date(),
       })),
-      skipDuplicates: true,
     });
 
     // Send email invitations to participants

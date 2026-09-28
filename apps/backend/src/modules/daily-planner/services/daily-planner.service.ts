@@ -6,6 +6,18 @@ import { format, startOfDay, endOfDay } from 'date-fns';
 export class DailyPlannerService {
   constructor(private readonly prisma: PrismaService) {}
 
+  // SQLite/Turso'da workload/priorities/suggestedOrder JSON metin olarak saklaniyor;
+  // API tarafinda eskisi gibi obje/dizi donmesi icin burada geri parse ediyoruz.
+  private parsePlanJsonFields(plan: any) {
+    if (!plan) return plan;
+    return {
+      ...plan,
+      workload: plan.workload ? JSON.parse(plan.workload) : null,
+      priorities: plan.priorities ? JSON.parse(plan.priorities) : null,
+      suggestedOrder: plan.suggestedOrder ? JSON.parse(plan.suggestedOrder) : null,
+    };
+  }
+
   async generateDailyPlan(userId: string, date?: Date) {
     const targetDate = date || new Date();
     const dayStart = startOfDay(targetDate);
@@ -97,37 +109,38 @@ export class DailyPlannerService {
         userId,
         date: dayStart,
         greeting,
-        workload: {
+        // SQLite/Turso Json tipini desteklemiyor; JSON metin olarak saklanir
+        workload: JSON.stringify({
           totalTasks,
           hearings: hearings.length,
           tasks: tasks.length,
           events: events.length,
           estimatedMinutes,
           estimatedHours,
-        },
-        priorities,
-        suggestedOrder,
+        }),
+        priorities: JSON.stringify(priorities),
+        suggestedOrder: JSON.stringify(suggestedOrder),
         estimatedCompletion: estimatedMinutes,
         remainingFreeTime,
       },
       update: {
         greeting,
-        workload: {
+        workload: JSON.stringify({
           totalTasks,
           hearings: hearings.length,
           tasks: tasks.length,
           events: events.length,
           estimatedMinutes,
           estimatedHours,
-        },
-        priorities,
-        suggestedOrder,
+        }),
+        priorities: JSON.stringify(priorities),
+        suggestedOrder: JSON.stringify(suggestedOrder),
         estimatedCompletion: estimatedMinutes,
         remainingFreeTime,
       },
     });
 
-    return dailyPlan;
+    return this.parsePlanJsonFields(dailyPlan);
   }
 
   async getDailyPlan(userId: string, date?: Date) {
@@ -144,10 +157,10 @@ export class DailyPlannerService {
 
     // If no plan exists, generate one
     if (!dailyPlan) {
-      dailyPlan = await this.generateDailyPlan(userId, targetDate);
+      return this.generateDailyPlan(userId, targetDate);
     }
 
-    return dailyPlan;
+    return this.parsePlanJsonFields(dailyPlan);
   }
 
   async optimizeDay(userId: string) {

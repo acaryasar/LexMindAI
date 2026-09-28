@@ -1,4 +1,4 @@
-# LexMind AI Security Policy
+# iyiAvukat Security Policy
 
 ## Document Information
 
@@ -10,7 +10,7 @@
 
 ## 1. Purpose
 
-This policy establishes the security framework for LexMind AI to protect:
+This policy establishes the security framework for iyiAvukat to protect:
 - Confidential information and intellectual property
 - User data and privacy
 - System integrity and availability
@@ -20,7 +20,7 @@ This policy establishes the security framework for LexMind AI to protect:
 
 This policy applies to:
 - All employees, contractors, and third-party partners
-- All LexMind AI systems, applications, and data
+- All iyiAvukat systems, applications, and data
 - All development, testing, and production environments
 - All third-party services and integrations
 
@@ -321,14 +321,14 @@ Regular review and improvement of security measures.
 ## 18. Contact Information
 
 ### Security Team
-- **Email:** security@lexmind.ai
-- **Emergency:** security-emergency@lexmind.ai
+- **Email:** security@iyiavukat.com
+- **Emergency:** security-emergency@iyiavukat.com
 - **Slack:** #security
 
 ### Reporting Security Issues
 - **Internal:** Report to security team
-- **External:** security@lexmind.ai
-- **Bug Bounty:** https://lexmind.ai/security
+- **External:** security@iyiavukat.com
+- **Bug Bounty:** https://iyiavukat.ai/security
 
 ---
 

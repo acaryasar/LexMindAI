@@ -1,5 +1,5 @@
 /**
- * LexMind AI Design System
+ * iyiAvukat Design System
  * Enterprise-grade design tokens and standards
  * Inspired by Apple, Microsoft, Stripe, Notion, Linear
  */

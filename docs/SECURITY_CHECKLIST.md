@@ -1,6 +1,6 @@
 # Security Checklist
 
-This checklist provides a comprehensive guide for securing the LexMind AI application.
+This checklist provides a comprehensive guide for securing the iyiAvukat application.
 
 ## Pre-Deployment Checklist
 

@@ -26,7 +26,7 @@ export class OCRAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir OCR Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir OCR Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin belge görüntülerini analiz etmek ve metin çıkarmak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

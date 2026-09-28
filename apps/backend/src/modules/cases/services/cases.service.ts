@@ -76,9 +76,9 @@ export class CasesService {
 
     if (search) {
       where.OR = [
-        { caseNumber: { contains: search, mode: 'insensitive' as const } },
-        { title: { contains: search, mode: 'insensitive' as const } },
-        { courtName: { contains: search, mode: 'insensitive' as const } },
+        { caseNumber: { contains: search } },
+        { title: { contains: search } },
+        { courtName: { contains: search } },
       ];
     }
 

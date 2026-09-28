@@ -1,7 +1,30 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaLibSQL } from '@prisma/adapter-libsql';
+import { createClient } from '@libsql/client';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
-const prisma = new PrismaClient();
+// Turso/libSQL: seed script kendi PrismaClient'ini kuruyor, PrismaService'teki
+// adaptor kablolamasinin ayni sini burada da tekrar ediyoruz.
+const libsql = createClient({
+  url: process.env.DATABASE_URL as string,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
+const adapter = new PrismaLibSQL(libsql);
+const prisma = new PrismaClient({ adapter } as any);
+
+function generateStrongPassword(length = 16): string {
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+  const randomValues = crypto.randomBytes(length);
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset[randomValues[i] % charset.length];
+  }
+  return password;
+}
+
+// Seed sirasinda uretilen gecici sifreleri toplamak icin (sadece ilk kurulumda konsola yazdirilir)
+const generatedCredentials: { email: string; password: string; role: string }[] = [];
 
 // Turkish data generators
 const turkishNames = {
@@ -158,12 +181,14 @@ async function main() {
   });
 
   // Create admin user
-  const hashedPassword = await bcrypt.hash('admin123', 10);
+  const adminPlainPassword = generateStrongPassword();
+  const hashedPassword = await bcrypt.hash(adminPlainPassword, 12);
+  generatedCredentials.push({ email: 'admin@iyiavukat.com', password: adminPlainPassword, role: 'ADMIN' });
   const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@lexmind.ai' },
+    where: { email: 'admin@iyiavukat.com' },
     update: {},
     create: {
-      email: 'admin@lexmind.ai',
+      email: 'admin@iyiavukat.com',
       password: hashedPassword,
       firstName: 'Admin',
       lastName: 'User',
@@ -189,15 +214,31 @@ async function main() {
   });
 
   // Create additional users with different roles
-  const commonPassword = await bcrypt.hash('password123', 10);
+  const partnerPlainPassword = generateStrongPassword();
+  const lawyer1PlainPassword = generateStrongPassword();
+  const lawyer2PlainPassword = generateStrongPassword();
+  const secretaryPlainPassword = generateStrongPassword();
+  const accountantPlainPassword = generateStrongPassword();
+  const partnerPassword = await bcrypt.hash(partnerPlainPassword, 12);
+  const lawyer1Password = await bcrypt.hash(lawyer1PlainPassword, 12);
+  const lawyer2Password = await bcrypt.hash(lawyer2PlainPassword, 12);
+  const secretaryPassword = await bcrypt.hash(secretaryPlainPassword, 12);
+  const accountantPassword = await bcrypt.hash(accountantPlainPassword, 12);
+  generatedCredentials.push(
+    { email: 'partner@iyiavukat.com', password: partnerPlainPassword, role: 'PARTNER' },
+    { email: 'lawyer1@iyiavukat.com', password: lawyer1PlainPassword, role: 'LAWYER' },
+    { email: 'lawyer2@iyiavukat.com', password: lawyer2PlainPassword, role: 'LAWYER' },
+    { email: 'secretary@iyiavukat.com', password: secretaryPlainPassword, role: 'SECRETARY' },
+    { email: 'accountant@iyiavukat.com', password: accountantPlainPassword, role: 'ACCOUNTANT' },
+  );
 
   // Partner user
   const partnerUser = await prisma.user.upsert({
-    where: { email: 'partner@lexmind.ai' },
+    where: { email: 'partner@iyiavukat.com' },
     update: {},
     create: {
-      email: 'partner@lexmind.ai',
-      password: commonPassword,
+      email: 'partner@iyiavukat.com',
+      password: partnerPassword,
       firstName: 'Mehmet',
       lastName: 'Yılmaz',
       phoneNumber: '+905555555556',
@@ -222,11 +263,11 @@ async function main() {
 
   // Lawyer user 1
   const lawyerUser1 = await prisma.user.upsert({
-    where: { email: 'lawyer1@lexmind.ai' },
+    where: { email: 'lawyer1@iyiavukat.com' },
     update: {},
     create: {
-      email: 'lawyer1@lexmind.ai',
-      password: commonPassword,
+      email: 'lawyer1@iyiavukat.com',
+      password: lawyer1Password,
       firstName: 'Ayşe',
       lastName: 'Demir',
       phoneNumber: '+905555555557',
@@ -251,11 +292,11 @@ async function main() {
 
   // Lawyer user 2
   const lawyerUser2 = await prisma.user.upsert({
-    where: { email: 'lawyer2@lexmind.ai' },
+    where: { email: 'lawyer2@iyiavukat.com' },
     update: {},
     create: {
-      email: 'lawyer2@lexmind.ai',
-      password: commonPassword,
+      email: 'lawyer2@iyiavukat.com',
+      password: lawyer2Password,
       firstName: 'Ali',
       lastName: 'Kaya',
       phoneNumber: '+905555555558',
@@ -280,11 +321,11 @@ async function main() {
 
   // Secretary user
   const secretaryUser = await prisma.user.upsert({
-    where: { email: 'secretary@lexmind.ai' },
+    where: { email: 'secretary@iyiavukat.com' },
     update: {},
     create: {
-      email: 'secretary@lexmind.ai',
-      password: commonPassword,
+      email: 'secretary@iyiavukat.com',
+      password: secretaryPassword,
       firstName: 'Fatma',
       lastName: 'Şahin',
       phoneNumber: '+905555555559',
@@ -309,11 +350,11 @@ async function main() {
 
   // Accountant user
   const accountantUser = await prisma.user.upsert({
-    where: { email: 'accountant@lexmind.ai' },
+    where: { email: 'accountant@iyiavukat.com' },
     update: {},
     create: {
-      email: 'accountant@lexmind.ai',
-      password: commonPassword,
+      email: 'accountant@iyiavukat.com',
+      password: accountantPassword,
       firstName: 'Mustafa',
       lastName: 'Öztürk',
       phoneNumber: '+905555555560',
@@ -336,6 +377,120 @@ async function main() {
     },
   });
 
+  // ---------------------------------------------------------------------
+  // DEMO HESAPLAR (herkese acik giris sayfasindaki "demo ile giris" butonlari)
+  // Bunlar YUKARIDAKI gercek/rastgele-sifreli hesaplardan tamamen AYRI,
+  // izole demo kullanicilardir (isDemo = true). Sifreleri bilerek sabit ve
+  // herkese acik tutulur; DemoModeInterceptor bu hesaplarin sadece
+  // GORUNTULEME yapabilmesini, veri ekleme/degistirme/silme yapamamasini
+  // saglar. Gercek musteri verisi olmadigi icin bu hesaplar tum ekranlari
+  // (musteriler, davalar, durusmalar, belgeler, finans, takvim) gostermek
+  // icin kullanilir.
+  console.log('Creating demo accounts (public demo login)...');
+  const DEMO_PASSWORD = process.env.DEMO_ACCOUNT_PASSWORD || 'Demo2026!';
+  const demoPasswordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
+
+  const demoAdminUser = await prisma.user.upsert({
+    where: { email: 'demo-admin@iyiavukat.com' },
+    update: { password: demoPasswordHash, isDemo: true, isActive: true },
+    create: {
+      email: 'demo-admin@iyiavukat.com',
+      password: demoPasswordHash,
+      firstName: 'Demo',
+      lastName: 'Yönetici',
+      phoneNumber: '+905550000001',
+      isActive: true,
+      emailVerified: true,
+      isDemo: true,
+    },
+  });
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: demoAdminUser.id, roleId: adminRole.id } },
+    update: {},
+    create: { userId: demoAdminUser.id, roleId: adminRole.id },
+  });
+
+  const demoPartnerUser = await prisma.user.upsert({
+    where: { email: 'demo-partner@iyiavukat.com' },
+    update: { password: demoPasswordHash, isDemo: true, isActive: true },
+    create: {
+      email: 'demo-partner@iyiavukat.com',
+      password: demoPasswordHash,
+      firstName: 'Demo',
+      lastName: 'Ortak',
+      phoneNumber: '+905550000002',
+      isActive: true,
+      emailVerified: true,
+      isDemo: true,
+    },
+  });
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: demoPartnerUser.id, roleId: partnerRole.id } },
+    update: {},
+    create: { userId: demoPartnerUser.id, roleId: partnerRole.id },
+  });
+
+  const demoLawyerUser = await prisma.user.upsert({
+    where: { email: 'demo-lawyer@iyiavukat.com' },
+    update: { password: demoPasswordHash, isDemo: true, isActive: true },
+    create: {
+      email: 'demo-lawyer@iyiavukat.com',
+      password: demoPasswordHash,
+      firstName: 'Demo',
+      lastName: 'Avukat',
+      phoneNumber: '+905550000003',
+      isActive: true,
+      emailVerified: true,
+      isDemo: true,
+    },
+  });
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: demoLawyerUser.id, roleId: lawyerRole.id } },
+    update: {},
+    create: { userId: demoLawyerUser.id, roleId: lawyerRole.id },
+  });
+
+  const demoSecretaryUser = await prisma.user.upsert({
+    where: { email: 'demo-secretary@iyiavukat.com' },
+    update: { password: demoPasswordHash, isDemo: true, isActive: true },
+    create: {
+      email: 'demo-secretary@iyiavukat.com',
+      password: demoPasswordHash,
+      firstName: 'Demo',
+      lastName: 'Sekreter',
+      phoneNumber: '+905550000004',
+      isActive: true,
+      emailVerified: true,
+      isDemo: true,
+    },
+  });
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: demoSecretaryUser.id, roleId: secretaryRole.id } },
+    update: {},
+    create: { userId: demoSecretaryUser.id, roleId: secretaryRole.id },
+  });
+
+  const demoAccountantUser = await prisma.user.upsert({
+    where: { email: 'demo-accountant@iyiavukat.com' },
+    update: { password: demoPasswordHash, isDemo: true, isActive: true },
+    create: {
+      email: 'demo-accountant@iyiavukat.com',
+      password: demoPasswordHash,
+      firstName: 'Demo',
+      lastName: 'Muhasebeci',
+      phoneNumber: '+905550000005',
+      isActive: true,
+      emailVerified: true,
+      isDemo: true,
+    },
+  });
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: demoAccountantUser.id, roleId: accountantRole.id } },
+    update: {},
+    create: { userId: demoAccountantUser.id, roleId: accountantRole.id },
+  });
+  console.log('Demo accounts created: demo-admin, demo-partner, demo-lawyer, demo-secretary, demo-accountant (sifre: ' + DEMO_PASSWORD + ')');
+
   // Create sample clients (50+ records)
   console.log('Creating clients...');
   const clients = [];
@@ -355,7 +510,7 @@ async function main() {
         phoneNumber: generatePhoneNumber(),
         nationalId,
         address: generateAddress(city),
-        tags: getRandomItem([['VIP'], ['Kurumsal'], ['Bireysel'], ['Yüksek Risk'], []]),
+        tags: JSON.stringify(getRandomItem([['VIP'], ['Kurumsal'], ['Bireysel'], ['Yüksek Risk'], []])),
       },
     });
     clients.push(client);
@@ -543,7 +698,7 @@ async function main() {
           phoneNumber: generatePhoneNumber(),
           nationalId,
           address: generateAddress(city),
-          tags: getRandomItem([['VIP'], ['Kurumsal'], ['Bireysel'], ['Yüksek Risk'], []]),
+          tags: JSON.stringify(getRandomItem([['VIP'], ['Kurumsal'], ['Bireysel'], ['Yüksek Risk'], []])),
         },
       });
 
@@ -693,6 +848,145 @@ async function main() {
     console.log(`Created calendar events for lawyer ${lawyer.firstName} ${lawyer.lastName}`);
   }
 
+  // Create finance data (invoices, payments, expenses, time entries) so the
+  // ACCOUNTANT / demo-accountant screens have something meaningful to show.
+  console.log('Creating finance data (invoices, payments, expenses, time entries)...');
+  const allCasesForFinance = [...cases, ...enhancedCases];
+  const expenseCategories = ['Ofis Giderleri', 'Ulaşım', 'Danışmanlık', 'Mahkeme Harçları', 'Noter Giderleri', 'Kırtasiye', 'Yazılım/Lisans'];
+  const paymentMethods = ['Havale/EFT', 'Kredi Kartı', 'Nakit', 'Çek'];
+
+  for (let i = 0; i < 40; i++) {
+    const client = getRandomItem(clients);
+    const invoiceNumber = `FAT-${getRandomNumber(2024, 2026)}-${String(i + 1).padStart(4, '0')}`;
+    const amount = getRandomNumber(1500, 75000);
+    const status = getRandomItem(['PAID', 'PENDING', 'OVERDUE', 'PAID', 'PENDING']);
+    const dueDate = getRandomDate(2025, 2026);
+
+    const invoice = await prisma.invoice.upsert({
+      where: { invoiceNumber },
+      update: {},
+      create: {
+        invoiceNumber,
+        clientId: client.id,
+        amount,
+        status,
+        dueDate,
+        paidDate: status === 'PAID' ? getRandomDate(2025, 2026) : null,
+        createdBy: accountantUser.id,
+      },
+    });
+
+    if (status === 'PAID') {
+      await prisma.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          amount,
+          method: getRandomItem(paymentMethods),
+          date: dueDate,
+          notes: 'Fatura tam ödendi',
+          createdBy: accountantUser.id,
+        },
+      });
+    } else if (status === 'PENDING' && Math.random() > 0.5) {
+      // Partial payment
+      const partial = Math.round(amount * 0.4);
+      await prisma.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          amount: partial,
+          method: getRandomItem(paymentMethods),
+          date: dueDate,
+          notes: 'Kısmi ödeme',
+          createdBy: accountantUser.id,
+        },
+      });
+    }
+  }
+  console.log('Created 40 invoices with related payments');
+
+  for (let i = 0; i < 60; i++) {
+    await prisma.expense.create({
+      data: {
+        description: getRandomItem([
+          'Mahkeme harç ödemesi', 'Ofis kira ödemesi', 'Personel yol gideri', 'Bilgisayar/donanım alımı',
+          'Hukuki veritabanı aboneliği', 'Noter tasdik gideri', 'Kırtasiye malzemesi', 'Müşteri ağırlama gideri',
+        ]),
+        amount: getRandomNumber(150, 15000),
+        category: getRandomItem(expenseCategories),
+        date: getRandomDate(2025, 2026),
+        createdBy: accountantUser.id,
+      },
+    });
+  }
+  console.log('Created 60 expenses');
+
+  for (let i = 0; i < 80; i++) {
+    const lawyer = getRandomItem(lawyers);
+    const caseData = getRandomItem(allCasesForFinance);
+    await prisma.timeEntry.create({
+      data: {
+        userId: lawyer.id,
+        caseId: caseData.id,
+        description: getRandomItem([
+          'Dosya inceleme', 'Müvekkil görüşmesi', 'Dilekçe hazırlama', 'Duruşma hazırlığı',
+          'Araştırma ve mütalaa', 'Telefon görüşmesi', 'Sözleşme gözden geçirme',
+        ]),
+        hours: getRandomNumber(1, 8),
+        date: getRandomDate(2025, 2026),
+        billable: Math.random() > 0.2,
+        createdBy: lawyer.id,
+      },
+    });
+  }
+  console.log('Created 80 time entries');
+
+  // Create notifications for every seeded user (including demo accounts) so
+  // the notification bell / dashboard is populated for every role.
+  console.log('Creating notifications...');
+  const allSeededUsers = [
+    adminUser, partnerUser, lawyerUser1, lawyerUser2, secretaryUser, accountantUser,
+    demoAdminUser, demoPartnerUser, demoLawyerUser, demoSecretaryUser, demoAccountantUser,
+  ];
+  const notificationTemplates: { type: string; title: string; message: string }[] = [
+    { type: 'HEARING', title: 'Yaklaşan Duruşma', message: 'Önümüzdeki hafta bir duruşmanız bulunuyor.' },
+    { type: 'DOCUMENT', title: 'Yeni Belge Yüklendi', message: 'Bir dosyaya yeni belge eklendi.' },
+    { type: 'PAYMENT', title: 'Ödeme Alındı', message: 'Bir fatura için ödeme kaydedildi.' },
+    { type: 'TASK', title: 'Görev Atandı', message: 'Size yeni bir görev atandı.' },
+    { type: 'CASE', title: 'Dava Durumu Güncellendi', message: 'Bir davanın durumu güncellendi.' },
+    { type: 'SYSTEM', title: 'Hoş Geldiniz', message: 'iyiAvukat platformuna hoş geldiniz.' },
+  ];
+
+  for (const seededUser of allSeededUsers) {
+    const numNotifications = getRandomNumber(3, 6);
+    for (let i = 0; i < numNotifications; i++) {
+      const template = getRandomItem(notificationTemplates);
+      const isRead = Math.random() > 0.5;
+      await prisma.notification.create({
+        data: {
+          userId: seededUser.id,
+          type: template.type,
+          title: template.title,
+          message: template.message,
+          isRead,
+          readAt: isRead ? new Date() : null,
+        },
+      });
+    }
+  }
+  console.log('Created notifications for all seeded users');
+
+  console.log('\n==============================================');
+  console.log('SEED TAMAMLANDI - GECICI GIRIS BILGILERI (SADECE ILK KURULUM)');
+  console.log('Bu sifreler rastgele uretildi. Ilk girişten sonra HEMEN degistirin.');
+  console.log('Bu ciktiyi bir dosyaya kaydetmeyin / paylasmayin.');
+  console.log('==============================================');
+  for (const cred of generatedCredentials) {
+    console.log(`  [${cred.role}]  ${cred.email}  ->  ${cred.password}`);
+  }
+  console.log('==============================================\n');
+  console.log('DEMO HESAPLAR (herkese acik, sabit sifreli - login sayfasindaki demo butonlari icindir):');
+  console.log(`  demo-admin@iyiavukat.com / demo-partner@iyiavukat.com / demo-lawyer@iyiavukat.com / demo-secretary@iyiavukat.com / demo-accountant@iyiavukat.com  ->  ${DEMO_PASSWORD}`);
+  console.log('==============================================\n');
   console.log('Seed completed successfully!');
 }
 

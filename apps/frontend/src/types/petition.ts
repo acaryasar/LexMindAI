@@ -1,4 +1,4 @@
-// Petition Types for LexMind AI
+// Petition Types for iyiAvukat
 
 export type PetitionType = 
   | 'CEVAP_DILEKCESI'

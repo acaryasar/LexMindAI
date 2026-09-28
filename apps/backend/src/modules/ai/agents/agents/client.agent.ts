@@ -26,7 +26,7 @@ export class ClientAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Client Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Client Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin müvekkil ilişkilerini analiz etmek ve içgörüler sağlamak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

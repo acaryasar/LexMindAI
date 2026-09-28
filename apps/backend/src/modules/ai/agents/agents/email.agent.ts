@@ -26,7 +26,7 @@ export class EmailAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Email Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Email Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin e-posta iletişimlerini hazırlamak ve yönetmek.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

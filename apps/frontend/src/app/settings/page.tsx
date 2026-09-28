@@ -295,7 +295,7 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">E-posta</label>
-                <Input defaultValue="admin@lexmind.ai" />
+                <Input defaultValue="admin@iyiavukat.com" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Telefon</label>

@@ -68,8 +68,8 @@ export class DocumentsService {
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' as const } },
-        { fileName: { contains: search, mode: 'insensitive' as const } },
+        { name: { contains: search } },
+        { fileName: { contains: search } },
       ];
     }
 
@@ -258,9 +258,9 @@ export class DocumentsService {
       this.prisma.document.findMany({
         where: {
           OR: [
-            { name: { contains: query, mode: 'insensitive' as const } },
-            { fileName: { contains: query, mode: 'insensitive' as const } },
-            { tags: { some: { tag: { contains: query, mode: 'insensitive' as const } } } },
+            { name: { contains: query } },
+            { fileName: { contains: query } },
+            { tags: { some: { tag: { contains: query } } } },
           ],
         },
         skip,
@@ -273,9 +273,9 @@ export class DocumentsService {
       this.prisma.document.count({
         where: {
           OR: [
-            { name: { contains: query, mode: 'insensitive' as const } },
-            { fileName: { contains: query, mode: 'insensitive' as const } },
-            { tags: { some: { tag: { contains: query, mode: 'insensitive' as const } } } },
+            { name: { contains: query } },
+            { fileName: { contains: query } },
+            { tags: { some: { tag: { contains: query } } } },
           ],
         },
       }),

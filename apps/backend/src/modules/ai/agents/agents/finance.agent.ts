@@ -26,7 +26,7 @@ export class FinanceAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Finance Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Finance Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin finansal verileri analiz etmek ve içgörüler sağlamak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

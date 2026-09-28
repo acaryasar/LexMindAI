@@ -1,6 +1,6 @@
 # Dependency Fix Guide
 
-Bu rehber LexMind AI projesindeki dependency vulnerability'lerini nasıl düzelteceğinizi açıklar.
+Bu rehber iyiAvukat projesindeki dependency vulnerability'lerini nasıl düzelteceğinizi açıklar.
 
 ## Mevcut Durum
 

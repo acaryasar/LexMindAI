@@ -1,4 +1,4 @@
-# LexMind AI Security Training Schedule
+# iyiAvukat Security Training Schedule
 
 ## Document Information
 

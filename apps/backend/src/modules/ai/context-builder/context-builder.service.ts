@@ -130,7 +130,7 @@ export class AIContextBuilder {
       phoneNumber: client.phoneNumber,
       nationalId: client.nationalId,
       taxNumber: client.taxNumber,
-      tags: client.tags,
+      tags: client.tags ? (JSON.parse(client.tags) as string[]) : [],
     };
   }
 

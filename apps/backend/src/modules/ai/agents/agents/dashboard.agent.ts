@@ -28,7 +28,7 @@ export class DashboardAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Dashboard Agent'sın, bir hukuk uygulama yönetim sistemi. 
+    return `Sen iyiAvukat için bir Dashboard Agent'sın, bir hukuk uygulama yönetim sistemi. 
     Görevin avukatlar için kapsamlı günlük brifingler ve içgörüler sağlamak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

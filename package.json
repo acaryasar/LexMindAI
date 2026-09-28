@@ -1,7 +1,7 @@
 {
-  "name": "lexmind-ai",
+  "name": "iyiavukat",
   "version": "1.0.0",
-  "description": "LexMind AI - Enterprise Development Kit",
+  "description": "iyiAvukat - Enterprise Development Kit",
   "private": true,
   "workspaces": [
     "apps/*",

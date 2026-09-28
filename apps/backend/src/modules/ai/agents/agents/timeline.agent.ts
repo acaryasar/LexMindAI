@@ -26,7 +26,7 @@ export class TimelineAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Timeline Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Timeline Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin dava zaman çizelgeleri ve kronolojiler oluşturmak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

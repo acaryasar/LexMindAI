@@ -45,8 +45,8 @@ export class HearingsService {
 
     if (search) {
       where.OR = [
-        { location: { contains: search, mode: 'insensitive' } },
-        { notes: { contains: search, mode: 'insensitive' } },
+        { location: { contains: search } },
+        { notes: { contains: search } },
       ];
     }
 

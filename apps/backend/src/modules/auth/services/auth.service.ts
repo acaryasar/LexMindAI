@@ -6,7 +6,6 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-  ForbiddenException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -392,7 +391,7 @@ export class AuthService {
           aiProvider: aiConfig.provider,
           aiApiKey: encryptedApiKey,
           aiModel: aiConfig.model,
-          aiSettings: aiConfig.settings || {},
+          aiSettings: JSON.stringify(aiConfig.settings || {}),
         },
       });
 
@@ -438,7 +437,7 @@ export class AuthService {
       provider: user.aiProvider,
       apiKey: decryptedApiKey ? `${decryptedApiKey.substring(0, 8)}...` : null, // Only return partial key for security
       model: user.aiModel,
-      settings: user.aiSettings,
+      settings: user.aiSettings ? JSON.parse(user.aiSettings) : null,
       hasConfig: !!user.aiProvider && !!user.aiApiKey,
     };
   }
@@ -708,59 +707,6 @@ export class AuthService {
       email: updatedUser.email,
       phoneNumber: updatedUser.phoneNumber,
       roles: updatedUser.roles.map(ur => ur.role.name),
-    };
-  }
-
-  async getUserRolesByEmailAndPassword(email: string, password: string) {
-    // Security: Disable demo endpoint in production
-    if (process.env.NODE_ENV === 'production') {
-      throw new ForbiddenException('Demo endpoint production ortamında kullanılamaz');
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      include: {
-        roles: {
-          include: {
-            role: true,
-          },
-        },
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('Geçersiz e-posta veya şifre');
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Geçersiz e-posta veya şifre');
-    }
-
-    // Get all users
-    const users = await this.prisma.user.findMany({
-      include: {
-        roles: {
-          include: {
-            role: true,
-          },
-        },
-      },
-    });
-
-    return {
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      roles: user.roles.map(ur => ur.role.name),
-      demoUsers: users.map(u => ({
-        email: u.email,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        password: 'Use forgot-password to reset', // Don't expose actual passwords
-        roles: u.roles.map(ur => ur.role.name),
-      })),
     };
   }
 

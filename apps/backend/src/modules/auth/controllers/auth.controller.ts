@@ -170,15 +170,6 @@ export class AuthController {
     return this.authService.updateUserRoles(id, body.roles);
   }
 
-  @Post('demo-roles')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Demo kullanıcı rollerini getir' })
-  @ApiResponse({ status: 200, description: 'Kullanıcı rolleri getirildi' })
-  @ApiResponse({ status: 401, description: 'Geçersiz kimlik bilgileri' })
-  async getDemoRoles(@Body() body: { email: string; password: string }) {
-    return this.authService.getUserRolesByEmailAndPassword(body.email, body.password);
-  }
-
   @Get('roles')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

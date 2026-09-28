@@ -26,7 +26,7 @@ export class TaskAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Task Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Task Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin görevleri yönetmek ve verimlilik içgörüleri sağlamak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

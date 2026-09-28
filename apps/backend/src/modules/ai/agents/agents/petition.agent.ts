@@ -29,7 +29,7 @@ export class PetitionAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Petition Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Petition Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin uygun hukuk dili ve formatıyla hukuk belgeleri oluşturmak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

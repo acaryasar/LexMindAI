@@ -1,17 +1,17 @@
 # Environment Variables Documentation
 
-This document describes all environment variables required for the LexMind AI application.
+This document describes all environment variables required for the iyiAvukat application.
 
 ## Required Environment Variables
 
-### Database
+### Database (Turso / libSQL)
 ```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/lexmind
+DATABASE_URL=libsql://<db-adi>-<org-adi>.aws-eu-west-1.turso.io
+TURSO_AUTH_TOKEN=<turso-auth-token>
 ```
-- **Description**: PostgreSQL connection string
+- **Description**: Turso (libSQL) veritabani baglanti adresi ve kimlik dogrulama token'i. Veritabani uzak/cloud'da barinir, yerel bir Postgres/SQLite dosyasi gerekmez.
 - **Required**: Yes
-- **Example**: `postgresql://lexmind:strong_password@localhost:5432/lexmind`
-- **Security**: Must be kept secret, use strong password
+- **Security**: `TURSO_AUTH_TOKEN` gizli bir credential'dir; asla git'e commitlenmez, sadece `.env`/`.env.development` icinde tutulur. Token'i turso dashboard'undan yenileyebilirsiniz.
 
 ### Redis
 ```bash
@@ -49,7 +49,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_specific_password
-SMTP_FROM=noreply@lexmind.ai
+SMTP_FROM=noreply@iyiavukat.com
 ```
 - **Description**: SMTP configuration for email notifications
 - **Required**: Yes (for email features)
@@ -150,8 +150,9 @@ This will generate a `secrets.txt` file with strong secrets for all required var
 ## Environment File Template
 
 ```bash
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/lexmind
+# Database (Turso / libSQL)
+DATABASE_URL=libsql://<db-adi>-<org-adi>.aws-eu-west-1.turso.io
+TURSO_AUTH_TOKEN=<turso-auth-token>
 
 # Redis
 REDIS_HOST=localhost
@@ -172,7 +173,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_specific_password
-SMTP_FROM=noreply@lexmind.ai
+SMTP_FROM=noreply@iyiavukat.com
 
 # Sentry (Optional)
 SENTRY_DSN=https://your_sentry_dsn@sentry.io/project_id
@@ -199,7 +200,7 @@ LOG_LEVEL=info
 
 ### Database Connection Failed
 - Verify DATABASE_URL format
-- Check if PostgreSQL is running
+- Check that DATABASE_URL/TURSO_AUTH_TOKEN are correct and the Turso database is reachable
 - Verify database credentials
 
 ### JWT Token Invalid

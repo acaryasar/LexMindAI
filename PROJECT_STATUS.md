@@ -1,4 +1,4 @@
-# LexMind AI - Project Status
+# iyiAvukat - Project Status
 
 ## Completed Components
 
@@ -132,7 +132,7 @@
 - Top priority recommendation card with confidence score
 - Smart recommendations list with priority badges
 - "Explain Why" feature for all recommendations
-- "Run with LexMind AI" one-click action buttons
+- "Run with iyiAvukat" one-click action buttons
 - "Optimize My Day" daily planner button
 - Premium purple accent (#5B4BFF) design system
 
@@ -160,13 +160,13 @@
 
 ✅ **Seed Data** (`apps/backend/prisma/seed.ts`)
 - Roles (Managing Partner, Partner, Lawyer, Secretary, Accountant)
-- Admin user (admin@lexmind.ai / admin123)
+- Admin ve diger rol kullanicilari (sifreler artik rastgele uretiliyor, `npx prisma db seed` calistirinca konsola yazdirilir)
 - Sample clients, cases, hearings, tasks, events
 - AI prompts
 
 ### Infrastructure
 ✅ **Docker Compose** (`docker-compose.yml`)
-- PostgreSQL 16
+- Turso (libSQL) - uzak/cloud veritabani, local container yok
 - Redis 7
 - MinIO (S3-compatible storage)
 - Backend service
@@ -196,7 +196,7 @@
 
 1. **Start Infrastructure Services**
 ```bash
-docker-compose up -d postgres redis minio
+docker-compose up -d redis minio
 ```
 
 2. **Install Dependencies**
@@ -237,8 +237,10 @@ docker-compose up -d
 ```
 
 ### Default Credentials
-- **Email:** admin@lexmind.ai
-- **Password:** admin123
+Seed script'i artik sabit bir sifre kullanmiyor. `npx prisma db seed` calistirdiginizda
+her kullanici icin rastgele bir sifre uretilir ve SADECE konsola bir kereligine yazdirilir.
+Bu sifreleri not alip ilk girişten sonra HEMEN degistirin; bu dosyaya veya baska bir
+dokumana yazmayin.
 
 ## Architecture Highlights
 

@@ -38,9 +38,12 @@ export class ClientsService {
       }
     }
 
+    const { tags, ...clientData } = createClientDto;
     const client = await this.prisma.client.create({
       data: {
-        ...createClientDto,
+        ...clientData,
+        // SQLite/Turso Json tipini desteklemiyor; dizi JSON metin olarak saklanir
+        tags: tags ? JSON.stringify(tags) : undefined,
         createdBy: userId,
       },
     });
@@ -76,11 +79,11 @@ export class ClientsService {
     const searchFilter = search
       ? {
           OR: [
-            { firstName: { contains: search, mode: 'insensitive' as const } },
-            { lastName: { contains: search, mode: 'insensitive' as const } },
-            { email: { contains: search, mode: 'insensitive' as const } },
-            { phoneNumber: { contains: search, mode: 'insensitive' as const } },
-            { nationalId: { contains: search, mode: 'insensitive' as const } },
+            { firstName: { contains: search } },
+            { lastName: { contains: search } },
+            { email: { contains: search } },
+            { phoneNumber: { contains: search } },
+            { nationalId: { contains: search } },
           ],
         }
       : {};
@@ -161,10 +164,13 @@ export class ClientsService {
       throw new NotFoundException('Müşteri bulunamadı');
     }
 
+    const { tags, ...clientUpdateData } = updateClientDto;
     const updated = await this.prisma.client.update({
       where: { id },
       data: {
-        ...updateClientDto,
+        ...clientUpdateData,
+        // SQLite/Turso Json tipini desteklemiyor; dizi JSON metin olarak saklanir
+        ...(tags !== undefined ? { tags: JSON.stringify(tags) } : {}),
         updatedBy: userId,
       },
     });

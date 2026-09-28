@@ -55,15 +55,22 @@ async function bootstrap() {
   const apiPrefix = process.env.API_PREFIX || 'api/v1';
   app.setGlobalPrefix(apiPrefix);
 
-  // CORS
+  // CORS - env tabanli: CORS_ORIGIN virgulle ayrilmis izinli origin listesi
+  // (ornek: "https://iyiavukat.acaryasar.com,https://iyiavukat.onrender.com").
+  // Tanimli degilse gelistirme icin yerel portlara dusulur.
+  const defaultDevOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003',
+    'http://localhost:3004',
+  ];
+  const corsOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
+    : defaultDevOrigins;
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'http://localhost:3003',
-      'http://localhost:3004',
-    ],
+    origin: corsOrigins,
     credentials: true,
   });
 
@@ -79,7 +86,7 @@ async function bootstrap() {
   // Swagger documentation (only in development)
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('LexMind AI API')
+      .setTitle('iyiAvukat API')
       .setDescription('Enterprise Development Kit for Law Firms')
       .setVersion('1.0')
       .addBearerAuth()

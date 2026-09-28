@@ -52,7 +52,7 @@ export class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>LexMind AI</h1>
+            <h1>iyiAvukat</h1>
           </div>
           <div class="content">
             <h2>Merhaba ${lawyerName},</h2>
@@ -78,7 +78,7 @@ export class EmailService {
           </div>
           <div class="footer">
             <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
-            <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+            <p>&copy; ${new Date().getFullYear()} iyiAvukat. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </body>
@@ -86,7 +86,7 @@ export class EmailService {
     `;
 
     await this.transporter.sendMail({
-      from: `"LexMind AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"iyiAvukat" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
@@ -125,7 +125,7 @@ export class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>LexMind AI</h1>
+            <h1>iyiAvukat</h1>
           </div>
           <div class="content">
             <h2>Merhaba ${lawyerName},</h2>
@@ -147,7 +147,7 @@ export class EmailService {
           </div>
           <div class="footer">
             <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
-            <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+            <p>&copy; ${new Date().getFullYear()} iyiAvukat. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </body>
@@ -155,7 +155,7 @@ export class EmailService {
     `;
 
     await this.transporter.sendMail({
-      from: `"LexMind AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"iyiAvukat" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
@@ -167,7 +167,7 @@ export class EmailService {
     firstName: string,
     lastName: string,
   ) {
-    const subject = 'LexMind AI Hesabınız Oluşturuldu';
+    const subject = 'iyiAvukat Hesabınız Oluşturuldu';
     const loginUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
     const html = `
@@ -191,11 +191,11 @@ export class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>LexMind AI</h1>
+            <h1>iyiAvukat</h1>
           </div>
           <div class="content">
             <h2>Hoş Geldiniz ${firstName} ${lastName},</h2>
-            <p>LexMind AI sistemine kaydınız başarıyla oluşturuldu. Sisteme giriş yapmak için aşağıdaki adımları izleyiniz:</p>
+            <p>iyiAvukat sistemine kaydınız başarıyla oluşturuldu. Sisteme giriş yapmak için aşağıdaki adımları izleyiniz:</p>
             
             <div class="steps">
               <div class="step">
@@ -224,7 +224,7 @@ export class EmailService {
           </div>
           <div class="footer">
             <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
-            <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+            <p>&copy; ${new Date().getFullYear()} iyiAvukat. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </body>
@@ -232,7 +232,7 @@ export class EmailService {
     `;
 
     await this.transporter.sendMail({
-      from: `"LexMind AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"iyiAvukat" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
@@ -267,7 +267,7 @@ export class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>LexMind AI</h1>
+            <h1>iyiAvukat</h1>
           </div>
           <div class="content">
             <h2>Merhaba ${firstName} ${lastName},</h2>
@@ -286,7 +286,7 @@ export class EmailService {
           </div>
           <div class="footer">
             <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
-            <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+            <p>&copy; ${new Date().getFullYear()} iyiAvukat. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </body>
@@ -294,7 +294,7 @@ export class EmailService {
     `;
 
     await this.transporter.sendMail({
-      from: `"LexMind AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"iyiAvukat" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
@@ -328,11 +328,11 @@ export class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>LexMind AI</h1>
+            <h1>iyiAvukat</h1>
           </div>
           <div class="content">
             <h2>Merhaba ${firstName} ${lastName},</h2>
-            <p>LexMind AI hesabınızın şifresi başarıyla değiştirildi.</p>
+            <p>iyiAvukat hesabınızın şifresi başarıyla değiştirildi.</p>
             
             <div class="info">
               <p><strong>Değişiklik Tarihi:</strong> ${new Date().toLocaleString('tr-TR')}</p>
@@ -348,7 +348,7 @@ export class EmailService {
           </div>
           <div class="footer">
             <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
-            <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+            <p>&copy; ${new Date().getFullYear()} iyiAvukat. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </body>
@@ -356,7 +356,7 @@ export class EmailService {
     `;
 
     await this.transporter.sendMail({
-      from: `"LexMind AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"iyiAvukat" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
@@ -399,7 +399,7 @@ export class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>LexMind AI</h1>
+            <h1>iyiAvukat</h1>
           </div>
           <div class="content">
             <h2>Merhaba ${recipientName},</h2>
@@ -424,7 +424,7 @@ export class EmailService {
           </div>
           <div class="footer">
             <p>Bu e-posta otomatik olarak gönderilmiştir. Lütfen cevaplamayınız.</p>
-            <p>&copy; ${new Date().getFullYear()} LexMind AI. Tüm hakları saklıdır.</p>
+            <p>&copy; ${new Date().getFullYear()} iyiAvukat. Tüm hakları saklıdır.</p>
           </div>
         </div>
       </body>
@@ -432,7 +432,7 @@ export class EmailService {
     `;
 
     await this.transporter.sendMail({
-      from: `"LexMind AI" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"iyiAvukat" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to,
       subject,
       html,

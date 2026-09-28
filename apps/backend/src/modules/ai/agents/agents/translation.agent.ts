@@ -26,7 +26,7 @@ export class TranslationAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Translation Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Translation Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin hukuk belgelerini ve iletişimlerini çevirmek.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

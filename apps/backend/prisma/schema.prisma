@@ -1,9 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
+// Turso (libSQL) - SQLite uyumlu, edge-ready veritabani
+// Baglanti PrismaLibSQL adapter'i ile src/prisma/prisma.service.ts icinde kuruluyor.
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -17,13 +20,14 @@ model User {
   phoneNumber   String?
   isActive      Boolean   @default(true)
   emailVerified Boolean  @default(false)
+  isDemo        Boolean   @default(false) // Herkese acik demo giris butonlari icin ayri, izole demo hesabi (gercek kullanici degil)
   lastLoginAt   DateTime?
   
   // AI Configuration
   aiProvider    String?   // openai, anthropic, etc.
   aiApiKey      String?   // encrypted API key
   aiModel       String?   // model name (e.g., gpt-4, claude-3)
-  aiSettings    Json?     // additional AI settings (temperature, maxTokens, etc.)
+  aiSettings    String?   // JSON metin olarak saklanir (SQLite Json tipini desteklemiyor); ek AI ayarlari (temperature, maxTokens, vb.)
   
   // Relations
   roles         UserRole[]
@@ -182,7 +186,7 @@ model Client {
   taxNumber    String?         @unique
   address      String?
   notes        String?
-  tags         String[]
+  tags         String?  // JSON dizi metin olarak saklanir (SQLite Json tipini desteklemiyor), ornek: ["acil","vip"]
   
   // Relations
   contacts     ClientContact[]
@@ -870,7 +874,7 @@ model AIRecommendation {
   legalImpact     String?
   estimatedTime   Int?
   confidenceScore Int
-  context         Json?
+  context         String?   // JSON metin olarak saklanir
   
   // Relations
   actions         AIRecommendationAction[]
@@ -910,7 +914,7 @@ model AIWorkflow {
   name        String
   description String?
   type        String
-  steps       Json
+  steps       String    // JSON metin olarak saklanir
   status      String
   
   // Relations
@@ -935,7 +939,7 @@ model AIWorkflowExecution {
   status      String
   currentStep Int?
   progress    Int?
-  results     Json?
+  results     String?   // JSON metin olarak saklanir
   error       String?
   
   startedAt   DateTime @default(now())
@@ -950,9 +954,9 @@ model AIDailyPlan {
   userId      String
   date        DateTime
   greeting    String?
-  workload    Json?
-  priorities  Json?
-  suggestedOrder Json?
+  workload    String?   // JSON metin olarak saklanir
+  priorities  String?   // JSON metin olarak saklanir
+  suggestedOrder String? // JSON metin olarak saklanir
   estimatedCompletion Int?
   remainingFreeTime Int?
   
@@ -971,7 +975,7 @@ model Notification {
   type      String
   title     String
   message   String
-  data      Json?
+  data      String?   // JSON metin olarak saklanir
   isRead    Boolean  @default(false)
   readAt    DateTime?
   

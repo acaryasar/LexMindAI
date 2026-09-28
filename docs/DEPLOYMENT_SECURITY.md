@@ -1,6 +1,6 @@
 # Deployment Security Guide
 
-This guide provides comprehensive security instructions for deploying the LexMind AI application to production.
+This guide provides comprehensive security instructions for deploying the iyiAvukat application to production.
 
 ## Pre-Deployment Preparation
 
@@ -28,7 +28,7 @@ PORT=3001
 API_PREFIX=api/v1
 
 # Database
-DATABASE_URL=postgresql://user:strong_password@localhost:5432/lexmind
+DATABASE_URL=postgresql://user:strong_password@localhost:5432/iyiavukat
 
 # Redis
 REDIS_HOST=localhost
@@ -49,7 +49,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASSWORD=your_app_specific_password
-SMTP_FROM=noreply@lexmind.ai
+SMTP_FROM=noreply@iyiavukat.com
 
 # Sentry
 SENTRY_DSN=https://your_sentry_dsn@sentry.io/project_id
@@ -72,15 +72,15 @@ chmod 600 .env.production
 #### PostgreSQL Configuration
 ```sql
 -- Create dedicated user with limited permissions
-CREATE USER lexmind WITH PASSWORD 'strong_password';
-CREATE DATABASE lexmind OWNER lexmind;
-GRANT ALL PRIVILEGES ON DATABASE lexmind TO lexmind;
+CREATE USER iyiavukat WITH PASSWORD 'strong_password';
+CREATE DATABASE iyiavukat OWNER iyiavukat;
+GRANT ALL PRIVILEGES ON DATABASE iyiavukat TO iyiavukat;
 
 -- Connect to database and grant schema permissions
-\c lexmind
-GRANT ALL ON SCHEMA public TO lexmind;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO lexmind;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO lexmind;
+\c iyiavukat
+GRANT ALL ON SCHEMA public TO iyiavukat;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO iyiavukat;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO iyiavukat;
 ```
 
 #### Enable SSL/TLS
@@ -93,16 +93,16 @@ ssl_key_file = 'server.key'
 
 Update connection string:
 ```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/lexmind?sslmode=require
+DATABASE_URL=postgresql://user:password@localhost:5432/iyiavukat?sslmode=require
 ```
 
 #### Database Backup
 ```bash
 # Automated daily backup
-0 2 * * * pg_dump -U lexmind lexmind > /backups/lexmind_$(date +\%Y\%m\%d).sql
+0 2 * * * pg_dump -U iyiavukat iyiavukat > /backups/iyiavukat_$(date +\%Y\%m\%d).sql
 
 # Encrypted backup
-0 2 * * * pg_dump -U lexmind lexmind | gzip | gpg --encrypt --recipient backup@lexmind.ai > /backups/lexmind_$(date +\%Y\%m\%d).sql.gz.gpg
+0 2 * * * pg_dump -U iyiavukat iyiavukat | gzip | gpg --encrypt --recipient backup@iyiavukat.com > /backups/iyiavukat_$(date +\%Y\%m\%d).sql.gz.gpg
 ```
 
 ### 3. Redis Security
@@ -184,8 +184,8 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_DB=lexmind
-      - POSTGRES_USER=lexmind
+      - POSTGRES_DB=iyiavukat
+      - POSTGRES_USER=iyiavukat
       - POSTGRES_PASSWORD=strong_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -241,10 +241,10 @@ secrets:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: lexmind-secrets
+  name: iyiavukat-secrets
 type: Opaque
 stringData:
-  database-url: "postgresql://user:password@postgres:5432/lexmind"
+  database-url: "postgresql://user:password@postgres:5432/iyiavukat"
   jwt-access-secret: "your_jwt_access_secret"
   jwt-refresh-secret: "your_jwt_refresh_secret"
   encryption-key: "your_encryption_key"
@@ -255,32 +255,32 @@ stringData:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: lexmind-backend
+  name: iyiavukat-backend
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: lexmind-backend
+      app: iyiavukat-backend
   template:
     metadata:
       labels:
-        app: lexmind-backend
+        app: iyiavukat-backend
     spec:
       containers:
       - name: backend
-        image: lexmind/backend:latest
+        image: iyiavukat/backend:latest
         ports:
         - containerPort: 3001
         env:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: lexmind-secrets
+              name: iyiavukat-secrets
               key: database-url
         - name: JWT_ACCESS_SECRET
           valueFrom:
             secretKeyRef:
-              name: lexmind-secrets
+              name: iyiavukat-secrets
               key: jwt-access-secret
         securityContext:
           runAsNonRoot: true
@@ -343,16 +343,16 @@ sudo ufw enable
 ```nginx
 server {
     listen 80;
-    server_name api.lexmind.ai;
+    server_name api.iyiavukat.ai;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name api.lexmind.ai;
+    server_name api.iyiavukat.ai;
 
-    ssl_certificate /etc/letsencrypt/live/api.lexmind.ai/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.lexmind.ai/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/api.iyiavukat.ai/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.iyiavukat.ai/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
     ssl_prefer_server_ciphers off;
@@ -382,7 +382,7 @@ server {
 #### Let's Encrypt Certificate
 ```bash
 sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d api.lexmind.ai
+sudo certbot --nginx -d api.iyiavukat.ai
 sudo certbot renew --dry-run
 ```
 
@@ -431,13 +431,13 @@ sudo iptables-save > /etc/iptables/rules.v4
 #### Health Check Endpoint
 ```bash
 # Monitor application health
-curl https://api.lexmind.ai/api/v1/health
+curl https://api.iyiavukat.ai/api/v1/health
 
 # Monitor metrics
-curl https://api.lexmind.ai/api/v1/health/metrics
+curl https://api.iyiavukat.ai/api/v1/health/metrics
 
 # Monitor system status
-curl https://api.lexmind.ai/api/v1/health/status
+curl https://api.iyiavukat.ai/api/v1/health/status
 ```
 
 #### Log Monitoring
@@ -485,7 +485,7 @@ sudo systemctl start fail2ban
 // main.ts
 if (process.env.NODE_ENV !== 'production') {
   const config = new DocumentBuilder()
-    .setTitle('LexMind AI API')
+    .setTitle('iyiAvukat API')
     .setDescription('Enterprise Development Kit for Law Firms')
     .setVersion('1.0')
     .addBearerAuth()
@@ -522,13 +522,13 @@ app.use((req, res, next) => {
 ### Database Backup Strategy
 ```bash
 # Daily full backup
-0 2 * * * pg_dump -U lexmind lexmind | gzip > /backups/daily/lexmind_$(date +\%Y\%m\%d).sql.gz
+0 2 * * * pg_dump -U iyiavukat iyiavukat | gzip > /backups/daily/iyiavukat_$(date +\%Y\%m\%d).sql.gz
 
 # Weekly full backup
-0 3 * * 0 pg_dump -U lexmind lexmind | gzip > /backups/weekly/lexmind_$(date +\%Y\%m\%d).sql.gz
+0 3 * * 0 pg_dump -U iyiavukat iyiavukat | gzip > /backups/weekly/iyiavukat_$(date +\%Y\%m\%d).sql.gz
 
 # Monthly full backup
-0 4 1 * * pg_dump -U lexmind lexmind | gzip > /backups/monthly/lexmind_$(date +\%Y\%m\%d).sql.gz
+0 4 1 * * pg_dump -U iyiavukat iyiavukat | gzip > /backups/monthly/iyiavukat_$(date +\%Y\%m\%d).sql.gz
 
 # Retention policy
 find /backups/daily -name "*.sql.gz" -mtime +7 -delete
@@ -579,7 +579,7 @@ tail -f logs/error-$(date +%Y-%m-%d).log
 cat .env.production
 
 # Check database connection
-psql -U lexmind -d lexmind -c "SELECT 1"
+psql -U iyiavukat -d iyiavukat -c "SELECT 1"
 
 # Check Redis connection
 redis-cli -a strong_redis_password ping
@@ -594,7 +594,7 @@ free -h
 ps aux --sort=-%mem | head
 
 # Restart application
-pm2 restart lexmind
+pm2 restart iyiavukat
 ```
 
 #### Database Connection Issues
@@ -606,7 +606,7 @@ sudo systemctl status postgresql
 echo $DATABASE_URL
 
 # Test connection
-psql -U lexmind -d lexmind -c "SELECT version()"
+psql -U iyiavukat -d iyiavukat -c "SELECT version()"
 ```
 
 ## References

@@ -1,10 +1,10 @@
-# LexMind AI
+# iyiAvukat
 
 Enterprise Development Kit (EDK) - Version 1.0
 
 ## Overview
 
-LexMind AI is a comprehensive SaaS platform for law firms, independent lawyers, and corporate legal departments. It integrates case management, client management, document management, AI-powered document generation, legal research, finance management, and team management into a single platform.
+iyiAvukat is a comprehensive SaaS platform for law firms, independent lawyers, and corporate legal departments. It integrates case management, client management, document management, AI-powered document generation, legal research, finance management, and team management into a single platform.
 
 ## Tech Stack
 
@@ -24,7 +24,7 @@ LexMind AI is a comprehensive SaaS platform for law firms, independent lawyers, 
 - NestJS
 - TypeScript
 - Prisma ORM
-- PostgreSQL
+- Turso (libSQL)
 - BullMQ
 - Redis
 - Swagger
@@ -32,7 +32,6 @@ LexMind AI is a comprehensive SaaS platform for law firms, independent lawyers, 
 ### AI
 - OpenAI Responses API
 - Embeddings
-- pgvector
 - RAG
 
 ### Infrastructure
@@ -44,7 +43,7 @@ LexMind AI is a comprehensive SaaS platform for law firms, independent lawyers, 
 ## Project Structure
 
 ```
-lexmind-ai/
+iyiavukat/
 ├── apps/
 │   ├── frontend/          # Next.js 15 frontend application
 │   └── backend/           # NestJS backend application
@@ -83,7 +82,7 @@ lexmind-ai/
    ```
 4. Start the infrastructure services:
    ```bash
-   docker-compose up -d postgres redis minio
+   docker-compose up -d redis minio
    ```
 5. Run database migrations:
    ```bash
@@ -102,7 +101,7 @@ lexmind-ai/
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:3001
 - API Documentation: http://localhost:3001/api/docs
-- PostgreSQL: localhost:5432
+- Veritabani: Turso (libSQL, uzak/cloud - yerel port yok)
 - Redis: localhost:6379
 - MinIO: http://localhost:9000
 
@@ -112,7 +111,8 @@ lexmind-ai/
 ```
 NODE_ENV=development
 PORT=3001
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/lexmind_ai?schema=public
+DATABASE_URL=libsql://<db-adi>-<org-adi>.aws-eu-west-1.turso.io
+TURSO_AUTH_TOKEN=<turso-auth-token>
 REDIS_HOST=localhost
 REDIS_PORT=6379
 JWT_SECRET=dev-secret-key-change-in-production
@@ -123,7 +123,7 @@ OPENAI_API_KEY=your-openai-api-key
 #### Frontend (.env.development)
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_APP_NAME=LexMind AI
+NEXT_PUBLIC_APP_NAME=iyiAvukat
 ```
 
 ## Modules (Version 1.0)
@@ -159,7 +159,7 @@ Detailed documentation is available in the following files:
 
 ## License
 
-Proprietary - LexMind AI Team
+Proprietary - iyiAvukat Team
 
 ## Version
 

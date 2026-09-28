@@ -1,4 +1,4 @@
-# LexMind AI Incident Response Plan
+# iyiAvukat Incident Response Plan
 
 ## Document Information
 
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This Incident Response Plan (IRP) establishes the procedures for detecting, responding to, and recovering from security incidents affecting LexMind AI systems and data.
+This Incident Response Plan (IRP) establishes the procedures for detecting, responding to, and recovering from security incidents affecting iyiAvukat systems and data.
 
 ## Incident Response Team
 
@@ -23,7 +23,7 @@ This Incident Response Plan (IRP) establishes the procedures for detecting, resp
   - Communicate with stakeholders
   - Make critical decisions
 - **Backup:** CTO
-- **Contact:** incident-commander@lexmind.ai
+- **Contact:** incident-commander@iyiavukat.com
 
 #### Technical Lead
 - **Role:** Technical investigation and remediation
@@ -33,7 +33,7 @@ This Incident Response Plan (IRP) establishes the procedures for detecting, resp
   - Implement containment measures
   - Validate remediation
 - **Backup:** Lead Developer
-- **Contact:** technical-lead@lexmind.ai
+- **Contact:** technical-lead@iyiavukat.com
 
 #### Security Analyst
 - **Role:** Security analysis and forensics
@@ -43,7 +43,7 @@ This Incident Response Plan (IRP) establishes the procedures for detecting, resp
   - Identify root cause
   - Document findings
 - **Backup:** Security Engineer
-- **Contact:** security-analyst@lexmind.ai
+- **Contact:** security-analyst@iyiavukat.com
 
 #### Communications Lead
 - **Role:** Internal and external communications
@@ -53,7 +53,7 @@ This Incident Response Plan (IRP) establishes the procedures for detecting, resp
   - Handle media inquiries
   - Prepare public statements
 - **Backup:** Marketing Director
-- **Contact:** communications@lexmind.ai
+- **Contact:** communications@iyiavukat.com
 
 #### Legal Counsel
 - **Role:** Legal guidance and compliance
@@ -62,7 +62,7 @@ This Incident Response Plan (IRP) establishes the procedures for detecting, resp
   - Ensure regulatory compliance
   - Coordinate with regulators
   - Manage legal risks
-- **Contact:** legal@lexmind.ai
+- **Contact:** legal@iyiavukat.com
 
 #### HR Representative
 - **Role:** Employee-related incident management
@@ -71,7 +71,7 @@ This Incident Response Plan (IRP) establishes the procedures for detecting, resp
   - Coordinate with HR
   - Manage personnel actions
   - Support affected employees
-- **Contact:** hr@lexmind.ai
+- **Contact:** hr@iyiavukat.com
 
 ### Contact Information
 
@@ -82,10 +82,10 @@ This Incident Response Plan (IRP) establishes the procedures for detecting, resp
 - **Communications Lead:** +90 555 XXX XXXX
 
 #### Non-Emergency Contacts
-- **Security Team:** security@lexmind.ai
-- **IT Support:** support@lexmind.ai
-- **Legal:** legal@lexmind.ai
-- **HR:** hr@lexmind.ai
+- **Security Team:** security@iyiavukat.com
+- **IT Support:** support@iyiavukat.com
+- **Legal:** legal@iyiavukat.com
+- **HR:** hr@iyiavukat.com
 
 #### External Contacts
 - **Law Enforcement:** Local police (if required)

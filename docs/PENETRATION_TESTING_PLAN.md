@@ -1,8 +1,8 @@
-# LexMind AI Penetration Testing Plan
+# iyiAvukat Penetration Testing Plan
 
 ## Executive Summary
 
-This document outlines the penetration testing strategy for LexMind AI to identify and remediate security vulnerabilities before they can be exploited by malicious actors.
+This document outlines the penetration testing strategy for iyiAvukat to identify and remediate security vulnerabilities before they can be exploited by malicious actors.
 
 ## Testing Objectives
 
@@ -341,7 +341,7 @@ This document outlines the penetration testing strategy for LexMind AI to identi
 
 ## Conclusion
 
-This penetration testing plan provides a comprehensive approach to identifying and remediating security vulnerabilities in LexMind AI. The phased approach ensures thorough coverage while minimizing risk to production systems.
+This penetration testing plan provides a comprehensive approach to identifying and remediating security vulnerabilities in iyiAvukat. The phased approach ensures thorough coverage while minimizing risk to production systems.
 
 **Next Steps:**
 1. Approve testing scope and rules of engagement

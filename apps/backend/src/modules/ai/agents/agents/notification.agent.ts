@@ -26,7 +26,7 @@ export class NotificationAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Notification Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Notification Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin bildirimleri oluşturmak ve yönetmek.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

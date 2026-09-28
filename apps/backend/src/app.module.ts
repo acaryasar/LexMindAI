@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bull';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -18,6 +19,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { EmailModule } from './modules/email/email.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { HealthModule } from './modules/health/health.module';
+import { DemoModeInterceptor } from './common/interceptors/demo-mode.interceptor';
 import { WinstonLogger } from './common/logger.service';
 import { SentryService } from './common/sentry.service';
 
@@ -57,7 +59,18 @@ import { SentryService } from './common/sentry.service';
     ReportsModule,
     HealthModule,
   ],
-  providers: [WinstonLogger, SentryService],
+  providers: [
+    WinstonLogger,
+    SentryService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: DemoModeInterceptor,
+    },
+  ],
   exports: [WinstonLogger, SentryService],
 })
 export class AppModule {}

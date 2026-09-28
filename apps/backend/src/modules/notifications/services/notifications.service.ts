@@ -14,8 +14,13 @@ export class NotificationsService {
   constructor(private prisma: PrismaService) {}
 
   async create(createNotificationDto: CreateNotificationDto) {
+    const { data, ...rest } = createNotificationDto;
     return this.prisma.notification.create({
-      data: createNotificationDto,
+      data: {
+        ...rest,
+        // SQLite/Turso Json tipini desteklemiyor; JSON metin olarak saklanir
+        data: data !== undefined ? JSON.stringify(data) : undefined,
+      },
     });
   }
 

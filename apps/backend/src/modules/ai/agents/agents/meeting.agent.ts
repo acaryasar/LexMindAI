@@ -26,7 +26,7 @@ export class MeetingAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Meeting Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Meeting Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin toplantılara hazırlanmak ve toplantıları yönetmek.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

@@ -4,7 +4,7 @@ import tr from "./messages/tr.json";
 export const locales = ["en", "tr"] as const;
 export type Locale = (typeof locales)[number];
 export const defaultLocale: Locale = "tr";
-export const LOCALE_STORAGE_KEY = "LexMind-locale";
+export const LOCALE_STORAGE_KEY = "iyiAvukat-locale";
 
 export const messages: Record<Locale, typeof en> = {
   en,

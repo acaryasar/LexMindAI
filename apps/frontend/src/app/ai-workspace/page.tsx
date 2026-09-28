@@ -31,7 +31,7 @@ export default function AIWorkspacePage() {
         {
           id: 1,
           role: 'assistant',
-          content: 'Merhaba! Ben LexMind AI asistanınızım. Size hukuki konularda yardımcı olmak için buradayım. Nasıl yardımcı olabilirim?',
+          content: 'Merhaba! Ben iyiAvukat asistanınızım. Size hukuki konularda yardımcı olmak için buradayım. Nasıl yardımcı olabilirim?',
         },
       ]);
     }

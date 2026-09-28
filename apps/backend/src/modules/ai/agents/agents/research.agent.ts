@@ -26,7 +26,7 @@ export class ResearchAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Research Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Research Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin hukuk araştırmaları yapmak ve içtihat içgörüleri sağlamak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }

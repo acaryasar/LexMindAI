@@ -11,6 +11,8 @@ import { useTranslations } from 'next-intl';
 import { useLocale } from '@/i18n/provider';
 import { 
   ArrowRight,
+  Briefcase,
+  Calculator,
   Eye,
   EyeOff,
   FileText,
@@ -22,6 +24,8 @@ import {
   Scale,
   ShieldCheck,
   Sparkles,
+  UserCog,
+  Users,
 } from 'lucide-react';
 
 const loginSchema = z.object({
@@ -31,15 +35,63 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+// Herkese acik demo hesaplar: bunlar gercek/uretim hesaplarindan tamamen
+// AYRI, sabit sifreli, sadece-goruntuleme yetkisine sahip ozel demo
+// kullanicilardir (backend: User.isDemo = true + DemoModeInterceptor).
+// Sifre backend seed.ts'deki DEMO_ACCOUNT_PASSWORD ile birebir eslesir.
+const DEMO_PASSWORD = 'Demo2026!';
+
+const DEMO_ACCOUNTS = [
+  {
+    email: 'demo-admin@iyiavukat.com',
+    role: 'admin',
+    label: 'Yönetici',
+    description: 'Tüm bürovu yönetim görünümü',
+    icon: UserCog,
+    className: 'border-[#d9a441]/30 bg-[#d9a441]/10 text-[#8a6413] hover:bg-[#d9a441]/20',
+  },
+  {
+    email: 'demo-partner@iyiavukat.com',
+    role: 'partner',
+    label: 'Ortak',
+    description: 'Ekip ve performans görünümü',
+    icon: Briefcase,
+    className: 'border-[#17345f]/25 bg-[#17345f]/10 text-[#17345f] hover:bg-[#17345f]/20',
+  },
+  {
+    email: 'demo-lawyer@iyiavukat.com',
+    role: 'lawyer',
+    label: 'Avukat',
+    description: 'Dava ve duruşma yönetimi',
+    icon: Scale,
+    className: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20',
+  },
+  {
+    email: 'demo-secretary@iyiavukat.com',
+    role: 'secretary',
+    label: 'Sekreter',
+    description: 'Takvim ve belge yönetimi',
+    icon: Users,
+    className: 'border-sky-500/25 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20',
+  },
+  {
+    email: 'demo-accountant@iyiavukat.com',
+    role: 'accountant',
+    label: 'Muhasebeci',
+    description: 'Fatura ve finans görünümü',
+    icon: Calculator,
+    className: 'border-violet-500/25 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20',
+  },
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [demoRoles, setDemoRoles] = useState<any>(null);
-  const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [demoLoadingEmail, setDemoLoadingEmail] = useState<string | null>(null);
   const t = useTranslations('login');
   const { locale, setLocale } = useLocale();
 
@@ -71,31 +123,31 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoClick = async () => {
-    const email = (document.getElementById('email') as HTMLInputElement)?.value;
-    const password = (document.getElementById('password') as HTMLInputElement)?.value;
-
-    if (!email || !password) {
-      setError(t('emailRequired'));
-      return;
-    }
-
-    setIsDemoLoading(true);
-    setError('');
-    setDemoRoles(null);
-
-    try {
-      const response = await api.post('/auth/demo-roles', { email, password });
-      setDemoRoles(response.data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || t('userNotFound'));
-    } finally {
-      setIsDemoLoading(false);
-    }
-  };
-
   const handleGoogleLogin = () => {
     console.log("Google login");
+  };
+
+  const handleDemoLogin = async (email: string) => {
+    setError('');
+    setDemoLoadingEmail(email);
+
+    try {
+      const response = await api.post('/auth/login', {
+        email,
+        password: DEMO_PASSWORD,
+      });
+      const { access_token, refresh_token, user } = response.data;
+
+      sessionStorage.setItem('accessToken', access_token);
+      sessionStorage.setItem('refreshToken', refresh_token);
+
+      setAuth(user, access_token, refresh_token);
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.response?.data?.message || t('error'));
+    } finally {
+      setDemoLoadingEmail(null);
+    }
   };
 
   return (
@@ -149,7 +201,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <h1 className="text-lg lg:text-xl xl:text-2xl font-bold tracking-tight">
-                    LexMind{" "}
+                    iyiAvukat{" "}
                     <span className="text-[#d9a441]">AI</span>
                   </h1>
                   <p className="mt-0.5 text-[8px] lg:text-[9px] xl:text-[10px] text-slate-300 font-medium tracking-wide">
@@ -217,7 +269,7 @@ export default function LoginPage() {
 
             {/* Footer */}
             <div className="flex items-center justify-between text-[8px] lg:text-[9px] xl:text-[10px] text-slate-500">
-              <span>© {new Date().getFullYear()} LexMind AI</span>
+              <span>© {new Date().getFullYear()} iyiAvukat</span>
               <div className="flex items-center gap-1 lg:gap-1.5">
                 <ShieldCheck className="h-2 w-2 lg:h-2.5 lg:w-2.5 xl:h-3 xl:w-3" />
                 <span className="hidden sm:inline">Kurumsal Güvenlik</span>
@@ -251,50 +303,6 @@ export default function LoginPage() {
             </svg>
           </button>
 
-          {/* Demo Button */}
-          <button
-            onClick={handleDemoClick}
-            disabled={isDemoLoading}
-            className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 lg:bottom-5 lg:right-5 bg-[#071a38]/10 hover:bg-[#071a38]/20 text-[#071a38] font-medium px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full transition text-[9px] sm:text-[10px]"
-          >
-            {isDemoLoading ? t('loading') : t('demo')}
-          </button>
-
-          {/* Demo Roles Display */}
-          {demoRoles && (
-            <div className="fixed bottom-10 right-2 sm:bottom-14 sm:right-3 lg:bottom-18 lg:right-5 z-50 bg-white p-1.5 sm:p-2 lg:p-3 rounded-lg shadow-lg max-w-md max-h-[40vh] overflow-y-auto">
-              <h3 className="font-bold mb-1.5 sm:mb-2 text-gray-900 text-[9px] sm:text-[10px]">{t('demoUsers')}</h3>
-              <div className="text-[8px] sm:text-[9px] text-gray-600">
-                {demoRoles.demoUsers && demoRoles.demoUsers.length > 0 ? (
-                  <div className="space-y-1 sm:space-y-1.5">
-                    {demoRoles.demoUsers.map((user: any, index: number) => (
-                      <div key={index} className="p-1 sm:p-1.5 bg-gray-50 rounded-md">
-                        <p className="font-medium text-gray-900 text-[8px] sm:text-[9px]">
-                          {user.firstName} {user.lastName}
-                        </p>
-                        <p className="text-[7px] sm:text-[8px] text-gray-500">{user.email}</p>
-                        <p className="text-[7px] sm:text-[8px] text-gray-600">
-                          <strong>{t('passwordLabel')}:</strong> {user.password}
-                        </p>
-                        <p className="text-[7px] sm:text-[8px] text-gray-600">
-                          <strong>{t('roles')}:</strong> {user.roles.join(', ')}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500">{t('userNotFound')}</p>
-                )}
-              </div>
-              <button
-                onClick={() => setDemoRoles(null)}
-                className="mt-1.5 sm:mt-2 w-full text-[8px] sm:text-[9px] text-gray-600 hover:text-gray-900"
-              >
-                {t('close')}
-              </button>
-            </div>
-          )}
-
           <div className="w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[440px]">
 
             {/* Mobile logo */}
@@ -305,7 +313,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <h1 className="text-lg sm:text-xl font-bold text-[#071a38]">
-                    LexMind{" "}
+                    iyiAvukat{" "}
                     <span className="text-[#d9a441]">AI</span>
                   </h1>
                   <p className="text-[8px] sm:text-[9px] text-slate-500">
@@ -325,7 +333,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg lg:text-xl font-bold text-[#071a38]">
-                    LexMind{" "}
+                    iyiAvukat{" "}
                     <span className="text-[#d9a441]">AI</span>
                   </h2>
                   <p className="text-[8px] sm:text-[9px] lg:text-[10px] text-slate-500">
@@ -364,7 +372,6 @@ export default function LoginPage() {
                     <Mail className="pointer-events-none absolute left-2 sm:left-2.5 lg:left-3 top-1/2 h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 -translate-y-1/2 text-slate-400 transition group-focus-within:text-[#b98c36]" />
                     <input
                       id="email"
-                      name="email"
                       type="email"
                       autoComplete="email"
                       required
@@ -392,7 +399,6 @@ export default function LoginPage() {
                     <Lock className="pointer-events-none absolute left-2 sm:left-2.5 lg:left-3 top-1/2 h-3 w-3 sm:h-3.5 sm:w-3.5 lg:h-4 lg:w-4 -translate-y-1/2 text-slate-400 transition group-focus-within:text-[#b98c36]" />
                     <input
                       id="password"
-                      name="password"
                       type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
                       required
@@ -477,6 +483,52 @@ export default function LoginPage() {
                   {t('googleLogin')}
                 </button>
               </form>
+            </div>
+
+            {/* Demo accounts - one-click demo login */}
+            <div className="mt-2 sm:mt-3 lg:mt-4 rounded-[12px] sm:rounded-[16px] border border-dashed border-slate-200 bg-white/60 p-2 sm:p-3 lg:p-4">
+              <div className="mb-1.5 sm:mb-2 flex items-center justify-between gap-2">
+                <p className="text-[9px] sm:text-[10px] lg:text-xs font-semibold text-slate-600">
+                  {t('demoSectionTitle')}
+                </p>
+                <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[7px] sm:text-[8px] font-medium uppercase tracking-wide text-slate-500">
+                  {t('demoSectionBadge')}
+                </span>
+              </div>
+              <p className="mb-1.5 sm:mb-2 text-[8px] sm:text-[9px] lg:text-[10px] leading-3 sm:leading-4 text-slate-400">
+                {t('demoSectionHint')}
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                {DEMO_ACCOUNTS.map((account) => {
+                  const Icon = account.icon;
+                  const isLoadingThis = demoLoadingEmail === account.email;
+                  return (
+                    <button
+                      key={account.email}
+                      type="button"
+                      disabled={demoLoadingEmail !== null}
+                      onClick={() => handleDemoLogin(account.email)}
+                      className={`group flex items-center gap-1.5 sm:gap-2 rounded-lg border px-1.5 sm:px-2 py-1.5 sm:py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${account.className}`}
+                    >
+                      <span className="flex h-5 w-5 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded-full bg-white/70">
+                        {isLoadingThis ? (
+                          <span className="h-2.5 w-2.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        ) : (
+                          <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                        )}
+                      </span>
+                      <span className="flex flex-col leading-tight">
+                        <span className="text-[9px] sm:text-[10px] lg:text-xs font-semibold">
+                          {t(`demoRole_${account.role}`)}
+                        </span>
+                        <span className="text-[7px] sm:text-[8px] lg:text-[9px] opacity-75 line-clamp-1">
+                          {t(`demoRoleDesc_${account.role}`)}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Security message */}

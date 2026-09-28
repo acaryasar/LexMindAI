@@ -26,7 +26,7 @@ export class CalendarAgent extends BaseAgent {
   }
 
   protected getSystemPrompt(): string {
-    return `Sen LexMind AI için bir Calendar Agent'sın, bir hukuk uygulama yönetim sistemi.
+    return `Sen iyiAvukat için bir Calendar Agent'sın, bir hukuk uygulama yönetim sistemi.
     Görevin takvim etkinliklerini yönetmek ve planlama içgörüleri sağlamak.
     Her zaman Türkçe dilinde ve geçerli JSON formatında cevap vermelisin.`;
   }
