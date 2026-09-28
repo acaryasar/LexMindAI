@@ -36,11 +36,14 @@
       "@database/*": [
         "src/database/*"
       ]
-    }
+    },
+    "rootDir": "./src"
   },
   "exclude": [
     "node_modules",
     "dist",
-    "scripts"
+    "scripts",
+    "prisma",
+    "test"
   ]
 }
