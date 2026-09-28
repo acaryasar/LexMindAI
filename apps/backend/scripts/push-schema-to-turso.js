@@ -5,7 +5,9 @@
  * "file:" ile baslamasini zorunlu kiliyor - bkz. Prisma+Turso bilinen
  * sinirlama). Bu script bu sinirlamayi asar:
  *   1) Aynı schema'yi gecici bir LOKAL sqlite dosyasina push eder
- *      (CLI bunu "file:" URL'i oldugu icin sorunsuz kabul eder).
+ *      (CLI bunu "file:" URL'i oldugu icin sorunsuz kabul eder). Bu dosya
+ *      OS temp dizininde olusturulur (OneDrive gibi senkron edilen proje
+ *      klasorlerinde dosya kilitlenmesi sorunlarindan kacinmak icin).
  *   2) O lokal dosyadan olusan tum CREATE TABLE / CREATE INDEX ifadelerini
  *      okur ve libsql client ile doğrudan Turso'ya uygular.
  * Idempotenttir: bir tablo/index zaten varsa o ifadeyi atlar, digerlerine
@@ -17,25 +19,46 @@ const { createClient } = require('@libsql/client');
 const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 const backendDir = path.join(__dirname, '..');
 const schemaPath = path.join(backendDir, 'prisma', 'schema.prisma');
-const shadowFile = path.join(backendDir, 'prisma', '_shadow.db');
 
-for (const suffix of ['', '-journal', '-wal', '-shm']) {
-  const f = shadowFile + suffix;
-  if (fs.existsSync(f)) fs.unlinkSync(f);
+// Windows'ta "file:" URL'i icinde ters slash sorun yaratabildigi ve OneDrive
+// gibi senkron edilen klasorlerde hizli create/delete kilitlenmelere yol
+// acabildigi icin gecici dosyayi OS temp dizininde, duz slash'li bir URL ile
+// olusturuyoruz.
+const shadowFile = path.join(os.tmpdir(), `iyiavukat-prisma-shadow-${process.pid}.db`);
+const shadowUrl = `file:${shadowFile.split(path.sep).join('/')}`;
+
+function cleanupShadowFiles() {
+  for (const suffix of ['', '-journal', '-wal', '-shm']) {
+    const f = shadowFile + suffix;
+    try {
+      if (fs.existsSync(f)) fs.unlinkSync(f);
+    } catch (err) {
+      console.warn(`[push-schema-to-turso] Gecici dosya silinemedi (${f}): ${(err && err.message) || err}`);
+    }
+  }
 }
 
-console.log('[push-schema-to-turso] Lokal golge (shadow) sqlite dosyasina schema push ediliyor...');
-execSync(
-  `npx prisma db push --schema="${schemaPath}" --skip-generate --accept-data-loss`,
-  {
-    cwd: backendDir,
-    env: { ...process.env, DATABASE_URL: `file:${shadowFile}` },
-    stdio: 'inherit',
-  },
-);
+cleanupShadowFiles();
+
+console.log(`[push-schema-to-turso] Lokal golge (shadow) sqlite dosyasina schema push ediliyor... (${shadowFile})`);
+try {
+  execSync(
+    `npx prisma db push --schema="${schemaPath}" --skip-generate --accept-data-loss`,
+    {
+      cwd: backendDir,
+      env: { ...process.env, DATABASE_URL: shadowUrl },
+      stdio: 'inherit',
+    },
+  );
+} catch (err) {
+  console.error('[push-schema-to-turso] Lokal shadow db\'ye "prisma db push" basarisiz oldu. Yukaridaki Prisma ciktisina bakin.');
+  cleanupShadowFiles();
+  process.exit(1);
+}
 
 async function main() {
   if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.startsWith('libsql:')) {
@@ -43,8 +66,11 @@ async function main() {
       'DATABASE_URL bir libsql:// adresi olmali (Turso). Su an: ' + process.env.DATABASE_URL,
     );
   }
+  if (!process.env.TURSO_AUTH_TOKEN) {
+    throw new Error('TURSO_AUTH_TOKEN tanimli degil (.env / .env.development kontrol edin).');
+  }
 
-  const shadow = createClient({ url: `file:${shadowFile}` });
+  const shadow = createClient({ url: shadowUrl });
   const remote = createClient({
     url: process.env.DATABASE_URL,
     authToken: process.env.TURSO_AUTH_TOKEN,
@@ -75,14 +101,11 @@ async function main() {
 
   shadow.close();
   remote.close();
-
-  for (const suffix of ['', '-journal', '-wal', '-shm']) {
-    const f = shadowFile + suffix;
-    if (fs.existsSync(f)) fs.unlinkSync(f);
-  }
+  cleanupShadowFiles();
 }
 
 main().catch((err) => {
   console.error('[push-schema-to-turso] Basarisiz:', err);
+  cleanupShadowFiles();
   process.exit(1);
 });
