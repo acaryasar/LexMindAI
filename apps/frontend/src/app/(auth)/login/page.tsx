@@ -280,7 +280,7 @@ export default function LoginPage() {
         </section>
 
         {/* RIGHT SIDE - LOGIN */}
-        <section className="relative flex h-screen items-center justify-center px-2 py-3 sm:px-3 sm:py-4 lg:px-5 lg:py-6 overflow-hidden">
+        <section className="relative flex h-screen items-center justify-center overflow-y-auto px-2 py-3 sm:px-3 sm:py-4 lg:px-5 lg:py-6">
 
           {/* Language selector */}
           <button
@@ -303,7 +303,7 @@ export default function LoginPage() {
             </svg>
           </button>
 
-          <div className="w-full max-w-[320px] sm:max-w-[380px] lg:max-w-[440px]">
+          <div className="my-auto w-full max-w-[320px] shrink-0 sm:max-w-[380px] lg:max-w-[440px]">
 
             {/* Mobile logo */}
             <div className="mb-2 sm:mb-3 lg:mb-4 flex justify-center lg:hidden">
