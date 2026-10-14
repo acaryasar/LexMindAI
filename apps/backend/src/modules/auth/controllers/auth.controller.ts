@@ -2,6 +2,8 @@ import { Controller, Post, Body, Get, Put, Delete, Param, UseGuards, Request, Ht
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from '../services/auth.service';
+import { AccountDeletionService } from '../services/account-deletion.service';
+import { DeleteAccountDto } from '../dto/delete-account.dto';
 import { LoginDto } from '../dto/login.dto';
 import { RegisterDto } from '../dto/register.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
@@ -17,7 +19,10 @@ import { SetMetadata } from '@nestjs/common';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private accountDeletion: AccountDeletionService,
+  ) {}
 
   @Post('register')
   @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 requests per hour
@@ -209,5 +214,21 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Geçersiz şifre' })
   async changePassword(@Request() req: any, @Body() changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
     return this.authService.changePassword(req.user.id, changePasswordDto);
+  }
+
+  @Post('delete-account')
+  @Throttle({ default: { limit: 5, ttl: 900000 } }) // 5 password attempts per 15 minutes
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Hesabımı sil (şifre doğrulamalı, geri alınamaz)' })
+  @ApiResponse({ status: 200, description: 'Hesap silindi' })
+  @ApiResponse({ status: 400, description: 'Şifre hatalı' })
+  @ApiResponse({ status: 403, description: 'Demo hesaplar silinemez' })
+  @ApiResponse({ status: 409, description: 'Son yönetici hesabı silinemez' })
+  async deleteAccount(@Request() req: any, @Body() dto: DeleteAccountDto): Promise<{ message: string }> {
+    // The identity always comes from the token; nothing in the body can name another user.
+    await this.accountDeletion.deleteOwnAccount(req.user.id, dto.password);
+    return { message: 'Hesabınız silindi' };
   }
 }

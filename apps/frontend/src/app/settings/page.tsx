@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { User, Bell, Shield, Database, Palette, Globe, Cpu, CheckCircle, AlertCircle, Info, Download, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import { aiApi } from '@/lib/api/ai';
+import { DeleteAccountCard } from '@/components/settings/delete-account-card';
 
 export default function SettingsPage() {
   const [aiConfig, setAiConfig] = useState({
@@ -774,6 +775,8 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <DeleteAccountCard />
       </div>
     </MainLayout>
   );
